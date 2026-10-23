@@ -1,0 +1,30 @@
+package io.github.yaulun.javacpp.compat.python;
+
+/** Python exception and warning categories supported by the 0.3.36 compatibility bridge. */
+public enum PythonErrorType {
+  VALUE_ERROR("ValueError", false),
+  RUNTIME_ERROR("RuntimeError", false),
+  ASSERTION_ERROR("AssertionError", false),
+  KEY_ERROR("KeyError", false),
+  TYPE_ERROR("TypeError", false),
+  INDEX_ERROR("IndexError", false),
+  ATTRIBUTE_ERROR("AttributeError", false),
+  RUNTIME_WARNING("RuntimeWarning", true),
+  DEPRECATION_WARNING("DeprecationWarning", true);
+
+  private final String pythonName;
+  private final boolean warning;
+
+  PythonErrorType(String pythonName, boolean warning) {
+    this.pythonName = pythonName;
+    this.warning = warning;
+  }
+
+  public String pythonName() {
+    return pythonName;
+  }
+
+  public boolean isWarning() {
+    return warning;
+  }
+}

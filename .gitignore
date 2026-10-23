@@ -47,3 +47,6 @@ build/
 *.part
 *.lock
 *.invalid-*
+
+# Generated chat contract test data.
+/src/test/resources/python-0.3.36-chat-contracts.tsv

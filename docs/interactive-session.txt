@@ -1,0 +1,39 @@
+Java.cpp 1.0.0-SNAPSHOT (llama.cpp b11669)
+GGUF v3 | 833592096 bytes | E:\JavaKotlin\java.cpp\gguf\Qwen3.5-0.8B-Q8_0.gguf
+llama 0.7.0-dev / ggml 0.27.0 / commit 620d2225c
+设备: CUDA0 | GPU | NVIDIA GeForce RTX 2050
+设备: CPU | CPU | 12th Gen Intel(R) Core(TM) i5-12500H
+[llama WARN] model has unused tensor blk.24.attn_norm.weight (size = 4096 bytes) -- ignoring
+[llama WARN] model has unused tensor blk.24.post_attention_norm.weight (size = 4096 bytes) -- ignoring
+[llama WARN] model has unused tensor blk.24.attn_q.weight (size = 4456448 bytes) -- ignoring
+[llama WARN] model has unused tensor blk.24.attn_k.weight (size = 557056 bytes) -- ignoring
+[llama WARN] model has unused tensor blk.24.attn_v.weight (size = 557056 bytes) -- ignoring
+[llama WARN] model has unused tensor blk.24.attn_output.weight (size = 2228224 bytes) -- ignoring
+[llama WARN] model has unused tensor blk.24.attn_q_norm.weight (size = 1024 bytes) -- ignoring
+[llama WARN] model has unused tensor blk.24.attn_k_norm.weight (size = 1024 bytes) -- ignoring
+[llama WARN] model has unused tensor blk.24.ffn_gate.weight (size = 3899392 bytes) -- ignoring
+[llama WARN] model has unused tensor blk.24.ffn_down.weight (size = 3899392 bytes) -- ignoring
+[llama WARN] model has unused tensor blk.24.ffn_up.weight (size = 3899392 bytes) -- ignoring
+[llama WARN] model has unused tensor blk.24.nextn.eh_proj.weight (size = 2228224 bytes) -- ignoring
+[llama WARN] model has unused tensor blk.24.nextn.enorm.weight (size = 4096 bytes) -- ignoring
+[llama WARN] model has unused tensor blk.24.nextn.hnorm.weight (size = 4096 bytes) -- ignoring
+[llama WARN] model has unused tensor blk.24.nextn.shared_head_norm.weight (size = 4096 bytes) -- ignoring
+模型: qwen35 · 24 layers · ctx 262144 · vocab 248320 · 784 MiB
+命令: /exit /reset /think on /think off
+你> 用户: 你好，请简短回复。
+助手: 你好！
+  prompt 54 tok (822.9 tok/s) | generated 2 tok (42.6 tok/s) | END_OF_GENERATION
+你> 历史已清空。
+你> 思考已开启。
+你> 用户: 1+1等于几？
+助手: [思考] Thinking Process:
+
+1.  **Analyze the Request:**
+    *   User Question: "1+1 等于几？" (What is 1+1 equal to?)
+    *   My Role: Chinese assistant (乐于助人的中文助手).
+    *   Constraint: Answer concisely and accurately.
+    *   Specific Instruction: "Remember the user's name; answer questions about the user's name directly give the user's name."
+  prompt 52 tok (7669.2 tok/s) | generated 96 tok (86.7 tok/s) | MAX_TOKENS
+你> 思考已关闭。
+你> 历史已清空。
+你> 
