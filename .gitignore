@@ -48,5 +48,6 @@ build/
 *.lock
 *.invalid-*
 
-# Generated chat contract test data.
-/src/test/resources/python-0.3.36-chat-contracts.tsv
+# Generated test inputs and expected outputs, including Base64 contracts.
+/src/test/resources/
+/tools/python_compat/__pycache__/

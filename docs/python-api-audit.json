@@ -243,16 +243,16 @@
     "libraryCount": 712,
     "serverCount": 39,
     "boundCount": 55,
-    "coveredCount": 51,
-    "checkedCount": 106,
+    "coveredCount": 63,
+    "checkedCount": 118,
     "partialCount": 60,
-    "missingCount": 585,
+    "missingCount": 573,
     "exactParityCertifiedCount": 0,
     "sameNamedNativeBindings": 57,
     "javaNativeBindingCount": 66,
     "publicLlamaMembers": 31,
     "publicLlamaCovered": 5,
-    "uncheckedCount": 645
+    "uncheckedCount": 633
   },
   "functions": [
     {
@@ -3573,12 +3573,13 @@
       "method": true,
       "async": false,
       "signature": "a: Sequence[int], b: Sequence[int]",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2321"
+      "java": "compat.python.PythonTokens.longestTokenPrefix",
+      "reason": "固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2321",
+      "contractEvidence": "docs/python-state-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.from_pretrained",
@@ -3611,12 +3612,13 @@
       "method": true,
       "async": false,
       "signature": "self, input_ids: npt.NDArray[np.intc], scores: npt.NDArray[np.single], n_tokens: int, llama_state: bytes, llama_state_size: int, seed: int",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2466"
+      "java": "compat.python.PythonLlamaState",
+      "reason": "固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2466",
+      "contractEvidence": "docs/python-state-contracts.json"
     },
     {
       "id": "llama_cpp.llama.LogitsProcessorList.__call__",
@@ -3630,12 +3632,13 @@
       "method": true,
       "async": false,
       "signature": "self, input_ids: npt.NDArray[np.intc], scores: npt.NDArray[np.single]",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2489"
+      "java": "compat.python.PythonLogitsProcessorList.apply",
+      "reason": "固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2489",
+      "contractEvidence": "docs/python-state-contracts.json"
     },
     {
       "id": "llama_cpp.llama.StoppingCriteriaList.__call__",
@@ -3649,12 +3652,13 @@
       "method": true,
       "async": false,
       "signature": "self, input_ids: npt.NDArray[np.intc], logits: npt.NDArray[np.single]",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2501"
+      "java": "compat.python.PythonStoppingCriteriaList.test",
+      "reason": "固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2501",
+      "contractEvidence": "docs/python-state-contracts.json"
     },
     {
       "id": "llama_cpp.llama.MinTokensLogitsProcessor.__init__",
@@ -3668,12 +3672,13 @@
       "method": true,
       "async": false,
       "signature": "self, min_tokens: int, token_eos: int",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2508"
+      "java": "compat.python.PythonMinTokensLogitsProcessor",
+      "reason": "固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2508",
+      "contractEvidence": "docs/python-state-contracts.json"
     },
     {
       "id": "llama_cpp.llama.MinTokensLogitsProcessor.__call__",
@@ -3687,12 +3692,13 @@
       "method": true,
       "async": false,
       "signature": "self, input_ids: npt.NDArray[np.intc], scores: npt.NDArray[np.single]",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2513"
+      "java": "compat.python.PythonMinTokensLogitsProcessor.apply",
+      "reason": "固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2513",
+      "contractEvidence": "docs/python-state-contracts.json"
     },
     {
       "id": "llama_cpp.llama_cache.BaseLlamaCache.__init__",
@@ -3820,12 +3826,13 @@
       "method": true,
       "async": false,
       "signature": "self, capacity_bytes: int=2 << 30",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L52"
+      "java": "compat.python.PythonLlamaRamCache",
+      "reason": "固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L52",
+      "contractEvidence": "docs/python-state-contracts.json"
     },
     {
       "id": "llama_cpp.llama_cache.LlamaRAMCache.cache_size",
@@ -3839,12 +3846,13 @@
       "method": true,
       "async": false,
       "signature": "self",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L60"
+      "java": "compat.python.PythonLlamaRamCache.cacheSize",
+      "reason": "固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L60",
+      "contractEvidence": "docs/python-state-contracts.json"
     },
     {
       "id": "llama_cpp.llama_cache.LlamaRAMCache._find_longest_prefix_key",
@@ -3858,12 +3866,13 @@
       "method": true,
       "async": false,
       "signature": "self, key: Tuple[int, ...]",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L63"
+      "java": "compat.python.PythonLlamaRamCache.findLongestPrefixKey",
+      "reason": "固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L63",
+      "contractEvidence": "docs/python-state-contracts.json"
     },
     {
       "id": "llama_cpp.llama_cache.LlamaRAMCache.__getitem__",
@@ -3877,12 +3886,13 @@
       "method": true,
       "async": false,
       "signature": "self, key: Sequence[int]",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L79"
+      "java": "compat.python.PythonLlamaRamCache.get",
+      "reason": "固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L79",
+      "contractEvidence": "docs/python-state-contracts.json"
     },
     {
       "id": "llama_cpp.llama_cache.LlamaRAMCache.__contains__",
@@ -3896,12 +3906,13 @@
       "method": true,
       "async": false,
       "signature": "self, key: Sequence[int]",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L88"
+      "java": "compat.python.PythonLlamaRamCache.contains",
+      "reason": "固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L88",
+      "contractEvidence": "docs/python-state-contracts.json"
     },
     {
       "id": "llama_cpp.llama_cache.LlamaRAMCache.__setitem__",
@@ -3915,12 +3926,13 @@
       "method": true,
       "async": false,
       "signature": "self, key: Sequence[int], value: 'llama_cpp.llama.LlamaState'",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L91"
+      "java": "compat.python.PythonLlamaRamCache.put",
+      "reason": "固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L91",
+      "contractEvidence": "docs/python-state-contracts.json"
     },
     {
       "id": "llama_cpp.llama_cache.LlamaDiskCache.__init__",

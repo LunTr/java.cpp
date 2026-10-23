@@ -10,6 +10,14 @@ import io.github.yaulun.javacpp.compat.python.PythonChatFormatterResponse;
 import io.github.yaulun.javacpp.compat.python.PythonErrorBridge;
 import io.github.yaulun.javacpp.compat.python.PythonErrorType;
 import io.github.yaulun.javacpp.compat.python.PythonException;
+import io.github.yaulun.javacpp.compat.python.PythonLlamaRamCache;
+import io.github.yaulun.javacpp.compat.python.PythonLlamaState;
+import io.github.yaulun.javacpp.compat.python.PythonLogitsProcessor;
+import io.github.yaulun.javacpp.compat.python.PythonLogitsProcessorList;
+import io.github.yaulun.javacpp.compat.python.PythonMinTokensLogitsProcessor;
+import io.github.yaulun.javacpp.compat.python.PythonStoppingCriteria;
+import io.github.yaulun.javacpp.compat.python.PythonStoppingCriteriaList;
+import io.github.yaulun.javacpp.compat.python.PythonTokens;
 import io.github.yaulun.javacpp.compat.python.PythonWarning;
 import io.github.yaulun.javacpp.compat.python.PythonWarningAction;
 import io.github.yaulun.javacpp.compat.python.PythonWarningLocation;
@@ -35,6 +43,14 @@ class PublicApiSurfaceTest {
             PythonErrorBridge.class,
             PythonErrorType.class,
             PythonException.class,
+            PythonLlamaRamCache.class,
+            PythonLlamaState.class,
+            PythonLogitsProcessor.class,
+            PythonLogitsProcessorList.class,
+            PythonMinTokensLogitsProcessor.class,
+            PythonStoppingCriteria.class,
+            PythonStoppingCriteriaList.class,
+            PythonTokens.class,
             PythonWarning.class,
             PythonWarningAction.class,
             PythonWarningLocation.class,

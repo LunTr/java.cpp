@@ -39,7 +39,8 @@ class PythonBridgeContractTest {
         new BufferedReader(
             new InputStreamReader(
                 Objects.requireNonNull(
-                    getClass().getResourceAsStream("/python-0.3.36-contracts.tsv")),
+                    getClass().getResourceAsStream("/python-0.3.36-contracts.tsv"),
+                    "Generate ignored fixtures with tools/python_compat/generate_all_contracts.py; see tools/python_compat/README.md"),
                 StandardCharsets.UTF_8))) {
       lines = reader.lines().toList();
     }

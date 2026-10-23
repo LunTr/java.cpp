@@ -1,6 +1,6 @@
 # 实现与验证记录
 
-> 后续更新（2026-10-23）：已加入 Python 0.3.36 错误桥接及 37 项静态聊天函数实现。最新 `verify -Pnative` 为 10,713 项通过，0 跳过（含 300 条桥接样例、10,376 条聊天函数及 CPython 样例）；来源、逐项覆盖及验证边界见 [Python 核对记录](PYTHON_COMPATIBILITY.md) 和 [聊天函数记录](PYTHON_CHAT_COMPATIBILITY.md)。下文保留初次封装阶段的测试与产物快照。
+> 后续更新（2026-10-23）：已加入 Python 0.3.36 错误桥接、37 项静态聊天及 12 项状态/缓存/处理器函数。最新 `verify -Pnative` 为 11,452 项通过，0 跳过（含 300 条桥接样例、10,376 条聊天/CPython 样例、738 组状态/缓存样例）；来源与边界见 [Python 核对记录](PYTHON_COMPATIBILITY.md)、[聊天函数记录](PYTHON_CHAT_COMPATIBILITY.md) 和 [状态/缓存记录](PYTHON_STATE_COMPATIBILITY.md)。测试数据按 `.gitignore` 规则在本地生成。下文保留初次封装阶段的测试与产物快照。
 
 日期：2026-10-23，Asia/Shanghai。
 

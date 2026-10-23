@@ -31,6 +31,10 @@
 
 ## Python 全量函数复刻进度
 
-用户要求以固定 Python 原版的输出、异常和警告为逐项复刻标准。最新清单为 751 项：55 项同名绑定、51 项独立能力实现、60 项部分覆盖、585 项尚无对应实现。645 项尚未打勾，全输入一致性认证继续为 0 项。
+用户要求以固定 Python 原版的输出、异常和警告为逐项复刻标准。最新清单为 751 项：55 项同名绑定、63 项独立能力实现、60 项部分覆盖、573 项尚无对应实现。633 项尚未打勾，全输入一致性认证继续为 0 项。
 
-本批补齐静态聊天模块 37 项，以 10,376 条原版完整函数体/CPython 样例对照；完整 `verify -Pnative` 为 10,713 项通过、0 跳过。记录见 `docs/PYTHON_CHAT_COMPATIBILITY.md`，可复现生成器位于 `tools/python_compat`。继续工作优先处理同原生 revision 的完整 Python 推理基准、Jinja2/chat handler、生成与缓存接口，并保持机器清单与 README 同步。
+静态聊天模块已移植 37 项，本批新增 RAM 缓存、状态和处理器 12 项，分别有 10,376 条及 738 组原版/CPython 对照。完整 `verify -Pnative` 为 11,452 项通过、0 跳过。记录见 `docs/PYTHON_CHAT_COMPATIBILITY.md` 和 `docs/PYTHON_STATE_COMPATIBILITY.md`，生成器位于 `tools/python_compat`。继续工作优先处理同原生 revision 的完整 Python 推理基准、Jinja2/chat handler、生成与缓存复用，并保持机器清单与 README 同步。
+
+## 测试数据维护规则
+
+测试数据及 Base64 样例文件统一保存在被 `.gitignore` 忽略的 `src/test/resources/`。旧桥接 TSV 已从 Git 索引移除，本地保留。生成脚本、来源、计数及摘要可以提交；根目录 `AGENTS.md` 记录后续规则。清洁检出先按 `tools/python_compat/README.md` 生成三组数据，再执行 Maven 测试；提交前确认 `git ls-files src/test/resources` 输出为空。

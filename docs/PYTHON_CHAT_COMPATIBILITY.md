@@ -2,6 +2,8 @@
 
 日期：2026-10-23。固定基线：llama-cpp-python 0.3.36 / `1652066e0af45f2313b339670ef9555e8a54e545`。
 
+后续进度：新增 12 项状态/缓存/处理器函数，总清单勾选 118 项，最新完整测试 11,452 项通过。见 [状态/缓存记录](PYTHON_STATE_COMPATIBILITY.md)。本页保留聊天批次的数量快照；全部测试数据统一采用 [本地生成规则](../tools/python_compat/README.md)。
+
 ## 数量复核
 
 重新读取本地缓存的 25 个原版 Python 文件，逐个验证审计清单中的 Git blob SHA-1 和 SHA-256，再使用 AST 枚举定义。结果仍为 786 个 def/async def、751 个去重函数项。机器清单和 README 逐项清单同步更新。
@@ -67,7 +69,7 @@ Object stop = formatted.stop();
 .\mvnw.cmd verify -Pnative "-Djavacpp.natives=E:\JavaKotlin\java.cpp\natives\b11669-cpu" "-Djavacpp.model=E:\JavaKotlin\java.cpp\gguf\Qwen3.5-0.8B-Q8_0.gguf"
 ```
 
-生成器的 `--source-root` 指向包含 `llama_cpp/` 原版源码的目录；各文件必须与审计清单摘要一致。生成脚本与测试资源均已纳入项目文件。
+生成器的 `--source-root` 指向包含 `llama_cpp/` 原版源码的目录；各文件必须与审计清单摘要一致。生成脚本已纳入版本控制。大型聊天 TSV 按 `.gitignore` 规则作为本地生成文件保存；清洁检出后先按上述命令生成 TSV，再运行本批测试。
 
 本次完整验证：**10,713 项通过，0 失败，0 错误，0 跳过**。包含新增 10,376 条原版/CPython 对照、2 项 Java 惰性读取/可变引用测试、原有 335 项测试；其中 11 项真实模型测试执行成功。Google Java Format 检查通过，类库和 demo JAR 已重新生成。
 

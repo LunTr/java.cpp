@@ -1,0 +1,18 @@
+{
+  "pythonPackage": "0.3.36",
+  "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
+  "fixtureRuntime": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]",
+  "numpyVersion": "2.4.3",
+  "uniqueFunctions": 12,
+  "caseCount": 738,
+  "casesByOperation": {
+    "prefix": 244,
+    "cache": 133,
+    "minTokens": 196,
+    "processors": 105,
+    "stopping": 12,
+    "state": 48
+  },
+  "fixtureSha256": "5ec39617b4d570306f026d92cf8746b45ee7edf47c138888dd7be5a88b235534",
+  "method": "Execute complete hash-verified original state, RAM cache, prefix and processor bodies; NumPy uses intc/single arrays. Capture per-step errors, order, mutable state, references and callback traces."
+}

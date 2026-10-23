@@ -107,10 +107,10 @@ Java.cpp 与 bytedeco/JavaCPP 为独立项目。
 |---|---:|
 | Python 去重函数/方法总数 | 751 |
 | 已有完整同名 JNA 绑定 | 55 |
-| 已覆盖独立能力（含静态聊天转换） | 51 |
-| 本清单打勾项合计 | 106 / 751（14.11%） |
+| 已覆盖独立能力（含聊天、缓存与处理器） | 63 |
+| 本清单打勾项合计 | 118 / 751（15.71%） |
 | 部分覆盖，保持未勾选 | 60 |
-| 当前缺少明确对应迁移项 | 585 |
+| 当前缺少明确对应迁移项 | 573 |
 | 已通过 Python 全行为、报错、警告一致性验收 | **0** |
 
 原版 `llama_cpp.py` 共 256 项，其中 255 个公开 C API 函数和 1 个警告辅助函数。Java 已声明其中 57 个同名入口；上下文结构相关 2 项列为部分覆盖，其余 55 项标记绑定完成。Java 另有 9 个 ggml 补充入口，单独提供设备枚举等能力，不增加 Python 迁移计数。
@@ -155,7 +155,15 @@ completionConfig 对 null、0、负数按剩余上下文处理，并截断过大
 
 固定原版完整函数体及 CPython repr 产生 10,376 条对照样例，比较 UTF-16 内容（包括未配对代理字符）、空值、角色过滤、异常类别/原文、字典顺序、debug 日志、数值和 Unicode 边界及出错前已产出的流式块。来源的 25 个文件均重新验证 Git blob SHA-1 / SHA-256，并用 AST 复核 786 个定义、751 个去重项。生成脚本已纳入版本控制，见 [本批验证记录](docs/PYTHON_CHAT_COMPATIBILITY.md)。
 
-清单尚未打勾 645 项，其中部分覆盖 60 项、尚无对应实现 585 项。所有 751 项继续保留全输入一致性待验收状态。
+清单尚未打勾 633 项，其中部分覆盖 60 项、尚无对应实现 573 项。所有 751 项继续保留全输入一致性待验收状态。
+
+### RAM 缓存、状态与处理器逐项移植
+
+本批新增 12 项：RAM 缓存 6 项、最长 token 前缀 1 项、LlamaState 构造 1 项、logits/停止列表 2 项及最小 token 处理器 2 项。738 组原版完整函数体对照覆盖状态与缓存操作序列、任意精度容量/大小、空键、前缀并列、命中后排序、负索引、原地修改和列表回调时序。见 [本批记录](docs/PYTHON_STATE_COMPATIBILITY.md)。
+
+### 测试数据管理
+
+`src/test/resources/` 全部由 `.gitignore` 忽略，测试数据及 Base64 样例保留本地。生成脚本、固定来源和小型摘要元数据纳入版本控制。清洁检出后先使用 [生成说明](tools/python_compat/README.md) 恢复三组数据，再执行 Maven 验证；`AGENTS.md` 已记录后续维护规则。
 
 ### 全量函数清单
 
@@ -311,7 +319,7 @@ completionConfig 对 null、0、负数按剩余上下文处理，并截断过大
 - [ ] [`llama_cpp._utils.MetaSingleton.__call__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_utils.py#L87) — 未迁移。
 - [ ] [`llama_cpp._utils.Singleton.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_utils.py#L98) — 未迁移。
 
-#### `llama_cpp/llama.py` — 49 项，勾选 5，部分 16
+#### `llama_cpp/llama.py` — 49 项，勾选 11，部分 16
 
 - [ ] [`llama_cpp.llama.Llama.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L60) — 部分覆盖 → `LlamaRuntime / LlamaModel / LlamaContext / Sampler`；构造参数、默认值、可选能力、所有权和错误格式均有差异。
 - [ ] [`llama_cpp.llama.Llama.__init__.free_lora_adapter`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L446) — 未迁移；嵌套函数。
@@ -355,15 +363,15 @@ completionConfig 对 null、0、负数按剩余上下文处理，并截断过大
 - [ ] [`llama_cpp.llama.Llama.close`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2295) — 部分覆盖 → `LlamaModel.close / LlamaContext.close / Sampler.close`；Java 资源分离且有并发/重入检查；生命周期错误文本有差异。
 - [ ] [`llama_cpp.llama.Llama.__del__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2299) — 未迁移。
 - [ ] [`llama_cpp.llama.Llama.logits_to_logprobs`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2303) — 未迁移。
-- [ ] [`llama_cpp.llama.Llama.longest_token_prefix`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2321) — 未迁移。
+- [x] [`llama_cpp.llama.Llama.longest_token_prefix`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2321) — 能力已覆盖 → `compat.python.PythonTokens.longestTokenPrefix`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
 - [ ] [`llama_cpp.llama.Llama.from_pretrained`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2331) — 部分覆盖 → `demo.download.ModelDownloader.ensure`；仅有 demo 固定模型下载，通用 Hugging Face 仓库、匹配和参数契约缺失。
-- [ ] [`llama_cpp.llama.LlamaState.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2466) — 未迁移。
-- [ ] [`llama_cpp.llama.LogitsProcessorList.__call__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2489) — 未迁移。
-- [ ] [`llama_cpp.llama.StoppingCriteriaList.__call__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2501) — 未迁移。
-- [ ] [`llama_cpp.llama.MinTokensLogitsProcessor.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2508) — 未迁移。
-- [ ] [`llama_cpp.llama.MinTokensLogitsProcessor.__call__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2513) — 未迁移。
+- [x] [`llama_cpp.llama.LlamaState.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2466) — 能力已覆盖 → `compat.python.PythonLlamaState`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
+- [x] [`llama_cpp.llama.LogitsProcessorList.__call__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2489) — 能力已覆盖 → `compat.python.PythonLogitsProcessorList.apply`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
+- [x] [`llama_cpp.llama.StoppingCriteriaList.__call__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2501) — 能力已覆盖 → `compat.python.PythonStoppingCriteriaList.test`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
+- [x] [`llama_cpp.llama.MinTokensLogitsProcessor.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2508) — 能力已覆盖 → `compat.python.PythonMinTokensLogitsProcessor`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
+- [x] [`llama_cpp.llama.MinTokensLogitsProcessor.__call__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2513) — 能力已覆盖 → `compat.python.PythonMinTokensLogitsProcessor.apply`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
 
-#### `llama_cpp/llama_cache.py` — 18 项，勾选 0，部分 0
+#### `llama_cpp/llama_cache.py` — 18 项，勾选 6，部分 0
 
 - [ ] [`llama_cpp.llama_cache.BaseLlamaCache.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L20) — 未迁移。
 - [ ] [`llama_cpp.llama_cache.BaseLlamaCache.cache_size`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L25) — 未迁移。
@@ -371,12 +379,12 @@ completionConfig 对 null、0、负数按剩余上下文处理，并截断过大
 - [ ] [`llama_cpp.llama_cache.BaseLlamaCache.__getitem__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L35) — 未迁移。
 - [ ] [`llama_cpp.llama_cache.BaseLlamaCache.__contains__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L39) — 未迁移。
 - [ ] [`llama_cpp.llama_cache.BaseLlamaCache.__setitem__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L43) — 未迁移。
-- [ ] [`llama_cpp.llama_cache.LlamaRAMCache.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L52) — 未迁移。
-- [ ] [`llama_cpp.llama_cache.LlamaRAMCache.cache_size`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L60) — 未迁移。
-- [ ] [`llama_cpp.llama_cache.LlamaRAMCache._find_longest_prefix_key`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L63) — 未迁移。
-- [ ] [`llama_cpp.llama_cache.LlamaRAMCache.__getitem__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L79) — 未迁移。
-- [ ] [`llama_cpp.llama_cache.LlamaRAMCache.__contains__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L88) — 未迁移。
-- [ ] [`llama_cpp.llama_cache.LlamaRAMCache.__setitem__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L91) — 未迁移。
+- [x] [`llama_cpp.llama_cache.LlamaRAMCache.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L52) — 能力已覆盖 → `compat.python.PythonLlamaRamCache`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
+- [x] [`llama_cpp.llama_cache.LlamaRAMCache.cache_size`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L60) — 能力已覆盖 → `compat.python.PythonLlamaRamCache.cacheSize`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
+- [x] [`llama_cpp.llama_cache.LlamaRAMCache._find_longest_prefix_key`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L63) — 能力已覆盖 → `compat.python.PythonLlamaRamCache.findLongestPrefixKey`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
+- [x] [`llama_cpp.llama_cache.LlamaRAMCache.__getitem__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L79) — 能力已覆盖 → `compat.python.PythonLlamaRamCache.get`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
+- [x] [`llama_cpp.llama_cache.LlamaRAMCache.__contains__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L88) — 能力已覆盖 → `compat.python.PythonLlamaRamCache.contains`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
+- [x] [`llama_cpp.llama_cache.LlamaRAMCache.__setitem__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L91) — 能力已覆盖 → `compat.python.PythonLlamaRamCache.put`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
 - [ ] [`llama_cpp.llama_cache.LlamaDiskCache.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L107) — 未迁移。
 - [ ] [`llama_cpp.llama_cache.LlamaDiskCache.cache_size`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L114) — 未迁移。
 - [ ] [`llama_cpp.llama_cache.LlamaDiskCache._find_longest_prefix_key`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L117) — 未迁移。

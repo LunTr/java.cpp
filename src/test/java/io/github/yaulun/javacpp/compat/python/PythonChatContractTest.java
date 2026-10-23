@@ -7,7 +7,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -30,7 +29,8 @@ class PythonChatContractTest {
         new BufferedReader(
             new InputStreamReader(
                 Objects.requireNonNull(
-                    getClass().getResourceAsStream("/python-0.3.36-chat-contracts.tsv")),
+                    getClass().getResourceAsStream("/python-0.3.36-chat-contracts.tsv"),
+                    "Generate chat fixtures with tools/python_compat/generate_chat_contracts.py; see docs/PYTHON_CHAT_COMPATIBILITY.md"),
                 StandardCharsets.US_ASCII))) {
       lines = reader.lines().toList();
     }
@@ -42,7 +42,7 @@ class PythonChatContractTest {
                   (i + 1) + ":" + parts[0],
                   () -> {
                     Object argument =
-                        read(
+                        PythonContractData.read(
                             new DataInputStream(
                                 new ByteArrayInputStream(Base64.getDecoder().decode(parts[1]))));
                     List<Object> yielded = new ArrayList<>();
@@ -80,7 +80,7 @@ class PythonChatContractTest {
                               logs);
                     }
                     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    write(new DataOutputStream(bytes), result);
+                    PythonContractData.write(new DataOutputStream(bytes), result);
                     assertEquals(
                         parts[2],
                         Base64.getEncoder().encodeToString(bytes.toByteArray()),
@@ -152,67 +152,6 @@ class PythonChatContractTest {
       case "_format_chatglm3" -> PythonChatFormats.formatChatglm3Prompt(system, messages, sep);
       default -> throw new AssertionError(kind);
     };
-  }
-
-  private static Object read(DataInputStream input) throws IOException {
-    int tag = input.readUnsignedByte();
-    return switch (tag) {
-      case 'n' -> null;
-      case 'f' -> false;
-      case 't' -> true;
-      case 'i' -> {
-        long number = input.readLong();
-        yield number >= Integer.MIN_VALUE && number <= Integer.MAX_VALUE
-            ? (Object) (int) number
-            : number;
-      }
-      case 'd' -> input.readDouble();
-      case 's' -> {
-        char[] chars = new char[input.readInt()];
-        for (int i = 0; i < chars.length; i++) chars[i] = input.readChar();
-        yield new String(chars);
-      }
-      case 'l' -> {
-        int count = input.readInt();
-        List<Object> values = new ArrayList<>();
-        for (int i = 0; i < count; i++) values.add(read(input));
-        yield values;
-      }
-      case 'm' -> {
-        int count = input.readInt();
-        Map<Object, Object> values = new LinkedHashMap<>();
-        for (int i = 0; i < count; i++) values.put(read(input), read(input));
-        yield values;
-      }
-      default -> throw new IOException("Unknown fixture tag " + tag);
-    };
-  }
-
-  private static void write(DataOutputStream output, Object value) throws IOException {
-    if (value == null) output.writeByte('n');
-    else if (value instanceof Boolean flag) output.writeByte(flag ? 't' : 'f');
-    else if (value instanceof String text) {
-      output.writeByte('s');
-      output.writeInt(text.length());
-      output.writeChars(text);
-    } else if (value instanceof Double || value instanceof Float) {
-      output.writeByte('d');
-      output.writeDouble(((Number) value).doubleValue());
-    } else if (value instanceof Number number) {
-      output.writeByte('i');
-      output.writeLong(number.longValue());
-    } else if (value instanceof List<?> values) {
-      output.writeByte('l');
-      output.writeInt(values.size());
-      for (Object item : values) write(output, item);
-    } else if (value instanceof Map<?, ?> values) {
-      output.writeByte('m');
-      output.writeInt(values.size());
-      for (var entry : values.entrySet()) {
-        write(output, entry.getKey());
-        write(output, entry.getValue());
-      }
-    } else throw new IOException("Unsupported fixture value " + value);
   }
 
   @Test
