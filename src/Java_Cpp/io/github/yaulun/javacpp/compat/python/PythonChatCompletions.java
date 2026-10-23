@@ -8,10 +8,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-/** OpenAI response conversion functions from llama-cpp-python 0.3.36. */
+/**
+ * OpenAI response conversion functions from llama-cpp-python 0.3.36. Nonstream calls are stateless;
+ * each stream iterator is owned by its consumer. Malformed dictionary fields raise PythonException
+ * with the upstream category and message. Inputs may contain null; keep them stable during a call.
+ */
 public final class PythonChatCompletions {
   private PythonChatCompletions() {}
 
+  /**
+   * Ports upstream _convert_text_completion_logprobs_to_chat with its original field and separator
+   * rules.
+   */
   public static Map<String, Object> convertTextCompletionLogprobsToChat(Object logprobs) {
     if (logprobs == null) return null;
     // Python evaluates all zip arguments before attempting to iterate them.
@@ -48,6 +56,9 @@ public final class PythonChatCompletions {
     return dict("content", content, "refusal", null);
   }
 
+  /**
+   * Ports upstream _convert_text_completion_to_chat with its original field and separator rules.
+   */
   public static Map<String, Object> convertTextCompletionToChat(Map<String, ?> completion) {
     if (!completion.containsKey("usage")) throw error(PythonErrorType.ASSERTION_ERROR, "");
     String id = "chat" + concat(get(completion, "id"));

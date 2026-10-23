@@ -7,10 +7,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-/** Literal ports of the static chat formatters in llama-cpp-python 0.3.36. */
+/**
+ * Static chat functions from llama-cpp-python 0.3.36. Calls are independent and thread safe when
+ * callers keep input collections stable during each call. Message dictionaries use role/content
+ * keys; malformed message fields raise PythonException with the original category and message.
+ */
 public final class PythonChatFormats {
   private PythonChatFormats() {}
 
+  /**
+   * Ports upstream guess_chat_format_from_gguf_metadata with its original field and separator
+   * rules.
+   */
   public static String guessChatFormatFromGgufMetadata(Map<String, ?> metadata) {
     Object template = metadata.get("tokenizer.chat_template");
     if (PythonChatTemplateConstants.CHATML_CHAT_TEMPLATE.equals(template)) return "chatml";
@@ -22,8 +30,10 @@ public final class PythonChatFormats {
     return null;
   }
 
+  /** Mapped role and nullable string content, corresponding to an upstream two-element tuple. */
   public record RoleMessage(String role, String content) {}
 
+  /** Ports upstream _get_system_message with its original field and separator rules. */
   public static Object getSystemMessage(List<?> messages) {
     for (Object message : messages) {
       if ("system".equals(get(message, "role"))) {
@@ -34,6 +44,7 @@ public final class PythonChatFormats {
     return "";
   }
 
+  /** Ports upstream _map_roles with its original field and separator rules. */
   public static List<RoleMessage> mapRoles(List<?> messages, Map<String, String> roleMap) {
     List<RoleMessage> output = new ArrayList<>();
     for (Object message : messages) {
@@ -49,6 +60,7 @@ public final class PythonChatFormats {
     return output;
   }
 
+  /** Ports upstream _format_llama2 with its original field and separator rules. */
   public static String formatLlama2Prompt(
       String system, List<RoleMessage> messages, String sep, String sep2) {
     StringBuilder result = new StringBuilder(system).append(sep);
@@ -64,15 +76,18 @@ public final class PythonChatFormats {
     return result.toString();
   }
 
+  /** Ports upstream _format_add_colon_single with its original field and separator rules. */
   public static String formatAddColonSingle(String system, List<RoleMessage> messages, String sep) {
     return colon(system, messages, sep, sep, false);
   }
 
+  /** Ports upstream _format_add_colon_two with its original field and separator rules. */
   public static String formatAddColonTwo(
       String system, List<RoleMessage> messages, String sep, String sep2) {
     return colon(system, messages, sep, sep2, false);
   }
 
+  /** Ports upstream _format_add_colon_space_single with its original field and separator rules. */
   public static String formatAddColonSpaceSingle(
       String system, List<RoleMessage> messages, String sep) {
     return colon(system, messages, sep, sep, true);
@@ -91,6 +106,7 @@ public final class PythonChatFormats {
     return result.toString();
   }
 
+  /** Ports upstream _format_no_colon_single with its original field and separator rules. */
   public static String formatNoColonSingle(String system, List<RoleMessage> messages, String sep) {
     StringBuilder result = new StringBuilder(system);
     for (RoleMessage item : messages) {
@@ -100,6 +116,7 @@ public final class PythonChatFormats {
     return result.toString();
   }
 
+  /** Ports upstream _format_chatml with its original field and separator rules. */
   public static String formatChatmlPrompt(String system, List<RoleMessage> messages, String sep) {
     StringBuilder result = new StringBuilder();
     if (!system.isEmpty()) result.append(system).append(sep).append('\n');
@@ -110,6 +127,7 @@ public final class PythonChatFormats {
     return result.toString();
   }
 
+  /** Ports upstream _format_chatglm3 with its original field and separator rules. */
   public static String formatChatglm3Prompt(String system, List<RoleMessage> messages, String sep) {
     StringBuilder result = new StringBuilder(system);
     for (RoleMessage item : messages) {
@@ -130,6 +148,7 @@ public final class PythonChatFormats {
     return new PythonChatFormatterResponse(prompt, null);
   }
 
+  /** Ports upstream format_llama2 with its original field and separator rules. */
   public static PythonChatFormatterResponse formatLlama2(List<?> messages) {
     List<RoleMessage> mapped = mapped(messages, "<s>[INST]", "[/INST]", false);
     Object system = getSystemMessage(messages);
@@ -137,6 +156,7 @@ public final class PythonChatFormats {
     return response(formatLlama2Prompt(text, mapped, " ", "</s>") + "[/INST]");
   }
 
+  /** Ports upstream format_llama3 with its original field and separator rules. */
   public static PythonChatFormatterResponse formatLlama3(List<?> messages) {
     List<RoleMessage> mapped =
         mapRoles(
@@ -150,12 +170,14 @@ public final class PythonChatFormats {
         formatNoColonSingle("", mapped, "<|eot_id|>"), "<|eot_id|>");
   }
 
+  /** Ports upstream format_alpaca with its original field and separator rules. */
   public static PythonChatFormatterResponse formatAlpaca(List<?> messages) {
     Object system = getSystemMessage(messages);
     List<RoleMessage> mapped = mapped(messages, "### Instruction", "### Response", false);
     return response(formatAddColonTwo(leftString(system), mapped, "\n\n", "</s>"));
   }
 
+  /** Ports upstream format_qwen with its original field and separator rules. */
   public static PythonChatFormatterResponse formatQwen(List<?> messages) {
     Object system = getSystemMessage(messages);
     String text =
@@ -168,6 +190,7 @@ public final class PythonChatFormats {
         "<|endoftext|>");
   }
 
+  /** Ports upstream format with its original field and separator rules. */
   public static PythonChatFormatterResponse formatVicuna(List<?> messages) {
     String system =
         "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.";
@@ -175,6 +198,7 @@ public final class PythonChatFormats {
         formatAddColonTwo(system, mapped(messages, "USER", "ASSISTANT", true), " ", "</s>"));
   }
 
+  /** Ports upstream format_oasst_llama with its original field and separator rules. */
   public static PythonChatFormatterResponse formatOasstLlama(List<?> messages) {
     String system = "[INST] <<SYS>>\n" + string(getSystemMessage(messages)) + "\n<</SYS>>\n\n";
     return response(
@@ -182,6 +206,7 @@ public final class PythonChatFormats {
             system, mapped(messages, "<|prompter|>", "<|assistant|>", true), "</s>"));
   }
 
+  /** Ports upstream format_baichuan2 with its original field and separator rules. */
   public static PythonChatFormatterResponse formatBaichuan2(List<?> messages) {
     String system = string(getSystemMessage(messages));
     return response(
@@ -189,6 +214,7 @@ public final class PythonChatFormats {
             system, mapped(messages, "<reserved_106>", "<reserved_107>", true), ""));
   }
 
+  /** Ports upstream format_baichuan with its original field and separator rules. */
   public static PythonChatFormatterResponse formatBaichuan(List<?> messages) {
     String system = string(getSystemMessage(messages));
     return response(
@@ -196,6 +222,7 @@ public final class PythonChatFormats {
             system, mapped(messages, "<reserved_102>", "<reserved_103>", true), ""));
   }
 
+  /** Ports upstream format_openbuddy with its original field and separator rules. */
   public static PythonChatFormatterResponse formatOpenbuddy(List<?> messages) {
     String system =
         "You are a helpful, respectful and honest INTP-T AI Assistant named Buddy. You are talking to a human User.\n"
@@ -208,6 +235,7 @@ public final class PythonChatFormats {
         formatAddColonSingle(system, mapped(messages, "User", "Assistant", true), "\n"));
   }
 
+  /** Ports upstream format_redpajama_incite with its original field and separator rules. */
   public static PythonChatFormatterResponse formatRedpajamaIncite(List<?> messages) {
     Object system = getSystemMessage(messages);
     List<RoleMessage> mapped = mapped(messages, "<human>", "<bot>", true);
@@ -215,6 +243,7 @@ public final class PythonChatFormats {
         formatAddColonSingle(leftString(system), mapped, "\n"), "<human>");
   }
 
+  /** Ports upstream format_snoozy with its original field and separator rules. */
   public static PythonChatFormatterResponse formatSnoozy(List<?> messages) {
     Object system = getSystemMessage(messages);
     if ("".equals(system))
@@ -225,6 +254,7 @@ public final class PythonChatFormats {
         formatAddColonSingle(leftString(system), mapped, "\n"), "###");
   }
 
+  /** Ports upstream format_phind with its original field and separator rules. */
   public static PythonChatFormatterResponse formatPhind(List<?> messages) {
     return response(
         formatAddColonSingle(
@@ -233,6 +263,7 @@ public final class PythonChatFormats {
             "\n\n"));
   }
 
+  /** Ports upstream format_intel with its original field and separator rules. */
   public static PythonChatFormatterResponse formatIntel(List<?> messages) {
     return response(
         formatAddColonSingle(
@@ -241,6 +272,7 @@ public final class PythonChatFormats {
             "\n"));
   }
 
+  /** Ports upstream format_open_orca with its original field and separator rules. */
   public static PythonChatFormatterResponse formatOpenOrca(List<?> messages) {
     String system =
         "You are a helpful assistant. Please answer truthfully and write out your "
@@ -257,6 +289,7 @@ public final class PythonChatFormats {
         formatAddColonSpaceSingle(system, mapped, "<|end_of_turn|>\n"), "User");
   }
 
+  /** Ports upstream format_mistrallite with its original field and separator rules. */
   public static PythonChatFormatterResponse formatMistrallite(List<?> messages) {
     String system = "<|system|>" + string(getSystemMessage(messages)) + "</s>";
     return response(
@@ -271,14 +304,17 @@ public final class PythonChatFormats {
         formatChatmlPrompt(system, mapped(messages, user, assistant, true), sep), sep);
   }
 
+  /** Ports upstream format_zephyr with its original field and separator rules. */
   public static PythonChatFormatterResponse formatZephyr(List<?> messages) {
     return chatml(messages, "<|system|>\n", "<|user|>\n", "<|assistant|>\n", "</s>");
   }
 
+  /** Ports upstream format_pygmalion with its original field and separator rules. */
   public static PythonChatFormatterResponse formatPygmalion(List<?> messages) {
     return chatml(messages, "<|system|>", "<|user|>", "<|model|>", "\n");
   }
 
+  /** Ports upstream format_chatml with its original field and separator rules. */
   public static PythonChatFormatterResponse formatChatml(List<?> messages) {
     return chatml(
         messages,
@@ -288,6 +324,7 @@ public final class PythonChatFormats {
         "<|im_end|>");
   }
 
+  /** Ports upstream format_mistral_instruct with its original field and separator rules. */
   public static PythonChatFormatterResponse formatMistralInstruct(List<?> messages) {
     StringBuilder prompt = new StringBuilder();
     for (Object message : messages) {
@@ -303,6 +340,7 @@ public final class PythonChatFormats {
     return new PythonChatFormatterResponse(prompt.append(" [/INST]").toString(), "</s>");
   }
 
+  /** Ports upstream format_chatglm3 with its original field and separator rules. */
   public static PythonChatFormatterResponse formatChatglm3(List<?> messages) {
     String system = "<|system|>\n" + string(getSystemMessage(messages));
     return new PythonChatFormatterResponse(
@@ -310,6 +348,7 @@ public final class PythonChatFormats {
         "</s>");
   }
 
+  /** Ports upstream format_openchat with its original field and separator rules. */
   public static PythonChatFormatterResponse formatOpenchat(List<?> messages) {
     String system = string(getSystemMessage(messages)) + "<|end_of_turn|>";
     return new PythonChatFormatterResponse(
@@ -321,6 +360,7 @@ public final class PythonChatFormats {
         "<|end_of_turn|>");
   }
 
+  /** Ports upstream format_saiga with its original field and separator rules. */
   public static PythonChatFormatterResponse formatSaiga(List<?> messages) {
     List<RoleMessage> mapped =
         mapRoles(messages, Map.of("user", "user", "bot", "bot", "system", "system"));
@@ -332,6 +372,7 @@ public final class PythonChatFormats {
     return response(prompt.append("<s>bot").toString());
   }
 
+  /** Ports format_gemma with debug output disabled; use the overload to receive debug messages. */
   public static PythonChatFormatterResponse formatGemma(List<?> messages) {
     return formatGemma(messages, message -> {});
   }
@@ -349,6 +390,7 @@ public final class PythonChatFormats {
         sep);
   }
 
+  /** Dispatches the 23 static format names; unknown names raise Python ValueError. */
   public static PythonChatFormatterResponse format(String name, List<?> messages) {
     return switch (name) {
       case "llama-2" -> formatLlama2(messages);
