@@ -10,13 +10,19 @@ import io.github.yaulun.javacpp.compat.python.PythonChatFormatterResponse;
 import io.github.yaulun.javacpp.compat.python.PythonErrorBridge;
 import io.github.yaulun.javacpp.compat.python.PythonErrorType;
 import io.github.yaulun.javacpp.compat.python.PythonException;
+import io.github.yaulun.javacpp.compat.python.PythonLlama;
+import io.github.yaulun.javacpp.compat.python.PythonLlamaExecution;
 import io.github.yaulun.javacpp.compat.python.PythonLlamaRamCache;
+import io.github.yaulun.javacpp.compat.python.PythonLlamaSampler;
 import io.github.yaulun.javacpp.compat.python.PythonLlamaState;
+import io.github.yaulun.javacpp.compat.python.PythonLlamaTokenizer;
 import io.github.yaulun.javacpp.compat.python.PythonLogitsProcessor;
 import io.github.yaulun.javacpp.compat.python.PythonLogitsProcessorList;
 import io.github.yaulun.javacpp.compat.python.PythonMinTokensLogitsProcessor;
 import io.github.yaulun.javacpp.compat.python.PythonStoppingCriteria;
 import io.github.yaulun.javacpp.compat.python.PythonStoppingCriteriaList;
+import io.github.yaulun.javacpp.compat.python.PythonTokenizer;
+import io.github.yaulun.javacpp.compat.python.PythonTokenizerModel;
 import io.github.yaulun.javacpp.compat.python.PythonTokens;
 import io.github.yaulun.javacpp.compat.python.PythonWarning;
 import io.github.yaulun.javacpp.compat.python.PythonWarningAction;
@@ -43,6 +49,13 @@ class PublicApiSurfaceTest {
             PythonErrorBridge.class,
             PythonErrorType.class,
             PythonException.class,
+            PythonLlama.class,
+            PythonLlama.TokenGenerator.class,
+            PythonLlamaExecution.class,
+            PythonLlamaSampler.class,
+            PythonLlamaTokenizer.class,
+            PythonTokenizer.class,
+            PythonTokenizerModel.class,
             PythonLlamaRamCache.class,
             PythonLlamaState.class,
             PythonLogitsProcessor.class,

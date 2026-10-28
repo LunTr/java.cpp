@@ -1,5 +1,15 @@
 # 实现与验证记录
 
+## 2026-10-28：第二轮分词链路 8 项迁移
+
+Llama 与 LlamaTokenizer 的分词、反分词、UTF-8 encode/decode 和模型包装器已实现。324 组固定原版契约与 1 项新增真实模型测试通过；完整 `verify -Pnative` 共 **12,152 项通过，0 失败、0 错误、0 跳过**。Google Java Format、公开 API 检查、类库和 demo 打包通过。数据继续保存在被忽略的资源目录。适用范围和重建步骤见 [分词迁移记录](PYTHON_TOKENIZER_COMPATIBILITY.md)。
+
+## 2026-10-28：llama.py 本轮 8 项迁移
+
+新增 `compat.python.PythonLlama`，覆盖状态视图/快照、缓存与种子赋值、reset 和 log-softmax。固定 Python 原版执行生成 374 组对照，另有 1 项 Java 接口与状态测试。完整 `verify -Pnative` 共 **11,827 项通过，0 失败、0 错误、0 跳过**，包含 11 项既有真实模型测试；Google Java Format、公开 API 检查、类库与 demo 打包通过。新组件的原生内存回调使用显式测试替身；浮点对照采用绝对与相对 `4e-6` 容差。
+
+函数映射、适用范围和复现命令见 [本轮迁移记录](PYTHON_LLAMA_COMPATIBILITY.md)。测试数据保存在被忽略的 `src/test/resources/`，Git 跟踪文件检查输出为空。
+
 > 后续更新（2026-10-23）：已加入 Python 0.3.36 错误桥接、37 项静态聊天及 12 项状态/缓存/处理器函数。最新 `verify -Pnative` 为 11,452 项通过，0 跳过（含 300 条桥接样例、10,376 条聊天/CPython 样例、738 组状态/缓存样例）；来源与边界见 [Python 核对记录](PYTHON_COMPATIBILITY.md)、[聊天函数记录](PYTHON_CHAT_COMPATIBILITY.md) 和 [状态/缓存记录](PYTHON_STATE_COMPATIBILITY.md)。测试数据按 `.gitignore` 规则在本地生成。下文保留初次封装阶段的测试与产物快照。
 
 日期：2026-10-23，Asia/Shanghai。

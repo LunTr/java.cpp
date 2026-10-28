@@ -85,19 +85,72 @@ for row in audit["functions"]:
                    reason="固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收",
                    contractEvidence="docs/python-state-contracts.json")
 assert foundStates == set(stateMappings)
+llamaContracts = json.loads((root / "docs/python-llama-contracts.json").read_text(encoding="utf-8"))
+llamaMappings = {
+    "Llama._input_ids": ("inputIds", "intc token 前缀以 IntBuffer 提供可写共享视图，保留负切片及截断规则"),
+    "Llama._scores": ("scores", "single scores 前缀以 FloatBuffer 行视图提供可写共享数据"),
+    "Llama.eval_tokens": ("evalTokens", "按原版 deque 的 maxlen 保留末尾 token，Java 返回独立 List 快照"),
+    "Llama.eval_logits": ("evalLogits", "按 logits_all 选择行数，Java 返回独立二维 List 快照"),
+    "Llama.set_cache": ("setCache", "附加或清除 PythonLlamaRamCache 引用，保留当前游标和待求值标记"),
+    "Llama.set_seed": ("setSeed", "BigInteger 保留原版整数赋值语义，采样器由调用方管理"),
+    "Llama.reset": ("reset", "先更新游标及待求值标记，再通过调用方内存适配回调处理 recurrent/hybrid 分支；已测回调顺序及异常后状态"),
+    "Llama.logits_to_logprobs": ("logitsToLogprobs", "single 向量及二维矩阵 axis 0/1/-1/-2 已对照，数值采用绝对及相对 4e-6 容差；NumPy 警告和更高维数组待迁移"),
+}
+assert len(llamaMappings) == llamaContracts["uniqueFunctions"] == 8
+assert set(llamaMappings) == set(llamaContracts["functions"])
+foundLlama = set()
+for row in audit["functions"]:
+    if row["file"] == "llama_cpp/llama.py" and row["qualname"] in llamaMappings:
+        name = row["qualname"]
+        method, reason = llamaMappings[name]
+        foundLlama.add(name)
+        row.update(status="covered", checked=True, pythonExactParity="not-certified",
+                   java="compat.python.PythonLlama." + method,
+                   reason=reason + "；固定原版完整函数体已有场景对照，全输入一致性继续验收",
+                   contractEvidence="docs/python-llama-contracts.json")
+assert foundLlama == set(llamaMappings)
+tokenizerContracts = json.loads((root / "docs/python-tokenizer-contracts.json").read_text(encoding="utf-8"))
+tokenizerMappings = {
+    ("llama.py", "Llama.tokenize"): "PythonLlama.tokenize",
+    ("llama.py", "Llama.detokenize"): "PythonLlama.detokenize",
+    ("llama.py", "Llama.tokenizer"): "PythonLlama.tokenizer",
+    ("llama_tokenizer.py", "LlamaTokenizer.__init__"): "PythonLlamaTokenizer",
+    ("llama_tokenizer.py", "LlamaTokenizer.tokenize"): "PythonLlamaTokenizer.tokenize",
+    ("llama_tokenizer.py", "LlamaTokenizer.detokenize"): "PythonLlamaTokenizer.detokenize",
+    ("llama_tokenizer.py", "LlamaTokenizer.encode"): "PythonLlamaTokenizer.encode",
+    ("llama_tokenizer.py", "LlamaTokenizer.decode"): "PythonLlamaTokenizer.decode",
+}
+assert len(tokenizerMappings) == tokenizerContracts["uniqueFunctions"] == 8
+assert {key[1] for key in tokenizerMappings} == set(tokenizerContracts["functions"])
+foundTokenizer = set()
+for row in audit["functions"]:
+    key = (row["file"].removeprefix("llama_cpp/"), row["qualname"])
+    if key in tokenizerMappings:
+        foundTokenizer.add(key)
+        row.update(status="covered", checked=True, pythonExactParity="not-certified",
+                   java="compat.python." + tokenizerMappings[key],
+                   reason="固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照",
+                   contractEvidence="docs/python-tokenizer-contracts.json")
+assert foundTokenizer == set(tokenizerMappings)
 states = collections.Counter(row["status"] for row in audit["functions"])
 summary = audit["summary"]
 summary.update(boundCount=states["bound"], coveredCount=states["covered"],
                checkedCount=states["bound"] + states["covered"], partialCount=states["partial"],
                missingCount=states["missing"], exactParityCertifiedCount=0,
                uncheckedCount=states["partial"] + states["missing"])
+publicLlama = [row for row in audit["functions"]
+               if row["file"] == "llama_cpp/llama.py" and row["qualname"].startswith("Llama.")
+               and row["qualname"].count(".") == 1 and not row["qualname"].split(".")[1].startswith("_")]
+summary.update(publicLlamaMembers=len(publicLlama), publicLlamaCovered=sum(row["checked"] for row in publicLlama))
 assert sum(states.values()) == 751
 auditPath.write_text(json.dumps(audit, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 readmePath = root / "README.md"
 readme = readmePath.read_text(encoding="utf-8")
 start, oldList = readme.split("### 全量函数清单", 1)
-start = re.sub(r"\| 已覆盖独立[^\n]*", f"| 已覆盖独立能力（含聊天、缓存与处理器） | {states['covered']} |", start)
+start = re.sub(r"高层 `Llama` 有[^\n]*",
+               f"高层 `Llama` 有 {summary['publicLlamaMembers']} 个普通公开命名成员（含 4 个属性 getter），其中 {summary['publicLlamaCovered']} 项已有查询或窄范围辅助能力；构造、生成、聊天、分词等继续逐项对照。构造器、`__call__`、析构、私有辅助成员在下表另行完整列出。", start)
+start = re.sub(r"\| 已覆盖独立[^\n]*", f"| 已覆盖独立能力（含聊天、缓存、处理器及 Llama 辅助方法） | {states['covered']} |", start)
 start = re.sub(r"\| 本清单打勾项合计[^\n]*", f"| 本清单打勾项合计 | {summary['checkedCount']} / 751（{summary['checkedCount'] / 751:.2%}） |", start)
 start = re.sub(r"\| 部分覆盖，保持未勾选[^\n]*", f"| 部分覆盖，保持未勾选 | {states['partial']} |", start)
 start = re.sub(r"\| 当前缺少明确对应迁移项[^\n]*", f"| 当前缺少明确对应迁移项 | {states['missing']} |", start)
@@ -118,9 +171,21 @@ start = start.rstrip() + f"""
 
 本批新增 12 项：RAM 缓存 6 项、最长 token 前缀 1 项、LlamaState 构造 1 项、logits/停止列表 2 项及最小 token 处理器 2 项。{stateContracts['caseCount']} 组原版完整函数体对照覆盖状态与缓存操作序列、任意精度容量/大小、空键、前缀并列、命中后排序、负索引、原地修改和列表回调时序。见 [本批记录](docs/PYTHON_STATE_COMPATIBILITY.md)。
 
+### llama.py 状态访问与数值辅助方法（2026-10-28）
+
+本轮迁移 8 项：`Llama._input_ids`、`_scores`、`eval_tokens`、`eval_logits`、`set_cache`、`set_seed`、`reset` 和 `logits_to_logprobs`，Java 入口为 `compat.python.PythonLlama`。它接收调用方已求值的 intc/single 缓冲，提供可写共享视图、按原版容量截取的独立 List 快照、缓存引用及任意精度种子赋值，并保留 reset 的状态更新和 recurrent/hybrid 内存回调顺序。
+
+log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定原版的 {llamaContracts['caseCount']} 组对照覆盖切片、共享修改、快照、种子、重置分支与异常时序、数值边界。浮点对照采用绝对与相对 `4e-6` 容差。完整 `Llama` 构造、eval/generate 连接、Python deque 的后续变更操作、多维 NumPy 接口及数值警告列入后续范围。接口示例、8 项映射和验证结果见 [本轮记录](docs/PYTHON_LLAMA_COMPATIBILITY.md)。
+
+### llama.py 与 LlamaTokenizer 分词链路（2026-10-28，第二轮）
+
+本轮迁移 8 项：Llama 的 tokenize/detokenize/tokenizer，以及 LlamaTokenizer 的构造、tokenize/detokenize/encode/decode。入口为 `PythonLlama`、`PythonLlamaTokenizer`，支持原始 bytes、两层不同的 special 默认值、UTF-8 errors=ignore、自定义分词器及每次新建的模型包装器。原版 `{tokenizerContracts['caseCount']}` 组对照核对参数、调用轨迹、引用和返回内容。
+
+`PythonLlamaTokenizer.modelFromVocab(model.vocab())` 可接入现有模型；字节反分词保留原版 32 字节 piece 缓冲及 BOS 首空格规则。原生依赖继续锁定 b11669，固定 Python vendor revision 的全模型分词对照列入后续范围。8 项映射、用法和验证结果见 [分词迁移记录](docs/PYTHON_TOKENIZER_COMPATIBILITY.md)。
+
 ### 测试数据管理
 
-`src/test/resources/` 全部由 `.gitignore` 忽略，测试数据及 Base64 样例保留本地。生成脚本、固定来源和小型摘要元数据纳入版本控制。清洁检出后先使用 [生成说明](tools/python_compat/README.md) 恢复三组数据，再执行 Maven 验证；`AGENTS.md` 已记录后续维护规则。
+`src/test/resources/` 全部由 `.gitignore` 忽略，测试数据及 Base64 样例保留本地。生成脚本、固定来源和小型摘要元数据纳入版本控制。清洁检出后先使用 [生成说明](tools/python_compat/README.md) 恢复五组数据，再执行 Maven 验证；`AGENTS.md` 已记录后续维护规则。
 
 """
 parts = ["### 全量函数清单\n\n"]

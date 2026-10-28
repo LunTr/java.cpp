@@ -107,15 +107,15 @@ Java.cpp 与 bytedeco/JavaCPP 为独立项目。
 |---|---:|
 | Python 去重函数/方法总数 | 751 |
 | 已有完整同名 JNA 绑定 | 55 |
-| 已覆盖独立能力（含聊天、缓存与处理器） | 63 |
-| 本清单打勾项合计 | 118 / 751（15.71%） |
-| 部分覆盖，保持未勾选 | 60 |
-| 当前缺少明确对应迁移项 | 573 |
+| 已覆盖独立能力（含聊天、缓存、处理器及 Llama 辅助方法） | 79 |
+| 本清单打勾项合计 | 134 / 751（17.84%） |
+| 部分覆盖，保持未勾选 | 50 |
+| 当前缺少明确对应迁移项 | 567 |
 | 已通过 Python 全行为、报错、警告一致性验收 | **0** |
 
 原版 `llama_cpp.py` 共 256 项，其中 255 个公开 C API 函数和 1 个警告辅助函数。Java 已声明其中 57 个同名入口；上下文结构相关 2 项列为部分覆盖，其余 55 项标记绑定完成。Java 另有 9 个 ggml 补充入口，单独提供设备枚举等能力，不增加 Python 迁移计数。
 
-高层 `Llama` 有 31 个普通公开命名成员（含 4 个属性 getter），其中 5 个查询成员已覆盖；构造、生成、聊天、分词等仍有契约差异。构造器、`__call__`、析构、私有辅助成员在下表另行完整列出。
+高层 `Llama` 有 31 个普通公开命名成员（含 4 个属性 getter），其中 15 项已有查询或窄范围辅助能力；构造、生成、聊天、分词等继续逐项对照。构造器、`__call__`、析构、私有辅助成员在下表另行完整列出。
 
 勾选含义：`[x]` 表示该 C 入口绑定或窄范围能力已实现；**勾选不代表 Python 完全一致**。`[ ]` 表示部分覆盖或尚无明确迁移项，具体差异写在函数后。未单独对应的内部辅助动作可能由 Java/JNA 间接承担，未计入完成项。清单覆盖多个分层，同一能力可能出现在 C 入口、内部包装和高层 API；各项分别计数，不将它们解释为独立产品能力。差异证据和桥接用法见 [Python 兼容核对](docs/PYTHON_COMPATIBILITY.md)，机器可读清单见 [python-api-audit.json](docs/python-api-audit.json)。
 
@@ -155,15 +155,27 @@ completionConfig 对 null、0、负数按剩余上下文处理，并截断过大
 
 固定原版完整函数体及 CPython repr 产生 10,376 条对照样例，比较 UTF-16 内容（包括未配对代理字符）、空值、角色过滤、异常类别/原文、字典顺序、debug 日志、数值和 Unicode 边界及出错前已产出的流式块。来源的 25 个文件均重新验证 Git blob SHA-1 / SHA-256，并用 AST 复核 786 个定义、751 个去重项。生成脚本已纳入版本控制，见 [本批验证记录](docs/PYTHON_CHAT_COMPATIBILITY.md)。
 
-清单尚未打勾 633 项，其中部分覆盖 60 项、尚无对应实现 573 项。所有 751 项继续保留全输入一致性待验收状态。
+清单尚未打勾 617 项，其中部分覆盖 50 项、尚无对应实现 567 项。所有 751 项继续保留全输入一致性待验收状态。
 
 ### RAM 缓存、状态与处理器逐项移植
 
 本批新增 12 项：RAM 缓存 6 项、最长 token 前缀 1 项、LlamaState 构造 1 项、logits/停止列表 2 项及最小 token 处理器 2 项。738 组原版完整函数体对照覆盖状态与缓存操作序列、任意精度容量/大小、空键、前缀并列、命中后排序、负索引、原地修改和列表回调时序。见 [本批记录](docs/PYTHON_STATE_COMPATIBILITY.md)。
 
+### llama.py 状态访问与数值辅助方法（2026-10-28）
+
+本轮迁移 8 项：`Llama._input_ids`、`_scores`、`eval_tokens`、`eval_logits`、`set_cache`、`set_seed`、`reset` 和 `logits_to_logprobs`，Java 入口为 `compat.python.PythonLlama`。它接收调用方已求值的 intc/single 缓冲，提供可写共享视图、按原版容量截取的独立 List 快照、缓存引用及任意精度种子赋值，并保留 reset 的状态更新和 recurrent/hybrid 内存回调顺序。
+
+log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定原版的 374 组对照覆盖切片、共享修改、快照、种子、重置分支与异常时序、数值边界。浮点对照采用绝对与相对 `4e-6` 容差。完整 `Llama` 构造、eval/generate 连接、Python deque 的后续变更操作、多维 NumPy 接口及数值警告列入后续范围。接口示例、8 项映射和验证结果见 [本轮记录](docs/PYTHON_LLAMA_COMPATIBILITY.md)。
+
+### llama.py 与 LlamaTokenizer 分词链路（2026-10-28，第二轮）
+
+本轮迁移 8 项：Llama 的 tokenize/detokenize/tokenizer，以及 LlamaTokenizer 的构造、tokenize/detokenize/encode/decode。入口为 `PythonLlama`、`PythonLlamaTokenizer`，支持原始 bytes、两层不同的 special 默认值、UTF-8 errors=ignore、自定义分词器及每次新建的模型包装器。原版 `324` 组对照核对参数、调用轨迹、引用和返回内容。
+
+`PythonLlamaTokenizer.modelFromVocab(model.vocab())` 可接入现有模型；字节反分词保留原版 32 字节 piece 缓冲及 BOS 首空格规则。原生依赖继续锁定 b11669，固定 Python vendor revision 的全模型分词对照列入后续范围。8 项映射、用法和验证结果见 [分词迁移记录](docs/PYTHON_TOKENIZER_COMPATIBILITY.md)。
+
 ### 测试数据管理
 
-`src/test/resources/` 全部由 `.gitignore` 忽略，测试数据及 Base64 样例保留本地。生成脚本、固定来源和小型摘要元数据纳入版本控制。清洁检出后先使用 [生成说明](tools/python_compat/README.md) 恢复三组数据，再执行 Maven 验证；`AGENTS.md` 已记录后续维护规则。
+`src/test/resources/` 全部由 `.gitignore` 忽略，测试数据及 Base64 样例保留本地。生成脚本、固定来源和小型摘要元数据纳入版本控制。清洁检出后先使用 [生成说明](tools/python_compat/README.md) 恢复五组数据，再执行 Maven 验证；`AGENTS.md` 已记录后续维护规则。
 
 ### 全量函数清单
 
@@ -319,21 +331,21 @@ completionConfig 对 null、0、负数按剩余上下文处理，并截断过大
 - [ ] [`llama_cpp._utils.MetaSingleton.__call__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_utils.py#L87) — 未迁移。
 - [ ] [`llama_cpp._utils.Singleton.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_utils.py#L98) — 未迁移。
 
-#### `llama_cpp/llama.py` — 49 项，勾选 11，部分 16
+#### `llama_cpp/llama.py` — 49 项，勾选 22，部分 11
 
 - [ ] [`llama_cpp.llama.Llama.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L60) — 部分覆盖 → `LlamaRuntime / LlamaModel / LlamaContext / Sampler`；构造参数、默认值、可选能力、所有权和错误格式均有差异。
 - [ ] [`llama_cpp.llama.Llama.__init__.free_lora_adapter`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L446) — 未迁移；嵌套函数。
 - [ ] [`llama_cpp.llama.Llama.ctx`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L576) — 部分覆盖 → `LlamaContext`；Java 隐藏原生指针，Python 公开底层句柄属性。
 - [ ] [`llama_cpp.llama.Llama.model`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L580) — 部分覆盖 → `LlamaModel`；Java 隐藏原生指针，Python 公开底层句柄属性。
-- [ ] [`llama_cpp.llama.Llama._input_ids`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L584) — 未迁移。
-- [ ] [`llama_cpp.llama.Llama._scores`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L588) — 未迁移。
-- [ ] [`llama_cpp.llama.Llama.eval_tokens`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L592) — 未迁移。
-- [ ] [`llama_cpp.llama.Llama.eval_logits`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L596) — 未迁移。
-- [ ] [`llama_cpp.llama.Llama.tokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L602) — 部分覆盖 → `Vocab.tokenize`；Python 接受任意 bytes；Java 接受 String 并拒绝 NUL，返回类型与错误不同。
-- [ ] [`llama_cpp.llama.Llama.detokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L620) — 部分覆盖 → `Vocab.detokenize`；Python 返回 bytes；Java 返回 String，special、prev_tokens 与字节解码契约未对齐。
-- [ ] [`llama_cpp.llama.Llama.set_cache`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L640) — 未迁移。
-- [ ] [`llama_cpp.llama.Llama.set_seed`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L648) — 部分覆盖 → `Sampler.Builder.seed`；Java 在创建采样器时设置，缺少同一对象上的 set_seed 方法。
-- [ ] [`llama_cpp.llama.Llama.reset`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L656) — 部分覆盖 → `LlamaContext.clear / ChatSession.reset`；Python 按模型类型处理 KV 和 Python 状态；Java 清理范围与时机不同。
+- [x] [`llama_cpp.llama.Llama._input_ids`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L584) — 能力已覆盖 → `compat.python.PythonLlama.inputIds`；intc token 前缀以 IntBuffer 提供可写共享视图，保留负切片及截断规则；固定原版完整函数体已有场景对照，全输入一致性继续验收。
+- [x] [`llama_cpp.llama.Llama._scores`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L588) — 能力已覆盖 → `compat.python.PythonLlama.scores`；single scores 前缀以 FloatBuffer 行视图提供可写共享数据；固定原版完整函数体已有场景对照，全输入一致性继续验收。
+- [x] [`llama_cpp.llama.Llama.eval_tokens`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L592) — 能力已覆盖 → `compat.python.PythonLlama.evalTokens`；按原版 deque 的 maxlen 保留末尾 token，Java 返回独立 List 快照；固定原版完整函数体已有场景对照，全输入一致性继续验收。
+- [x] [`llama_cpp.llama.Llama.eval_logits`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L596) — 能力已覆盖 → `compat.python.PythonLlama.evalLogits`；按 logits_all 选择行数，Java 返回独立二维 List 快照；固定原版完整函数体已有场景对照，全输入一致性继续验收。
+- [x] [`llama_cpp.llama.Llama.tokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L602) — 能力已覆盖 → `compat.python.PythonLlama.tokenize`；固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照。
+- [x] [`llama_cpp.llama.Llama.detokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L620) — 能力已覆盖 → `compat.python.PythonLlama.detokenize`；固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照。
+- [x] [`llama_cpp.llama.Llama.set_cache`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L640) — 能力已覆盖 → `compat.python.PythonLlama.setCache`；附加或清除 PythonLlamaRamCache 引用，保留当前游标和待求值标记；固定原版完整函数体已有场景对照，全输入一致性继续验收。
+- [x] [`llama_cpp.llama.Llama.set_seed`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L648) — 能力已覆盖 → `compat.python.PythonLlama.setSeed`；BigInteger 保留原版整数赋值语义，采样器由调用方管理；固定原版完整函数体已有场景对照，全输入一致性继续验收。
+- [x] [`llama_cpp.llama.Llama.reset`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L656) — 能力已覆盖 → `compat.python.PythonLlama.reset`；先更新游标及待求值标记，再通过调用方内存适配回调处理 recurrent/hybrid 分支；已测回调顺序及异常后状态；固定原版完整函数体已有场景对照，全输入一致性继续验收。
 - [ ] [`llama_cpp.llama.Llama.eval`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L666) — 部分覆盖 → `LlamaContext.decode`；缺少 Python input_ids、scores、logits_all 和增量状态契约。
 - [ ] [`llama_cpp.llama.Llama._init_sampler`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L704) — 未迁移。
 - [ ] [`llama_cpp.llama.Llama._init_sampler.apply_func`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L726) — 未迁移；嵌套函数。
@@ -355,14 +367,14 @@ completionConfig 对 null、0、负数按剩余上下文处理，并截断过大
 - [x] [`llama_cpp.llama.Llama.n_ctx`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2263) — 能力已覆盖 → `LlamaContext.contextLength`；查询能力已覆盖；仅对有效且打开的资源确认对应，关闭后行为与跨版本结果未完成 Python 对照验收。
 - [x] [`llama_cpp.llama.Llama.n_embd`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2267) — 能力已覆盖 → `LlamaModel.info().embedding`；查询能力已覆盖；仅对有效且打开的资源确认对应，关闭后行为与跨版本结果未完成 Python 对照验收。
 - [x] [`llama_cpp.llama.Llama.n_vocab`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2271) — 能力已覆盖 → `Vocab.size`；查询能力已覆盖；仅对有效且打开的资源确认对应，关闭后行为与跨版本结果未完成 Python 对照验收。
-- [ ] [`llama_cpp.llama.Llama.tokenizer`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2275) — 部分覆盖 → `LlamaModel.vocab`；模型词表可用，Python tokenizer 工厂及替换协议尚未移植。
+- [x] [`llama_cpp.llama.Llama.tokenizer`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2275) — 能力已覆盖 → `compat.python.PythonLlama.tokenizer`；固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照。
 - [x] [`llama_cpp.llama.Llama.token_eos`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2279) — 能力已覆盖 → `Vocab.eos`；查询能力已覆盖；仅对有效且打开的资源确认对应，关闭后行为与跨版本结果未完成 Python 对照验收。
 - [x] [`llama_cpp.llama.Llama.token_bos`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2283) — 能力已覆盖 → `Vocab.bos`；查询能力已覆盖；仅对有效且打开的资源确认对应，关闭后行为与跨版本结果未完成 Python 对照验收。
 - [ ] [`llama_cpp.llama.Llama.token_nl`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2287) — 未迁移。
 - [ ] [`llama_cpp.llama.Llama.pooling_type`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2291) — 未迁移。
 - [ ] [`llama_cpp.llama.Llama.close`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2295) — 部分覆盖 → `LlamaModel.close / LlamaContext.close / Sampler.close`；Java 资源分离且有并发/重入检查；生命周期错误文本有差异。
 - [ ] [`llama_cpp.llama.Llama.__del__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2299) — 未迁移。
-- [ ] [`llama_cpp.llama.Llama.logits_to_logprobs`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2303) — 未迁移。
+- [x] [`llama_cpp.llama.Llama.logits_to_logprobs`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2303) — 能力已覆盖 → `compat.python.PythonLlama.logitsToLogprobs`；single 向量及二维矩阵 axis 0/1/-1/-2 已对照，数值采用绝对及相对 4e-6 容差；NumPy 警告和更高维数组待迁移；固定原版完整函数体已有场景对照，全输入一致性继续验收。
 - [x] [`llama_cpp.llama.Llama.longest_token_prefix`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2321) — 能力已覆盖 → `compat.python.PythonTokens.longestTokenPrefix`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
 - [ ] [`llama_cpp.llama.Llama.from_pretrained`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2331) — 部分覆盖 → `demo.download.ModelDownloader.ensure`；仅有 demo 固定模型下载，通用 Hugging Face 仓库、匹配和参数契约缺失。
 - [x] [`llama_cpp.llama.LlamaState.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2466) — 能力已覆盖 → `compat.python.PythonLlamaState`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
@@ -814,15 +826,15 @@ completionConfig 对 null、0、负数按剩余上下文处理，并截断过大
 - [ ] [`llama_cpp.llama_speculative.LlamaPromptLookupDecoding.find_candidate_pred_tokens`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_speculative.py#L25) — 未迁移。
 - [ ] [`llama_cpp.llama_speculative.LlamaPromptLookupDecoding.__call__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_speculative.py#L57) — 未迁移。
 
-#### `llama_cpp/llama_tokenizer.py` — 12 项，勾选 0，部分 6
+#### `llama_cpp/llama_tokenizer.py` — 12 项，勾选 5，部分 1
 
 - [ ] [`llama_cpp.llama_tokenizer.BaseLlamaTokenizer.tokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L16) — 未迁移。
 - [ ] [`llama_cpp.llama_tokenizer.BaseLlamaTokenizer.detokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L29) — 未迁移。
-- [ ] [`llama_cpp.llama_tokenizer.LlamaTokenizer.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L46) — 部分覆盖 → `LlamaModel.vocab`；Java 为模型拥有的词表，Python 为独立 tokenizer 包装对象。
-- [ ] [`llama_cpp.llama_tokenizer.LlamaTokenizer.tokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L49) — 部分覆盖 → `Vocab.tokenize`；bytes/String、默认 special 和错误契约不同。
-- [ ] [`llama_cpp.llama_tokenizer.LlamaTokenizer.detokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L54) — 部分覆盖 → `Vocab.detokenize`；bytes/String、prev_tokens 和特殊 token 契约不同。
-- [ ] [`llama_cpp.llama_tokenizer.LlamaTokenizer.encode`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L62) — 部分覆盖 → `Vocab.tokenize`；Python UTF-8 errors=ignore；Java String 编码策略不同。
-- [ ] [`llama_cpp.llama_tokenizer.LlamaTokenizer.decode`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L69) — 部分覆盖 → `Vocab.detokenize`；Python UTF-8 errors=ignore；Java 解码替换非法序列。
+- [x] [`llama_cpp.llama_tokenizer.LlamaTokenizer.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L46) — 能力已覆盖 → `compat.python.PythonLlamaTokenizer`；固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照。
+- [x] [`llama_cpp.llama_tokenizer.LlamaTokenizer.tokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L49) — 能力已覆盖 → `compat.python.PythonLlamaTokenizer.tokenize`；固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照。
+- [x] [`llama_cpp.llama_tokenizer.LlamaTokenizer.detokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L54) — 能力已覆盖 → `compat.python.PythonLlamaTokenizer.detokenize`；固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照。
+- [x] [`llama_cpp.llama_tokenizer.LlamaTokenizer.encode`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L62) — 能力已覆盖 → `compat.python.PythonLlamaTokenizer.encode`；固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照。
+- [x] [`llama_cpp.llama_tokenizer.LlamaTokenizer.decode`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L69) — 能力已覆盖 → `compat.python.PythonLlamaTokenizer.decode`；固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照。
 - [ ] [`llama_cpp.llama_tokenizer.LlamaTokenizer.from_ggml_file`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L73) — 部分覆盖 → `LlamaModel.load(ModelParams.vocabOnly=true)`；仅词表加载能力存在，工厂返回类型与所有权不同。
 - [ ] [`llama_cpp.llama_tokenizer.LlamaHFTokenizer.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L78) — 未迁移。
 - [ ] [`llama_cpp.llama_tokenizer.LlamaHFTokenizer.tokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L81) — 未迁移。

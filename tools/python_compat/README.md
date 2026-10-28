@@ -12,10 +12,28 @@
 .\mvnw.cmd verify
 ```
 
-`generate_bridge_contracts.py` 生成错误/警告数据；`generate_chat_contracts.py` 生成静态聊天和 CPython repr 数据；`generate_state_contracts.py` 生成缓存、状态和处理器数据。三组数据分别写入 `python-0.3.36-contracts.tsv`、`python-0.3.36-chat-contracts.tsv`、`python-0.3.36-state-contracts.tsv`。生成器执行原版函数体并保留来源核验，不使用 Java 输出制作预期结果。
+`generate_bridge_contracts.py` 生成错误/警告数据；`generate_chat_contracts.py` 生成静态聊天和 CPython repr 数据；`generate_state_contracts.py` 生成缓存、状态和处理器数据；`generate_llama_contracts.py` 生成首轮 8 项 Llama 状态访问、重置和 log-softmax 数据；`generate_tokenizer_contracts.py` 生成第二轮 8 项分词链路数据。五组数据分别写入 `python-0.3.36-contracts.tsv`、`python-0.3.36-chat-contracts.tsv`、`python-0.3.36-state-contracts.tsv`、`python-0.3.36-llama-contracts.tsv`、`python-0.3.36-tokenizer-contracts.tsv`。生成器执行原版函数体并保留来源核验，预期结果来源为 Python 原版。
+
+单独恢复首轮状态数据：
+
+```powershell
+& E:/soft/Anaconda/python.exe tools/python_compat/generate_llama_contracts.py --source-root .tools/python-api-audit
+.\mvnw.cmd "-Dtest=PythonLlamaContractTest" test
+```
+
+本轮生成器通过 AST 保留 8 项原版完整函数体，用显式测试替身记录内存查询/清理顺序。log-softmax 输入采用 NumPy single，比较绝对和相对 `4e-6` 容差，生成时屏蔽数值 RuntimeWarning。测试替身及警告范围见 [迁移记录](../../docs/PYTHON_LLAMA_COMPATIBILITY.md)。
 
 `contract_wire.py` 定义聊天及状态数据共用的类型编码。各 `docs/python-*-contracts.json` 只保存来源、环境、计数和摘要。缓存和回调测试在一条数据中记录完整操作序列，便于核对顺序及发生错误后的状态。
 
 更新函数映射后执行 `update_inventory.py` 同步 README 和机器清单。提交前执行 `git ls-files src/test/resources`，输出应为空；通过 `git check-ignore -v <测试数据路径>` 检查新增数据是否被忽略。
 
 Python 仅用于维护阶段生成对照数据。Java 类库、打包产物及这些生成数据的 JUnit 验证均独立运行。
+
+单独恢复第二轮分词数据：
+
+```powershell
+& E:/soft/Anaconda/python.exe tools/python_compat/generate_tokenizer_contracts.py --source-root .tools/python-api-audit
+.\mvnw.cmd "-Dtest=PythonTokenizerContractTest" test
+```
+
+324 组对照与显式 codec 测试替身说明见 [分词迁移记录](../../docs/PYTHON_TOKENIZER_COMPATIBILITY.md)。原生集成测试复用其中由 Python 产生的 UTF-8 字节作为往返输入。

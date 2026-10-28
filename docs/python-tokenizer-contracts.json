@@ -1,0 +1,19 @@
+{
+  "pythonPackage": "0.3.36",
+  "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
+  "fixtureRuntime": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]",
+  "uniqueFunctions": 8,
+  "functions": [
+    "Llama.tokenize",
+    "Llama.detokenize",
+    "Llama.tokenizer",
+    "LlamaTokenizer.__init__",
+    "LlamaTokenizer.tokenize",
+    "LlamaTokenizer.detokenize",
+    "LlamaTokenizer.encode",
+    "LlamaTokenizer.decode"
+  ],
+  "caseCount": 324,
+  "fixtureSha256": "8788d471571bcb406e597f05efc35e4651b9030bacc48d90c8f2967bc5c6ccc3",
+  "method": "Execute complete verified bodies with model/custom-tokenizer tracing doubles; compare UTF-8 ignore, flags, previous-token forwarding, references, fresh wrappers and captured model. Native segmentation remains version-specific."
+}

@@ -1,0 +1,15 @@
+{
+  "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
+  "fixtureRuntime": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]",
+  "numpyVersion": "2.4.3",
+  "caseCount": 204,
+  "casesByOperation": {
+    "eval": 90,
+    "sample": 24,
+    "save": 12,
+    "load": 19,
+    "generate": 59
+  },
+  "fixtureSha256": "65700092d5340f55fa0643b0cdda50a11363606caaa708d0ff0e66e1b1842ff1",
+  "method": "Complete pinned eval/sample/generate/save/load bodies; tracing execution and sampler doubles; compare errors, diagnostics, final arrays, cursor, seed and sampler retention. Sampling-policy construction remains separately mapped."
+}

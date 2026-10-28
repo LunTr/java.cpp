@@ -1,6 +1,6 @@
 # Java.cpp 实施状态
 
-更新：2026-10-23。
+更新：2026-10-28。
 
 用户确认采用现有单工程结构。`src/Java_Cpp` 为封装源码根目录，仅包含必要迁移项；demo 位于 `src/main/java/io/github/yaulun/demo`，测试位于 `src/test/java`。根目录保留唯一 POM，通过 build-helper 添加封装源码根目录。根 JAR 仅打包类库；独立 assembly 生成 demo JAR。
 
@@ -31,10 +31,14 @@
 
 ## Python 全量函数复刻进度
 
-用户要求以固定 Python 原版的输出、异常和警告为逐项复刻标准。最新清单为 751 项：55 项同名绑定、63 项独立能力实现、60 项部分覆盖、573 项尚无对应实现。633 项尚未打勾，全输入一致性认证继续为 0 项。
+用户要求以固定 Python 原版的输出、异常和警告为逐项复刻标准。最新清单为 751 项：55 项同名绑定、79 项独立能力实现、50 项部分覆盖、567 项尚无对应实现。617 项尚未打勾，全输入一致性认证继续为 0 项。
 
 静态聊天模块已移植 37 项，本批新增 RAM 缓存、状态和处理器 12 项，分别有 10,376 条及 738 组原版/CPython 对照。完整 `verify -Pnative` 为 11,452 项通过、0 跳过。记录见 `docs/PYTHON_CHAT_COMPATIBILITY.md` 和 `docs/PYTHON_STATE_COMPATIBILITY.md`，生成器位于 `tools/python_compat`。继续工作优先处理同原生 revision 的完整 Python 推理基准、Jinja2/chat handler、生成与缓存复用，并保持机器清单与 README 同步。
 
+2026-10-28 轮迁移 llama.py 的 8 项状态访问和数值辅助方法，入口 `compat.python.PythonLlama`，374 组固定原版对照。包括共享 buffer 视图、独立快照、缓存/种子赋值、reset 的 recurrent/hybrid 回调顺序及 single log-softmax。完整 `verify -Pnative` 为 11,827 项通过、0 跳过，格式和 JAR 打包通过。接口形态、浮点容差和后续 eval/generate 连接范围见 `docs/PYTHON_LLAMA_COMPATIBILITY.md`。后续继续以约 8 项函数为一轮推进。
+
+2026-10-28 第二轮迁移 Llama/LlamaTokenizer 的 8 项分词接口；324 组原版对照及 1 项新增真实模型测试通过。完整 `verify -Pnative` 为 12,152 项通过，0 跳过，格式和 JAR 打包通过。分词开关、UTF-8 ignore、prev_tokens、自定义分词器和 Vocab 接入见 `docs/PYTHON_TOKENIZER_COMPATIBILITY.md`。
+
 ## 测试数据维护规则
 
-测试数据及 Base64 样例文件统一保存在被 `.gitignore` 忽略的 `src/test/resources/`。旧桥接 TSV 已从 Git 索引移除，本地保留。生成脚本、来源、计数及摘要可以提交；根目录 `AGENTS.md` 记录后续规则。清洁检出先按 `tools/python_compat/README.md` 生成三组数据，再执行 Maven 测试；提交前确认 `git ls-files src/test/resources` 输出为空。
+测试数据及 Base64 样例文件统一保存在被 `.gitignore` 忽略的 `src/test/resources/`。旧桥接 TSV 已从 Git 索引移除，本地保留。生成脚本、来源、计数及摘要可以提交；根目录 `AGENTS.md` 记录后续规则。清洁检出先按 `tools/python_compat/README.md` 生成五组数据，再执行 Maven 测试；提交前确认 `git ls-files src/test/resources` 输出为空。

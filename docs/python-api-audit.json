@@ -243,16 +243,16 @@
     "libraryCount": 712,
     "serverCount": 39,
     "boundCount": 55,
-    "coveredCount": 63,
-    "checkedCount": 118,
-    "partialCount": 60,
-    "missingCount": 573,
+    "coveredCount": 79,
+    "checkedCount": 134,
+    "partialCount": 50,
+    "missingCount": 567,
     "exactParityCertifiedCount": 0,
     "sameNamedNativeBindings": 57,
     "javaNativeBindingCount": 66,
     "publicLlamaMembers": 31,
-    "publicLlamaCovered": 5,
-    "uncheckedCount": 633
+    "publicLlamaCovered": 15,
+    "uncheckedCount": 617
   },
   "functions": [
     {
@@ -2851,12 +2851,13 @@
       "method": true,
       "async": false,
       "signature": "self",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L584"
+      "java": "compat.python.PythonLlama.inputIds",
+      "reason": "intc token 前缀以 IntBuffer 提供可写共享视图，保留负切片及截断规则；固定原版完整函数体已有场景对照，全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L584",
+      "contractEvidence": "docs/python-llama-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama._scores",
@@ -2870,12 +2871,13 @@
       "method": true,
       "async": false,
       "signature": "self",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L588"
+      "java": "compat.python.PythonLlama.scores",
+      "reason": "single scores 前缀以 FloatBuffer 行视图提供可写共享数据；固定原版完整函数体已有场景对照，全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L588",
+      "contractEvidence": "docs/python-llama-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.eval_tokens",
@@ -2889,12 +2891,13 @@
       "method": true,
       "async": false,
       "signature": "self",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L592"
+      "java": "compat.python.PythonLlama.evalTokens",
+      "reason": "按原版 deque 的 maxlen 保留末尾 token，Java 返回独立 List 快照；固定原版完整函数体已有场景对照，全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L592",
+      "contractEvidence": "docs/python-llama-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.eval_logits",
@@ -2908,12 +2911,13 @@
       "method": true,
       "async": false,
       "signature": "self",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L596"
+      "java": "compat.python.PythonLlama.evalLogits",
+      "reason": "按 logits_all 选择行数，Java 返回独立二维 List 快照；固定原版完整函数体已有场景对照，全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L596",
+      "contractEvidence": "docs/python-llama-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.tokenize",
@@ -2927,12 +2931,13 @@
       "method": true,
       "async": false,
       "signature": "self, text: bytes, add_bos: bool=True, special: bool=False",
-      "status": "partial",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "Vocab.tokenize",
-      "reason": "Python 接受任意 bytes；Java 接受 String 并拒绝 NUL，返回类型与错误不同",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L602"
+      "java": "compat.python.PythonLlama.tokenize",
+      "reason": "固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L602",
+      "contractEvidence": "docs/python-tokenizer-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.detokenize",
@@ -2946,12 +2951,13 @@
       "method": true,
       "async": false,
       "signature": "self, tokens: List[int], prev_tokens: Optional[List[int]]=None, special: bool=False",
-      "status": "partial",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "Vocab.detokenize",
-      "reason": "Python 返回 bytes；Java 返回 String，special、prev_tokens 与字节解码契约未对齐",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L620"
+      "java": "compat.python.PythonLlama.detokenize",
+      "reason": "固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L620",
+      "contractEvidence": "docs/python-tokenizer-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.set_cache",
@@ -2965,12 +2971,13 @@
       "method": true,
       "async": false,
       "signature": "self, cache: Optional[BaseLlamaCache]",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L640"
+      "java": "compat.python.PythonLlama.setCache",
+      "reason": "附加或清除 PythonLlamaRamCache 引用，保留当前游标和待求值标记；固定原版完整函数体已有场景对照，全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L640",
+      "contractEvidence": "docs/python-llama-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.set_seed",
@@ -2984,12 +2991,13 @@
       "method": true,
       "async": false,
       "signature": "self, seed: int",
-      "status": "partial",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "Sampler.Builder.seed",
-      "reason": "Java 在创建采样器时设置，缺少同一对象上的 set_seed 方法",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L648"
+      "java": "compat.python.PythonLlama.setSeed",
+      "reason": "BigInteger 保留原版整数赋值语义，采样器由调用方管理；固定原版完整函数体已有场景对照，全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L648",
+      "contractEvidence": "docs/python-llama-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.reset",
@@ -3003,12 +3011,13 @@
       "method": true,
       "async": false,
       "signature": "self",
-      "status": "partial",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "LlamaContext.clear / ChatSession.reset",
-      "reason": "Python 按模型类型处理 KV 和 Python 状态；Java 清理范围与时机不同",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L656"
+      "java": "compat.python.PythonLlama.reset",
+      "reason": "先更新游标及待求值标记，再通过调用方内存适配回调处理 recurrent/hybrid 分支；已测回调顺序及异常后状态；固定原版完整函数体已有场景对照，全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L656",
+      "contractEvidence": "docs/python-llama-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.eval",
@@ -3421,12 +3430,13 @@
       "method": true,
       "async": false,
       "signature": "self",
-      "status": "partial",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "LlamaModel.vocab",
-      "reason": "模型词表可用，Python tokenizer 工厂及替换协议尚未移植",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2275"
+      "java": "compat.python.PythonLlama.tokenizer",
+      "reason": "固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2275",
+      "contractEvidence": "docs/python-tokenizer-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.token_eos",
@@ -3554,12 +3564,13 @@
       "method": true,
       "async": false,
       "signature": "logits: Union[npt.NDArray[np.single], List], axis: int=-1",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2303"
+      "java": "compat.python.PythonLlama.logitsToLogprobs",
+      "reason": "single 向量及二维矩阵 axis 0/1/-1/-2 已对照，数值采用绝对及相对 4e-6 容差；NumPy 警告和更高维数组待迁移；固定原版完整函数体已有场景对照，全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2303",
+      "contractEvidence": "docs/python-llama-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.longest_token_prefix",
@@ -11903,12 +11914,13 @@
       "method": true,
       "async": false,
       "signature": "self, llama: llama_cpp.Llama",
-      "status": "partial",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "LlamaModel.vocab",
-      "reason": "Java 为模型拥有的词表，Python 为独立 tokenizer 包装对象",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L46"
+      "java": "compat.python.PythonLlamaTokenizer",
+      "reason": "固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L46",
+      "contractEvidence": "docs/python-tokenizer-contracts.json"
     },
     {
       "id": "llama_cpp.llama_tokenizer.LlamaTokenizer.tokenize",
@@ -11922,12 +11934,13 @@
       "method": true,
       "async": false,
       "signature": "self, text: bytes, add_bos: bool=True, special: bool=True",
-      "status": "partial",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "Vocab.tokenize",
-      "reason": "bytes/String、默认 special 和错误契约不同",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L49"
+      "java": "compat.python.PythonLlamaTokenizer.tokenize",
+      "reason": "固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L49",
+      "contractEvidence": "docs/python-tokenizer-contracts.json"
     },
     {
       "id": "llama_cpp.llama_tokenizer.LlamaTokenizer.detokenize",
@@ -11941,12 +11954,13 @@
       "method": true,
       "async": false,
       "signature": "self, tokens: List[int], prev_tokens: Optional[List[int]]=None, special: bool=False",
-      "status": "partial",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "Vocab.detokenize",
-      "reason": "bytes/String、prev_tokens 和特殊 token 契约不同",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L54"
+      "java": "compat.python.PythonLlamaTokenizer.detokenize",
+      "reason": "固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L54",
+      "contractEvidence": "docs/python-tokenizer-contracts.json"
     },
     {
       "id": "llama_cpp.llama_tokenizer.LlamaTokenizer.encode",
@@ -11960,12 +11974,13 @@
       "method": true,
       "async": false,
       "signature": "self, text: str, add_bos: bool=True, special: bool=True",
-      "status": "partial",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "Vocab.tokenize",
-      "reason": "Python UTF-8 errors=ignore；Java String 编码策略不同",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L62"
+      "java": "compat.python.PythonLlamaTokenizer.encode",
+      "reason": "固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L62",
+      "contractEvidence": "docs/python-tokenizer-contracts.json"
     },
     {
       "id": "llama_cpp.llama_tokenizer.LlamaTokenizer.decode",
@@ -11979,12 +11994,13 @@
       "method": true,
       "async": false,
       "signature": "self, tokens: List[int]",
-      "status": "partial",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "Vocab.detokenize",
-      "reason": "Python UTF-8 errors=ignore；Java 解码替换非法序列",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L69"
+      "java": "compat.python.PythonLlamaTokenizer.decode",
+      "reason": "固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L69",
+      "contractEvidence": "docs/python-tokenizer-contracts.json"
     },
     {
       "id": "llama_cpp.llama_tokenizer.LlamaTokenizer.from_ggml_file",

@@ -43,6 +43,11 @@ public final class Vocab {
     return model.withOpen(() -> library.llama_vocab_eos(handle));
   }
 
+  /** Returns the native newline token, or -1 when absent. */
+  public int newline() {
+    return model.withOpen(() -> library.llama_vocab_nl(handle));
+  }
+
   /** Tests an existing vocabulary token for end-of-generation. */
   public boolean isEog(int token) {
     return model.withOpen(
@@ -161,6 +166,32 @@ public final class Vocab {
             throw failure("Detokenized size=" + count);
           }
           return NativeStrings.fromBytes(buffer, count);
+        });
+  }
+
+  /** Python 0.3.36 model codec: reuse a 32-byte piece buffer and trim BOS-leading space. */
+  public byte[] pythonDetokenizeBytes(int[] tokens, boolean special) {
+    int[] copy = Objects.requireNonNull(tokens, "tokens").clone();
+    return model.withOpen(
+        () -> {
+          java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream();
+          byte[] buffer = new byte[32];
+          for (int token : copy) {
+            checkToken(token);
+            int count =
+                library.llama_token_to_piece(
+                    handle, token, buffer, 32, 0, NativeStrings.cBool(special));
+            if (count > 32) throw new AssertionError("Piece exceeds Python buffer");
+            int end = count < 0 ? Math.max(0, 32 + count) : count;
+            output.write(buffer, 0, end);
+          }
+          byte[] bytes = output.toByteArray();
+          return copy.length > 0
+                  && copy[0] == library.llama_vocab_bos(handle)
+                  && bytes.length > 0
+                  && bytes[0] == ' '
+              ? Arrays.copyOfRange(bytes, 1, bytes.length)
+              : bytes;
         });
   }
 

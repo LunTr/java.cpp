@@ -68,6 +68,8 @@ public interface LlamaLibrary extends Library {
 
   int llama_vocab_eos(Pointer vocab);
 
+  int llama_vocab_nl(Pointer vocab);
+
   byte llama_vocab_is_eog(Pointer vocab, int token);
 
   int llama_tokenize(
@@ -100,6 +102,18 @@ public interface LlamaLibrary extends Library {
   int llama_n_batch(Pointer context);
 
   Pointer llama_get_memory(Pointer context);
+
+  byte llama_memory_seq_rm(Pointer memory, int sequence, int start, int end);
+
+  Pointer llama_get_logits_ith(Pointer context, int index);
+
+  long llama_state_get_size(Pointer context);
+
+  long llama_state_get_data(Pointer context, byte[] destination, long size);
+
+  long llama_state_set_data(Pointer context, byte[] source, long size);
+
+  int llama_pooling_type(Pointer context);
 
   void llama_memory_clear(Pointer memory, byte data);
 

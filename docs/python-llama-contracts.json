@@ -1,0 +1,31 @@
+{
+  "pythonPackage": "0.3.36",
+  "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
+  "fixtureRuntime": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]",
+  "numpyVersion": "2.4.3",
+  "uniqueFunctions": 8,
+  "functions": [
+    "Llama._input_ids",
+    "Llama._scores",
+    "Llama.eval_logits",
+    "Llama.eval_tokens",
+    "Llama.logits_to_logprobs",
+    "Llama.reset",
+    "Llama.set_cache",
+    "Llama.set_seed"
+  ],
+  "caseCount": 374,
+  "casesByOperation": {
+    "views": 150,
+    "settings": 12,
+    "reset": 48,
+    "vector": 92,
+    "matrix": 72
+  },
+  "fixtureSha256": "d362d481d57a2bba42fd83aff4e9429614a4439c16829f71d93c94dd434c3798",
+  "numericalTolerance": {
+    "absolute": 4e-06,
+    "relative": 4e-06
+  },
+  "method": "Execute complete verified method bodies via AST. Native memory calls use explicit tracing doubles; no model inference. Compare view mutation, snapshots, cursor/cache/seed, reset ordering/errors and single-precision log-softmax. Runtime warnings suppressed in numerical fixtures; Java numeric comparison uses the recorded tolerance."
+}

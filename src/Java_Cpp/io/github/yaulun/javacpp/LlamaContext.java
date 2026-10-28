@@ -29,6 +29,7 @@ public final class LlamaContext implements AutoCloseable {
   private final ReentrantLock lock = new ReentrantLock();
   private volatile boolean closed;
   private boolean logitsReady;
+  private int outputCount;
   private boolean needsClear;
 
   LlamaContext(LlamaModel model, ContextParams params) {
@@ -99,6 +100,7 @@ public final class LlamaContext implements AutoCloseable {
         () -> {
           library.llama_memory_clear(memory, (byte) 1);
           logitsReady = false;
+          outputCount = 0;
           needsClear = false;
           return null;
         });
@@ -159,6 +161,103 @@ public final class LlamaContext implements AutoCloseable {
           } finally {
             sampler.release();
           }
+        });
+  }
+
+  /** Returns whether this native resource has been released. */
+  public int poolingType() {
+    return guarded(() -> library.llama_pooling_type(handle));
+  }
+
+  /** Removes sequence positions at and after position, including recurrent-model refusal. */
+  public boolean removeSequence(int position) {
+    return guarded(
+        () -> {
+          int used = usedLocked();
+          boolean removed = library.llama_memory_seq_rm(memory, -1, position, -1) != 0;
+      if (removed && position < used) { logitsReady = false; outputCount = 0; }
+          return removed;
+        });
+  }
+
+  /** Evaluates one explicit-position batch for the Python adapter and copies requested logits. */
+  public void evaluateAt(int[] tokens, int position, boolean logitsAll) {
+    int[] copy = Objects.requireNonNull(tokens, "tokens").clone();
+    guarded(
+        () -> {
+          ensureReady();
+          validateTokens(copy);
+          if (position < 0
+              || (long) position + copy.length > contextLength
+              || copy.length > batchSize)
+            throw new IllegalArgumentException("Explicit batch outside context dimensions");
+          if (copy.length == 0) return null;
+          logitsReady = false;
+          outputCount = 0;
+          library.llama_batch_ext_clear(batch);
+          for (int i = 0; i < copy.length; i++) {
+            int slot = library.llama_batch_ext_add_token(batch, 0, copy[i]);
+            if (slot < 0
+                || library.llama_batch_ext_set_pos(batch, slot, new int[] {position + i}) == 0
+                || library.llama_batch_ext_set_output_logits(
+                        batch, slot, (byte) (logitsAll || i == copy.length - 1 ? 1 : 0))
+                    == 0) {
+              needsClear = true;
+              throw failure(ErrorCode.E303, "Explicit batch rejected");
+            }
+          }
+          int result = library.llama_process(handle, 1, batch);
+          if (result != 0) {
+            needsClear = true;
+            throw new InferenceException(
+                ErrorCode.E303,
+                "llama_process returned " + result,
+                NativeLogBridge.instance().recentProblems(),
+                null,
+                new NativeFailure("llama_process", result));
+          }
+          logitsReady = copy.length > 0;
+          outputCount = logitsAll ? copy.length : 1;
+          return null;
+        });
+  }
+
+  /** Copies live output rows before the next decode. */
+  public float[][] outputLogits(int rows) {
+    return guarded(
+        () -> {
+          if (!logitsReady || rows < 0 || rows > outputCount)
+            throw new IllegalStateException("Live logits required");
+          float[][] output = new float[rows][];
+          for (int i = 0; i < output.length; i++) {
+            Pointer row = library.llama_get_logits_ith(handle, i);
+            if (row == null) throw failure(ErrorCode.E303, "Missing output logits");
+            output[i] = row.getFloatArray(0, model.vocab().size());
+          }
+          return output;
+        });
+  }
+
+  public long stateSize() {
+    return guarded(() -> library.llama_state_get_size(handle));
+  }
+
+  /** Copies state to a caller buffer and returns the actual native count. */
+  public long copyState(byte[] target) {
+    Objects.requireNonNull(target, "target");
+    return guarded(() -> library.llama_state_get_data(handle, target, target.length));
+  }
+
+  /** Restores state; restored logits require evaluation before sampling. */
+  public long restoreState(byte[] source) {
+    byte[] copy = Objects.requireNonNull(source, "source").clone();
+    return guarded(
+        () -> {
+          logitsReady = false;
+          outputCount = 0;
+          long count = library.llama_state_set_data(handle, copy, copy.length);
+          needsClear = count != copy.length;
+          return count;
         });
   }
 
@@ -268,6 +367,7 @@ public final class LlamaContext implements AutoCloseable {
       }
     }
     logitsReady = true;
+    outputCount = 1;
   }
 
   private GenerationResult generateLocked(

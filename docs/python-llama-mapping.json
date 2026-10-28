@@ -1,0 +1,1218 @@
+{
+  "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
+  "sourceSha256": "fff35cbe5f93076683089447cf7b38195c85a9d7bb344459fa22361994b1f228",
+  "functionCount": 49,
+  "nestedCount": 4,
+  "directErrorSiteCount": 23,
+  "mappingMeaning": "All source definitions have a concrete existing or planned Java destination. implementationStatus preserves implemented/partial/missing distinctions; mapping alone does not change completion counts.",
+  "functions": [
+    {
+      "function": "Llama.__init__",
+      "line": 60,
+      "endLine": 573,
+      "signature": "self, model_path: str, *, n_gpu_layers: int=0, split_mode: int=llama_cpp.LLAMA_SPLIT_MODE_LAYER, main_gpu: int=0, tensor_split: Optional[List[float]]=None, vocab_only: bool=False, use_mmap: bool=True, use_mlock: bool=False, kv_overrides: Optional[Dict[str, Union[bool, int, float, str]]]=None, seed: int=llama_cpp.LLAMA_DEFAULT_SEED, n_ctx: int=512, n_batch: int=512, n_ubatch: int=512, n_threads: Optional[int]=None, n_threads_batch: Optional[int]=None, rope_scaling_type: Optional[int]=llama_cpp.LLAMA_ROPE_SCALING_TYPE_UNSPECIFIED, pooling_type: int=llama_cpp.LLAMA_POOLING_TYPE_UNSPECIFIED, attention_type: int=llama_cpp.LLAMA_ATTENTION_TYPE_UNSPECIFIED, rope_freq_base: float=0.0, rope_freq_scale: float=0.0, yarn_ext_factor: float=-1.0, yarn_attn_factor: float=1.0, yarn_beta_fast: float=32.0, yarn_beta_slow: float=1.0, yarn_orig_ctx: int=0, logits_all: bool=False, embedding: bool=False, offload_kqv: bool=True, flash_attn: bool=False, op_offload: Optional[bool]=None, swa_full: Optional[bool]=None, no_perf: bool=False, last_n_tokens_size: int=64, lora_base: Optional[str]=None, lora_scale: float=1.0, lora_path: Optional[str]=None, numa: Union[bool, int]=False, chat_format: Optional[str]=None, chat_handler: Optional[llama_chat_format.LlamaChatCompletionHandler]=None, draft_model: Optional[LlamaDraftModel]=None, tokenizer: Optional[BaseLlamaTokenizer]=None, type_k: Optional[int]=None, type_v: Optional[int]=None, spm_infill: bool=False, verbose: bool=True, **kwargs",
+      "decorators": [],
+      "javaTarget": "PythonErrorBridge.loadModel/createContext + ModelParams/ContextParams（参数全集待连接）",
+      "implementationStatus": "partial",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L60",
+      "directErrorSites": [
+        {
+          "kind": "raise",
+          "line": 237,
+          "expression": "ValueError(f'Attempt to split tensors that exceed maximum supported devices. Current LLAMA_MAX_DEVICES={llama_cpp.LLAMA_MAX_DEVICES}')"
+        },
+        {
+          "kind": "raise",
+          "line": 286,
+          "expression": "ValueError(f'Value for {k} is too long: {v}')"
+        },
+        {
+          "kind": "raise",
+          "line": 304,
+          "expression": "ValueError(f'Unknown value type for {k}: {v}')"
+        },
+        {
+          "kind": "raise",
+          "line": 384,
+          "expression": "ValueError(f'Model path does not exist: {model_path}')"
+        },
+        {
+          "kind": "raise",
+          "line": 442,
+          "expression": "RuntimeError(f'Failed to initialize LoRA adapter from lora path: {self.lora_path}')"
+        },
+        {
+          "kind": "raise",
+          "line": 457,
+          "expression": "RuntimeError(f'Failed to set LoRA adapter from lora path: {self.lora_path}')"
+        }
+      ],
+      "dependencies": [
+        "', '.join",
+        "FloatArray",
+        "LlamaTokenizer",
+        "RuntimeError",
+        "ValueError",
+        "contextlib.ExitStack",
+        "contextlib.closing",
+        "ctypes.POINTER",
+        "ctypes.addressof",
+        "ctypes.c_float",
+        "ctypes.c_float * 1",
+        "ctypes.cast",
+        "ctypes.memmove",
+        "dict",
+        "enumerate",
+        "internals.LlamaBatch",
+        "internals.LlamaContext",
+        "internals.LlamaModel",
+        "internals.LlamaTokenDataArray",
+        "isinstance",
+        "k.encode",
+        "kv_overrides.items",
+        "len",
+        "llama_chat_format.Jinja2ChatFormatter",
+        "llama_chat_format.Jinja2ChatFormatter(template=template, eos_token=eos_token, bos_token=bos_token, stop_token_ids=[eos_token_id]).to_chat_handler",
+        "llama_chat_format.guess_chat_format_from_gguf_metadata",
+        "llama_cpp.llama_adapter_lora_init",
+        "llama_cpp.llama_adapter_lora_p_ctypes * 1",
+        "llama_cpp.llama_backend_init",
+        "llama_cpp.llama_context_default_params",
+        "llama_cpp.llama_max_parallel_sequences",
+        "llama_cpp.llama_model_default_params",
+        "llama_cpp.llama_model_is_hybrid",
+        "llama_cpp.llama_model_is_recurrent",
+        "llama_cpp.llama_model_kv_override * kvo_array_len",
+        "llama_cpp.llama_numa_init",
+        "llama_cpp.llama_print_system_info",
+        "llama_cpp.llama_print_system_info().decode",
+        "llama_cpp.llama_set_adapters_lora",
+        "max",
+        "min",
+        "multiprocessing.cpu_count",
+        "name.startswith",
+        "np.ndarray",
+        "os.path.exists",
+        "print",
+        "self._model.metadata",
+        "self._model.n_ctx_train",
+        "self._model.token_get_text",
+        "self._stack.callback",
+        "self._stack.enter_context",
+        "self.lora_path.encode",
+        "self.metadata.items",
+        "self.n_ctx",
+        "self.n_vocab",
+        "self.token_bos",
+        "self.token_eos",
+        "self.token_nl",
+        "set_verbose",
+        "suppress_stdout_stderr",
+        "template_choices.items",
+        "template_choices.keys",
+        "typing.cast",
+        "v.encode",
+        "v_bytes.ljust"
+      ],
+      "orderNotes": "按源码顺序处理设备数、kv_overrides、路径、原生资源和 LoRA；参数默认值与 Java 默认值逐项跟踪。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.__init__.free_lora_adapter",
+      "line": 446,
+      "endLine": 450,
+      "signature": "",
+      "decorators": [],
+      "javaTarget": "计划：LoRA AutoCloseable 资源回调",
+      "implementationStatus": "missing",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L446",
+      "directErrorSites": [],
+      "dependencies": [
+        "llama_cpp.llama_adapter_lora_free"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.ctx",
+      "line": 576,
+      "endLine": 577,
+      "signature": "self",
+      "decorators": [
+        "property"
+      ],
+      "javaTarget": "PythonLlama.ctx（Java 上下文对象）",
+      "implementationStatus": "partial",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L576",
+      "directErrorSites": [],
+      "dependencies": [],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.model",
+      "line": 580,
+      "endLine": 581,
+      "signature": "self",
+      "decorators": [
+        "property"
+      ],
+      "javaTarget": "PythonLlama.model（Java 模型对象）",
+      "implementationStatus": "partial",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L580",
+      "directErrorSites": [],
+      "dependencies": [],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama._input_ids",
+      "line": 584,
+      "endLine": 585,
+      "signature": "self",
+      "decorators": [
+        "property"
+      ],
+      "javaTarget": "compat.python.PythonLlama.inputIds",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-llama-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L584",
+      "directErrorSites": [],
+      "dependencies": [],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama._scores",
+      "line": 588,
+      "endLine": 589,
+      "signature": "self",
+      "decorators": [
+        "property"
+      ],
+      "javaTarget": "compat.python.PythonLlama.scores",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-llama-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L588",
+      "directErrorSites": [],
+      "dependencies": [],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.eval_tokens",
+      "line": 592,
+      "endLine": 593,
+      "signature": "self",
+      "decorators": [
+        "property"
+      ],
+      "javaTarget": "compat.python.PythonLlama.evalTokens",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-llama-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L592",
+      "directErrorSites": [],
+      "dependencies": [
+        "deque",
+        "self.input_ids[:self.n_tokens].tolist"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.eval_logits",
+      "line": 596,
+      "endLine": 600,
+      "signature": "self",
+      "decorators": [
+        "property"
+      ],
+      "javaTarget": "compat.python.PythonLlama.evalLogits",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-llama-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L596",
+      "directErrorSites": [],
+      "dependencies": [
+        "deque",
+        "self.scores[:self.n_tokens, :].tolist"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.tokenize",
+      "line": 602,
+      "endLine": 618,
+      "signature": "self, text: bytes, add_bos: bool=True, special: bool=False",
+      "decorators": [],
+      "javaTarget": "compat.python.PythonLlama.tokenize",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-tokenizer-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L602",
+      "directErrorSites": [],
+      "dependencies": [
+        "self.tokenizer_.tokenize"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.detokenize",
+      "line": 620,
+      "endLine": 638,
+      "signature": "self, tokens: List[int], prev_tokens: Optional[List[int]]=None, special: bool=False",
+      "decorators": [],
+      "javaTarget": "compat.python.PythonLlama.detokenize",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-tokenizer-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L620",
+      "directErrorSites": [],
+      "dependencies": [
+        "self.tokenizer_.detokenize"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.set_cache",
+      "line": 640,
+      "endLine": 646,
+      "signature": "self, cache: Optional[BaseLlamaCache]",
+      "decorators": [],
+      "javaTarget": "compat.python.PythonLlama.setCache",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-llama-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L640",
+      "directErrorSites": [],
+      "dependencies": [],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.set_seed",
+      "line": 648,
+      "endLine": 654,
+      "signature": "self, seed: int",
+      "decorators": [],
+      "javaTarget": "compat.python.PythonLlama.setSeed",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-llama-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L648",
+      "directErrorSites": [],
+      "dependencies": [],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.reset",
+      "line": 656,
+      "endLine": 664,
+      "signature": "self",
+      "decorators": [],
+      "javaTarget": "compat.python.PythonLlama.reset",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-llama-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L656",
+      "directErrorSites": [],
+      "dependencies": [
+        "llama_cpp.llama_get_memory",
+        "llama_cpp.llama_memory_clear"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.eval",
+      "line": 666,
+      "endLine": 702,
+      "signature": "self, tokens: Sequence[int]",
+      "decorators": [],
+      "javaTarget": "PythonLlama.eval / PythonLlamaExecution",
+      "implementationStatus": "partial",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L666",
+      "directErrorSites": [],
+      "dependencies": [
+        "len",
+        "min",
+        "np.ctypeslib.as_array",
+        "range",
+        "self._batch.set_batch",
+        "self._ctx.decode",
+        "self._ctx.get_logits",
+        "self._ctx.kv_cache_seq_rm",
+        "self.scores[n_past:n_past + n_tokens, :].reshape"
+      ],
+      "orderNotes": "先移除后缀，再逐批 decode、写 input_ids、写扁平 scores，最后推进 n_tokens；空输入仍调用后缀移除。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama._init_sampler",
+      "line": 704,
+      "endLine": 790,
+      "signature": "self, top_k: int=40, top_p: float=0.95, min_p: float=0.05, typical_p: float=1.0, temp: float=0.8, repeat_penalty: float=1.0, frequency_penalty: float=0.0, presence_penalty: float=0.0, tfs_z: float=1.0, mirostat_mode: int=0, mirostat_eta: float=0.1, mirostat_tau: float=5.0, penalize_nl: bool=True, logits_processor: Optional[LogitsProcessorList]=None, grammar: Optional[LlamaGrammar]=None",
+      "decorators": [],
+      "javaTarget": "计划：完整 Python 采样链构造策略",
+      "implementationStatus": "missing",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L704",
+      "directErrorSites": [],
+      "dependencies": [
+        "internals.LlamaSampler",
+        "max",
+        "sampler.add_custom",
+        "sampler.add_dist",
+        "sampler.add_grammar",
+        "sampler.add_greedy",
+        "sampler.add_min_p",
+        "sampler.add_mirostat",
+        "sampler.add_mirostat_v2",
+        "sampler.add_penalties",
+        "sampler.add_temp",
+        "sampler.add_top_k",
+        "sampler.add_top_p",
+        "sampler.add_typical"
+      ],
+      "orderNotes": "custom、penalties、grammar、温度和 mirostat 分支按顺序；tfs_z/penalize_nl 在该函数体中未参与原生构造。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama._init_sampler.apply_func",
+      "line": 726,
+      "endLine": 742,
+      "signature": "token_data_array: llama_cpp.llama_token_data_array_p",
+      "decorators": [],
+      "javaTarget": "计划：采样候选数组与 logits processor 的共享内存适配",
+      "implementationStatus": "missing",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L726",
+      "directErrorSites": [],
+      "dependencies": [
+        "(llama_cpp.llama_token_data * size).from_address",
+        "ctypes.addressof",
+        "logit_processor",
+        "np.dtype",
+        "np.recarray"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.sample",
+      "line": 792,
+      "endLine": 852,
+      "signature": "self, top_k: int=40, top_p: float=0.95, min_p: float=0.05, typical_p: float=1.0, temp: float=0.8, repeat_penalty: float=1.0, frequency_penalty: float=0.0, presence_penalty: float=0.0, tfs_z: float=1.0, mirostat_mode: int=0, mirostat_eta: float=0.1, mirostat_tau: float=5.0, penalize_nl: bool=True, logits_processor: Optional[LogitsProcessorList]=None, grammar: Optional[LlamaGrammar]=None, idx: Optional[int]=None",
+      "decorators": [],
+      "javaTarget": "PythonLlama.sample（采样器工厂注入，完整参数链待连接）",
+      "implementationStatus": "partial",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L792",
+      "directErrorSites": [
+        {
+          "kind": "assert",
+          "line": 822,
+          "condition": "self.n_tokens > 0",
+          "message": ""
+        },
+        {
+          "kind": "assert",
+          "line": 848,
+          "condition": "self.ctx is not None",
+          "message": ""
+        }
+      ],
+      "dependencies": [
+        "self._init_sampler",
+        "self._sampler.sample"
+      ],
+      "orderNotes": "先检查 n_tokens；临时采样器构造先于 ctx 断言；idx 转相对位置；成功后清除临时引用，异常保留。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.generate",
+      "line": 854,
+      "endLine": 1025,
+      "signature": "self, tokens: Sequence[int], top_k: int=40, top_p: float=0.95, min_p: float=0.05, typical_p: float=1.0, temp: float=0.8, repeat_penalty: float=1.0, reset: bool=True, frequency_penalty: float=0.0, presence_penalty: float=0.0, tfs_z: float=1.0, mirostat_mode: int=0, mirostat_tau: float=5.0, mirostat_eta: float=0.1, penalize_nl: bool=True, logits_processor: Optional[LogitsProcessorList]=None, stopping_criteria: Optional[StoppingCriteriaList]=None, grammar: Optional[LlamaGrammar]=None",
+      "decorators": [],
+      "javaTarget": "PythonLlama.generate / TokenGenerator.send（状态机已接入，采样策略参数待连接）",
+      "implementationStatus": "partial",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L854",
+      "directErrorSites": [],
+      "dependencies": [
+        "ctypes.c_float",
+        "draft_tokens.astype",
+        "len",
+        "list",
+        "print",
+        "self._ctx.kv_cache_seq_rm",
+        "self._init_sampler",
+        "self.draft_model",
+        "self.eval",
+        "self.reset",
+        "self.sample",
+        "stopping_criteria",
+        "tokens.append",
+        "tokens.clear",
+        "tokens.extend",
+        "zip"
+      ],
+      "orderNotes": "惰性启动；缓存前缀/恢复后重放；yield 前停止检查；send 后追加 token；draft 验证及异常导致生成器结束。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.create_embedding",
+      "line": 1027,
+      "endLine": 1065,
+      "signature": "self, input: Union[str, List[str]], model: Optional[str]=None",
+      "decorators": [],
+      "javaTarget": "计划：embedding 结果对象与 usage 组装",
+      "implementationStatus": "missing",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1027",
+      "directErrorSites": [],
+      "dependencies": [
+        "enumerate",
+        "isinstance",
+        "self.embed"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.embed",
+      "line": 1067,
+      "endLine": 1193,
+      "signature": "self, input: Union[str, List[str]], normalize: bool=False, truncate: bool=True, return_count: bool=False",
+      "decorators": [],
+      "javaTarget": "计划：多序列 embedding 批处理与归一化",
+      "implementationStatus": "missing",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1067",
+      "directErrorSites": [
+        {
+          "kind": "raise",
+          "line": 1097,
+          "expression": "RuntimeError('Llama model must be created with embedding=True to call this method')"
+        },
+        {
+          "kind": "raise",
+          "line": 1160,
+          "expression": "ValueError(f'Requested tokens ({n_tokens}) exceed batch size of {n_batch}')"
+        }
+      ],
+      "dependencies": [
+        "RuntimeError",
+        "ValueError",
+        "decode_batch",
+        "isinstance",
+        "len",
+        "llama_cpp.llama_perf_context_print",
+        "llama_cpp.llama_perf_context_reset",
+        "s_batch.append",
+        "self._batch.add_sequence",
+        "self._batch.reset",
+        "self._ctx.kv_cache_clear",
+        "self.n_embd",
+        "self.pooling_type",
+        "self.reset",
+        "self.tokenize",
+        "text.encode"
+      ],
+      "orderNotes": "先查询维度/池化，再检查 embeddings；按容量和序列数批处理；仅在成功路径清空 KV 并 reset。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.embed.decode_batch",
+      "line": 1115,
+      "endLine": 1141,
+      "signature": "seq_sizes: List[int]",
+      "decorators": [],
+      "javaTarget": "计划：embedding 解码、池化与输出拷贝",
+      "implementationStatus": "missing",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1115",
+      "directErrorSites": [],
+      "dependencies": [
+        "data.append",
+        "enumerate",
+        "internals.normalize_embedding",
+        "len",
+        "llama_cpp.llama_get_embeddings",
+        "llama_cpp.llama_get_embeddings_seq",
+        "range",
+        "self._batch.reset",
+        "self._ctx.decode",
+        "self._ctx.kv_cache_clear"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama._create_completion",
+      "line": 1195,
+      "endLine": 1813,
+      "signature": "self, prompt: Union[str, List[int]], suffix: Optional[str]=None, max_tokens: Optional[int]=16, temperature: float=0.8, top_p: float=0.95, min_p: float=0.05, typical_p: float=1.0, logprobs: Optional[int]=None, echo: bool=False, stop: Optional[Union[str, List[str]]]=[], frequency_penalty: float=0.0, presence_penalty: float=0.0, repeat_penalty: float=1.0, top_k: int=40, stream: bool=False, seed: Optional[int]=None, tfs_z: float=1.0, mirostat_mode: int=0, mirostat_tau: float=5.0, mirostat_eta: float=0.1, model: Optional[str]=None, stopping_criteria: Optional[StoppingCriteriaList]=None, logits_processor: Optional[LogitsProcessorList]=None, grammar: Optional[LlamaGrammar]=None, logit_bias: Optional[Dict[int, float]]=None",
+      "decorators": [],
+      "javaTarget": "计划：completion 生成、stop/echo/logprobs、缓存和流式 UTF-8",
+      "implementationStatus": "missing",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1195",
+      "directErrorSites": [
+        {
+          "kind": "assert",
+          "line": 1225,
+          "condition": "suffix is None or suffix.__class__ is str",
+          "message": ""
+        },
+        {
+          "kind": "warning",
+          "line": 1314,
+          "expression": "warnings.warn(f'Detected duplicate leading \"{self._model.token_get_text(self.token_bos())}\" in prompt, this will likely reduce response quality, consider removing it...', RuntimeWarning)"
+        },
+        {
+          "kind": "raise",
+          "line": 1345,
+          "expression": "ValueError(f'Requested tokens ({len(prompt_tokens)}) exceed context window of {llama_cpp.llama_n_ctx(self.ctx)}')"
+        },
+        {
+          "kind": "raise",
+          "line": 1366,
+          "expression": "ValueError('logprobs is not supported for models created with logits_all=False')"
+        }
+      ],
+      "dependencies": [
+        "Llama.logits_to_logprobs",
+        "Llama.logits_to_logprobs(logits).tolist",
+        "Llama.longest_token_prefix",
+        "LogitsProcessorList",
+        "ValueError",
+        "all_text.index",
+        "bs.decode",
+        "cache_item.input_ids.tolist",
+        "completion_tokens.append",
+        "enumerate",
+        "float",
+        "int",
+        "isinstance",
+        "last_text[:len(last_text) - (token_end_position - end)].decode",
+        "len",
+        "list",
+        "llama_cpp.llama_n_ctx",
+        "llama_cpp.llama_vocab_is_eog",
+        "logit_bias.items",
+        "logits_processor.extend",
+        "min",
+        "print",
+        "prompt.encode",
+        "random.Random",
+        "random.Random(self._seed).randint",
+        "range",
+        "remaining_text.endswith",
+        "remaining_text.index",
+        "s.encode",
+        "self._ctx.print_timings",
+        "self._ctx.reset_timings",
+        "self._input_ids.tolist",
+        "self._model.add_bos_token",
+        "self._model.add_eos_token",
+        "self._model.token_cls",
+        "self._model.token_get_text",
+        "self._model.token_sep",
+        "self.detokenize",
+        "self.detokenize([i]).decode",
+        "self.detokenize([i], prev_tokens=all_tokens[:idx]).decode",
+        "self.detokenize([token]).decode",
+        "self.detokenize([token], prev_tokens=all_tokens[:i]).decode",
+        "self.detokenize([token], prev_tokens=prompt_tokens + completion_tokens[:returned_tokens]).decode",
+        "self.detokenize(all_tokens[:idx]).decode",
+        "self.detokenize(completion_tokens[:returned_tokens], prev_tokens=prompt_tokens + completion_tokens[:returned_tokens]).decode",
+        "self.generate",
+        "self.load_state",
+        "self.metadata.get",
+        "self.save_state",
+        "self.set_seed",
+        "self.token_bos",
+        "self.token_eos",
+        "self.tokenize",
+        "sorted",
+        "stopping_criteria",
+        "str",
+        "suffix.encode",
+        "text.decode",
+        "text_offsets.append",
+        "time.time",
+        "token_logprobs.append",
+        "tokens.append",
+        "top_logprob.update",
+        "top_logprobs.append",
+        "uuid.uuid4",
+        "warnings.warn",
+        "zip"
+      ],
+      "orderNotes": "校验 suffix、准备 prompt、重复 BOS 警告、bias、上下文上限、stop 编码、logprobs 限制、缓存/生成；异常发生在首次迭代时。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama._create_completion.logit_bias_processor",
+      "line": 1324,
+      "endLine": 1333,
+      "signature": "input_ids: npt.NDArray[np.intc], scores: npt.NDArray[np.single]",
+      "decorators": [],
+      "javaTarget": "计划：logit bias 拷贝、索引与列表扩展语义",
+      "implementationStatus": "missing",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1324",
+      "directErrorSites": [],
+      "dependencies": [
+        "logit_bias_map.items",
+        "np.copy"
+      ],
+      "orderNotes": "复制 scores 再逐键赋值；索引错误和 extend 返回 None 的源码行为均需保留证据。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.create_completion",
+      "line": 1815,
+      "endLine": 1910,
+      "signature": "self, prompt: Union[str, List[int]], suffix: Optional[str]=None, max_tokens: Optional[int]=16, temperature: float=0.8, top_p: float=0.95, min_p: float=0.05, typical_p: float=1.0, logprobs: Optional[int]=None, echo: bool=False, stop: Optional[Union[str, List[str]]]=[], frequency_penalty: float=0.0, presence_penalty: float=0.0, repeat_penalty: float=1.0, top_k: int=40, stream: bool=False, seed: Optional[int]=None, tfs_z: float=1.0, mirostat_mode: int=0, mirostat_tau: float=5.0, mirostat_eta: float=0.1, model: Optional[str]=None, stopping_criteria: Optional[StoppingCriteriaList]=None, logits_processor: Optional[LogitsProcessorList]=None, grammar: Optional[LlamaGrammar]=None, logit_bias: Optional[Dict[int, float]]=None",
+      "decorators": [],
+      "javaTarget": "现有 LlamaContext.generate；计划：完整 completion 参数转发和响应",
+      "implementationStatus": "partial",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1815",
+      "directErrorSites": [],
+      "dependencies": [
+        "next",
+        "self._create_completion"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.__call__",
+      "line": 1912,
+      "endLine": 2002,
+      "signature": "self, prompt: str, suffix: Optional[str]=None, max_tokens: Optional[int]=16, temperature: float=0.8, top_p: float=0.95, min_p: float=0.05, typical_p: float=1.0, logprobs: Optional[int]=None, echo: bool=False, stop: Optional[Union[str, List[str]]]=[], frequency_penalty: float=0.0, presence_penalty: float=0.0, repeat_penalty: float=1.0, top_k: int=40, stream: bool=False, seed: Optional[int]=None, tfs_z: float=1.0, mirostat_mode: int=0, mirostat_tau: float=5.0, mirostat_eta: float=0.1, model: Optional[str]=None, stopping_criteria: Optional[StoppingCriteriaList]=None, logits_processor: Optional[LogitsProcessorList]=None, grammar: Optional[LlamaGrammar]=None, logit_bias: Optional[Dict[int, float]]=None",
+      "decorators": [],
+      "javaTarget": "计划：createCompletion 参数别名",
+      "implementationStatus": "partial",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1912",
+      "directErrorSites": [],
+      "dependencies": [
+        "self.create_completion"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.create_chat_completion",
+      "line": 2004,
+      "endLine": 2105,
+      "signature": "self, messages: List[ChatCompletionRequestMessage], functions: Optional[List[ChatCompletionFunction]]=None, function_call: Optional[ChatCompletionRequestFunctionCall]=None, tools: Optional[List[ChatCompletionTool]]=None, tool_choice: Optional[ChatCompletionToolChoiceOption]=None, temperature: float=0.2, top_p: float=0.95, top_k: int=40, min_p: float=0.05, typical_p: float=1.0, stream: bool=False, stop: Optional[Union[str, List[str]]]=[], seed: Optional[int]=None, response_format: Optional[ChatCompletionRequestResponseFormat]=None, max_tokens: Optional[int]=None, presence_penalty: float=0.0, frequency_penalty: float=0.0, repeat_penalty: float=1.0, tfs_z: float=1.0, mirostat_mode: int=0, mirostat_tau: float=5.0, mirostat_eta: float=0.1, model: Optional[str]=None, logits_processor: Optional[LogitsProcessorList]=None, grammar: Optional[LlamaGrammar]=None, logit_bias: Optional[Dict[int, float]]=None, logprobs: Optional[bool]=None, top_logprobs: Optional[int]=None",
+      "decorators": [],
+      "javaTarget": "现有 ChatSession / PythonChatFormats；计划：chat handler 优先级和参数转发",
+      "implementationStatus": "partial",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2004",
+      "directErrorSites": [],
+      "dependencies": [
+        "handler",
+        "llama_chat_format.get_chat_completion_handler",
+        "self._chat_handlers.get"
+      ],
+      "orderNotes": "优先显式 chat_handler，再查模型内 handler，最后全局 registry；handler 错误原样传播。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.create_chat_completion_openai_v1",
+      "line": 2107,
+      "endLine": 2141,
+      "signature": "self, *args: Any, **kwargs: Any",
+      "decorators": [],
+      "javaTarget": "计划：Java OpenAI 类型 provider，依赖与转换异常策略",
+      "implementationStatus": "missing",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2107",
+      "directErrorSites": [
+        {
+          "kind": "assert",
+          "line": 2129,
+          "condition": "isinstance(stream, bool)",
+          "message": ""
+        },
+        {
+          "kind": "raise",
+          "line": 2138,
+          "expression": "ImportError('To use create_chat_completion_openai_v1, you must install the openai package.You can install it with `pip install openai`.')"
+        }
+      ],
+      "dependencies": [
+        "ChatCompletion",
+        "ChatCompletionChunk",
+        "ImportError",
+        "isinstance",
+        "kwargs.get",
+        "self.create_chat_completion"
+      ],
+      "orderNotes": "import 在 stream bool 检查之前；流式对象转换惰性执行；捕获范围包含同步 create_chat_completion 的 ImportError。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.__getstate__",
+      "line": 2143,
+      "endLine": 2209,
+      "signature": "self",
+      "decorators": [],
+      "javaTarget": "计划：Python 构造配置序列化（区别于推理快照）",
+      "implementationStatus": "missing",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2143",
+      "directErrorSites": [],
+      "dependencies": [
+        "dict"
+      ],
+      "orderNotes": "返回构造配置，包含当前 seed；保留可调用对象引用；不含推理 KV 字节。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.__setstate__",
+      "line": 2211,
+      "endLine": 2212,
+      "signature": "self, state",
+      "decorators": [],
+      "javaTarget": "计划：通过完整构造器重建配置",
+      "implementationStatus": "missing",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2211",
+      "directErrorSites": [],
+      "dependencies": [
+        "self.__init__"
+      ],
+      "orderNotes": "直接调用 __init__(**state)，重跑校验和资源初始化。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.save_state",
+      "line": 2214,
+      "endLine": 2242,
+      "signature": "self",
+      "decorators": [],
+      "javaTarget": "PythonLlama.saveState / PythonLlamaExecution.copyState",
+      "implementationStatus": "missing",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2214",
+      "directErrorSites": [
+        {
+          "kind": "raise",
+          "line": 2227,
+          "expression": "RuntimeError('Failed to copy llama state data')"
+        }
+      ],
+      "dependencies": [
+        "LlamaState",
+        "RuntimeError",
+        "bytes",
+        "ctypes.c_uint8 * int(n_bytes)",
+        "ctypes.c_uint8 * int(state_size)",
+        "int",
+        "llama_cpp.ctypes.memmove",
+        "llama_cpp.llama_state_get_data",
+        "llama_cpp.llama_state_get_size",
+        "print",
+        "self._scores.copy",
+        "self.input_ids.copy"
+      ],
+      "orderNotes": "按原版顺序输出诊断；实际拷贝数可小于分配量；大于分配量抛错；仅复制有效 scores，复制全部 input_ids。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.load_state",
+      "line": 2244,
+      "endLine": 2261,
+      "signature": "self, state: LlamaState",
+      "decorators": [],
+      "javaTarget": "PythonLlama.loadState / PythonLlamaExecution.restoreState",
+      "implementationStatus": "missing",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2244",
+      "directErrorSites": [
+        {
+          "kind": "raise",
+          "line": 2261,
+          "expression": "RuntimeError('Failed to set llama state data')"
+        }
+      ],
+      "dependencies": [
+        "LLamaStateArrayType.from_buffer_copy",
+        "RuntimeError",
+        "llama_cpp.llama_state_set_data",
+        "state.input_ids.copy",
+        "state.scores.copy"
+      ],
+      "orderNotes": "先广播 scores 并清除尾部正数，替换 input_ids/游标/种子，再检查 byte buffer 并恢复原生状态；失败保留已完成修改。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.n_ctx",
+      "line": 2263,
+      "endLine": 2265,
+      "signature": "self",
+      "decorators": [],
+      "javaTarget": "PythonLlama.nCtx",
+      "implementationStatus": "covered",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2263",
+      "directErrorSites": [],
+      "dependencies": [
+        "self._ctx.n_ctx"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.n_embd",
+      "line": 2267,
+      "endLine": 2269,
+      "signature": "self",
+      "decorators": [],
+      "javaTarget": "PythonLlama.nEmbd",
+      "implementationStatus": "covered",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2267",
+      "directErrorSites": [],
+      "dependencies": [
+        "self._model.n_embd"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.n_vocab",
+      "line": 2271,
+      "endLine": 2273,
+      "signature": "self",
+      "decorators": [],
+      "javaTarget": "PythonLlama.nVocab",
+      "implementationStatus": "covered",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2271",
+      "directErrorSites": [],
+      "dependencies": [
+        "self._model.n_vocab"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.tokenizer",
+      "line": 2275,
+      "endLine": 2277,
+      "signature": "self",
+      "decorators": [],
+      "javaTarget": "compat.python.PythonLlama.tokenizer",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-tokenizer-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2275",
+      "directErrorSites": [],
+      "dependencies": [
+        "LlamaTokenizer"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.token_eos",
+      "line": 2279,
+      "endLine": 2281,
+      "signature": "self",
+      "decorators": [],
+      "javaTarget": "PythonLlama.tokenEos",
+      "implementationStatus": "covered",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2279",
+      "directErrorSites": [],
+      "dependencies": [
+        "self._model.token_eos"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.token_bos",
+      "line": 2283,
+      "endLine": 2285,
+      "signature": "self",
+      "decorators": [],
+      "javaTarget": "PythonLlama.tokenBos",
+      "implementationStatus": "covered",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2283",
+      "directErrorSites": [],
+      "dependencies": [
+        "self._model.token_bos"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.token_nl",
+      "line": 2287,
+      "endLine": 2289,
+      "signature": "self",
+      "decorators": [],
+      "javaTarget": "PythonLlama.tokenNl",
+      "implementationStatus": "missing",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2287",
+      "directErrorSites": [],
+      "dependencies": [
+        "self._model.token_nl"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.pooling_type",
+      "line": 2291,
+      "endLine": 2293,
+      "signature": "self",
+      "decorators": [],
+      "javaTarget": "PythonLlama.poolingType（按实际返回 int）",
+      "implementationStatus": "missing",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2291",
+      "directErrorSites": [],
+      "dependencies": [
+        "self._ctx.pooling_type"
+      ],
+      "orderNotes": "源码注解是 str，但函数直接返回 _ctx.pooling_type() 的整数；Java 保留整数值。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.close",
+      "line": 2295,
+      "endLine": 2297,
+      "signature": "self",
+      "decorators": [],
+      "javaTarget": "PythonLlama.close / setCloseAction",
+      "implementationStatus": "partial",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2295",
+      "directErrorSites": [],
+      "dependencies": [
+        "self._stack.close"
+      ],
+      "orderNotes": "ExitStack 消耗清理回调；重复 close 有效，回调失败后的重试也保留已消耗状态。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.__del__",
+      "line": 2299,
+      "endLine": 2300,
+      "signature": "self",
+      "decorators": [],
+      "javaTarget": "AutoCloseable.close；Java 自动清理策略待实现",
+      "implementationStatus": "missing",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2299",
+      "directErrorSites": [],
+      "dependencies": [
+        "self.close"
+      ],
+      "orderNotes": "调用 close；Python 析构期间异常报告由 Python 运行时承担。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.logits_to_logprobs",
+      "line": 2303,
+      "endLine": 2318,
+      "signature": "logits: Union[npt.NDArray[np.single], List], axis: int=-1",
+      "decorators": [
+        "staticmethod"
+      ],
+      "javaTarget": "compat.python.PythonLlama.logitsToLogprobs",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-llama-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2303",
+      "directErrorSites": [],
+      "dependencies": [
+        "np.amax",
+        "np.errstate",
+        "np.exp",
+        "np.isfinite",
+        "np.log",
+        "np.subtract",
+        "np.sum"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.longest_token_prefix",
+      "line": 2321,
+      "endLine": 2328,
+      "signature": "a: Sequence[int], b: Sequence[int]",
+      "decorators": [
+        "staticmethod"
+      ],
+      "javaTarget": "compat.python.PythonTokens.longestTokenPrefix",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-state-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2321",
+      "directErrorSites": [],
+      "dependencies": [
+        "zip"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "Llama.from_pretrained",
+      "line": 2331,
+      "endLine": 2462,
+      "signature": "cls, repo_id: str, filename: Optional[str], additional_files: Optional[List]=None, local_dir: Optional[Union[str, os.PathLike[str]]]=None, local_dir_use_symlinks: Union[bool, Literal['auto']]='auto', cache_dir: Optional[Union[str, os.PathLike[str]]]=None, **kwargs: Any",
+      "decorators": [
+        "classmethod"
+      ],
+      "javaTarget": "现有 ModelDownloader；计划：repo 校验、文件匹配与 Hugging Face provider",
+      "implementationStatus": "partial",
+      "contractEvidence": null,
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2331",
+      "directErrorSites": [
+        {
+          "kind": "raise",
+          "line": 2359,
+          "expression": "ImportError('Llama.from_pretrained requires the huggingface-hub package. You can install it with `pip install huggingface-hub`.')"
+        },
+        {
+          "kind": "raise",
+          "line": 2383,
+          "expression": "ValueError(f'No file found in {repo_id} that match {filename}\\n\\nAvailable Files:\\n{json.dumps(file_list)}')"
+        },
+        {
+          "kind": "raise",
+          "line": 2389,
+          "expression": "ValueError(f'Multiple files found in {repo_id} matching {filename}\\n\\nAvailable Files:\\n{json.dumps(files)}')"
+        },
+        {
+          "kind": "raise",
+          "line": 2419,
+          "expression": "ValueError(f'No file found in {repo_id} that match {additonal_file_name}\\n\\nAvailable Files:\\n{json.dumps(file_list)}')"
+        },
+        {
+          "kind": "raise",
+          "line": 2425,
+          "expression": "ValueError(f'Multiple files found in {repo_id} matching {additonal_file_name}\\n\\nAvailable Files:\\n{json.dumps(files)}')"
+        }
+      ],
+      "dependencies": [
+        "HfFileSystem",
+        "ImportError",
+        "Path",
+        "Path(file).relative_to",
+        "ValueError",
+        "cls",
+        "file_list.append",
+        "fnmatch.fnmatch",
+        "hf_hub_download",
+        "hffs.ls",
+        "isinstance",
+        "json.dumps",
+        "len",
+        "os.path.join",
+        "str",
+        "validate_repo_id"
+      ],
+      "orderNotes": "先导入依赖并校验 repo，再匹配唯一文件；主文件先下载，随后校验/下载附加文件；无 local_dir 时再次取得缓存路径。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "LlamaState.__init__",
+      "line": 2466,
+      "endLine": 2480,
+      "signature": "self, input_ids: npt.NDArray[np.intc], scores: npt.NDArray[np.single], n_tokens: int, llama_state: bytes, llama_state_size: int, seed: int",
+      "decorators": [],
+      "javaTarget": "compat.python.PythonLlamaState",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-state-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2466",
+      "directErrorSites": [],
+      "dependencies": [],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "LogitsProcessorList.__call__",
+      "line": 2489,
+      "endLine": 2494,
+      "signature": "self, input_ids: npt.NDArray[np.intc], scores: npt.NDArray[np.single]",
+      "decorators": [],
+      "javaTarget": "compat.python.PythonLogitsProcessorList.apply",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-state-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2489",
+      "directErrorSites": [],
+      "dependencies": [
+        "processor"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "StoppingCriteriaList.__call__",
+      "line": 2501,
+      "endLine": 2504,
+      "signature": "self, input_ids: npt.NDArray[np.intc], logits: npt.NDArray[np.single]",
+      "decorators": [],
+      "javaTarget": "compat.python.PythonStoppingCriteriaList.test",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-state-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2501",
+      "directErrorSites": [],
+      "dependencies": [
+        "any",
+        "stopping_criteria"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "MinTokensLogitsProcessor.__init__",
+      "line": 2508,
+      "endLine": 2511,
+      "signature": "self, min_tokens: int, token_eos: int",
+      "decorators": [],
+      "javaTarget": "compat.python.PythonMinTokensLogitsProcessor",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-state-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2508",
+      "directErrorSites": [],
+      "dependencies": [],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    },
+    {
+      "function": "MinTokensLogitsProcessor.__call__",
+      "line": 2513,
+      "endLine": 2520,
+      "signature": "self, input_ids: npt.NDArray[np.intc], scores: npt.NDArray[np.single]",
+      "decorators": [],
+      "javaTarget": "compat.python.PythonMinTokensLogitsProcessor.apply",
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-state-contracts.json",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2513",
+      "directErrorSites": [],
+      "dependencies": [
+        "len"
+      ],
+      "orderNotes": "保留参数、返回形态及委托调用；回调、数组/编码、原生操作的隐式错误另按依赖核对。",
+      "errorScope": "显式 raise/assert/warnings.warn 来自 AST；隐式错误需由执行对照和依赖契约验证。"
+    }
+  ]
+}

@@ -9,5 +9,5 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--source-root", type=pathlib.Path, required=True)
 args = parser.parse_args()
 directory = pathlib.Path(__file__).resolve().parent
-for name in ["generate_bridge_contracts.py", "generate_chat_contracts.py", "generate_state_contracts.py"]:
+for name in ["generate_bridge_contracts.py", "generate_chat_contracts.py", "generate_state_contracts.py", "generate_llama_contracts.py", "generate_tokenizer_contracts.py", "generate_execution_contracts.py"]:
     subprocess.run([sys.executable, str(directory / name), "--source-root", str(args.source_root.resolve())], check=True)
