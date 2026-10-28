@@ -178,6 +178,8 @@ for failure in ["decode", "logits", "sample", "stop", "draft"]:
     record(dict(base, kind="generate", draft=[5], stopAfter=8, failure=failure))
 for failure in ["", "close"]: record(dict(base, kind="close", failure=failure))
 
+record(dict(base, kind="generate", cursor=7, tokens=[9], reset=False, draft=[], sends=[None, None], **{"all": False}))
+
 fixture = root / "src/test/resources/python-0.3.36-execution-contracts.tsv"
 fixture.write_text("\n".join(rows) + "\n", encoding="ascii")
 metadata = {"sourceCommit": audit["baseline"]["commit"], "fixtureRuntime": sys.version, "numpyVersion": np.__version__,

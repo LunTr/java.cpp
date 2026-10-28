@@ -9,6 +9,9 @@ public enum PythonErrorType {
   TYPE_ERROR("TypeError", false),
   INDEX_ERROR("IndexError", false),
   ATTRIBUTE_ERROR("AttributeError", false),
+  IMPORT_ERROR("ImportError", false),
+  STOP_ITERATION("StopIteration", false),
+  UNICODE_ENCODE_ERROR("UnicodeEncodeError", false),
   RUNTIME_WARNING("RuntimeWarning", true),
   DEPRECATION_WARNING("DeprecationWarning", true);
 

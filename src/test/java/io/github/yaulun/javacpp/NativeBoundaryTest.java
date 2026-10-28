@@ -31,6 +31,7 @@ class NativeBoundaryTest {
 
   @Test
   void verifiesX64StructLayoutWithoutLoadingLlama() {
+    assertEquals(32, new io.github.yaulun.javacpp.internal.LlamaTokenDataArray().size());
     assertEquals(80, new LlamaModelParams().size());
     assertEquals(168, new LlamaContextParams().size());
     assertEquals(1, new LlamaSamplerChainParams().size());

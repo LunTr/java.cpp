@@ -1,0 +1,8 @@
+{
+  "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
+  "fixtureRuntime": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]",
+  "numpyVersion": "2.4.3",
+  "caseCount": 140,
+  "fixtureSha256": "7950467baed8c4a0470e4f9e1c4d54901cd9b42c58e867689822c07d9d61bbc9",
+  "method": "Execute full original completion and generation functions with deterministic byte tokenizer, decode and sampling ports; preserve stream outputs before errors and warning contents."
+}

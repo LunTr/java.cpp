@@ -48,6 +48,26 @@ public final class Vocab {
     return model.withOpen(() -> library.llama_vocab_nl(handle));
   }
 
+  public int cls() {
+    return model.withOpen(() -> library.llama_vocab_cls(handle));
+  }
+
+  public int sep() {
+    return model.withOpen(() -> library.llama_vocab_sep(handle));
+  }
+
+  public boolean addBos() {
+    return model.withOpen(() -> library.llama_vocab_get_add_bos(handle) != 0);
+  }
+
+  public boolean addEos() {
+    return model.withOpen(() -> library.llama_vocab_get_add_eos(handle) != 0);
+  }
+
+  public String tokenText(int token) {
+    return model.withOpen(() -> library.llama_vocab_get_text(handle, token));
+  }
+
   /** Tests an existing vocabulary token for end-of-generation. */
   public boolean isEog(int token) {
     return model.withOpen(

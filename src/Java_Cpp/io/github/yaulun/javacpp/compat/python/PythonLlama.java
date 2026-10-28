@@ -16,12 +16,12 @@ import java.util.function.Supplier;
  */
 public final class PythonLlama implements AutoCloseable {
   private int[] inputIds;
-  private final float[][] scores;
-  private final int contextLength;
-  private final boolean logitsAll;
-  private final boolean recurrent;
-  private final boolean hybrid;
-  private final Supplier<Runnable> memoryAccess;
+  private float[][] scores;
+  private int contextLength;
+  private boolean logitsAll;
+  private boolean recurrent;
+  private boolean hybrid;
+  private Supplier<Runnable> memoryAccess;
   private int nTokens;
   private boolean requiresEval;
   private BigInteger seed = BigInteger.ZERO;
@@ -30,8 +30,120 @@ public final class PythonLlama implements AutoCloseable {
   private PythonTokenizer activeTokenizer;
   private io.github.yaulun.javacpp.LlamaModel nativeModel;
   private io.github.yaulun.javacpp.LlamaContext nativeContext;
-  private Runnable closeAction = () -> {};
-  private boolean closed;
+  private static final java.lang.ref.Cleaner cleaner = java.lang.ref.Cleaner.create();
+
+  private static final class Cleanup implements Runnable {
+    private Runnable action;
+
+    public void run() {
+      Runnable current = action;
+      action = null;
+      if (current != null) current.run();
+    }
+  }
+
+  private final Cleanup cleanup = new Cleanup();
+  private final java.lang.ref.Cleaner.Cleanable registration = cleaner.register(this, cleanup);
+  private PythonLlamaServices services = new PythonLlamaServices(this);
+  private PythonLlamaConfiguration configuration;
+  private java.util.function.UnaryOperator<int[]> draftModel;
+
+  public static java.util.Map<String, Object> constructorArguments(
+      java.util.Map<String, Object> options) {
+    return PythonLlamaDefaults.bind("__init__", options);
+  }
+
+  public static PythonLlama load(java.util.Map<String, Object> options) {
+    return io.github.yaulun.javacpp.PythonNativeLlama.load(options);
+  }
+
+  public void setConfiguration(PythonLlamaConfiguration value) {
+    configuration = value;
+  }
+
+  public java.util.Map<String, Object> getState() {
+    return configuration.getState();
+  }
+
+  public void setState(java.util.Map<String, Object> state) {
+    configuration.setState(state);
+  }
+
+  public void setDraftModel(java.util.function.UnaryOperator<int[]> value) {
+    draftModel = value;
+  }
+
+  public void replaceBuffers(
+      int[] ids,
+      float[][] logits,
+      int capacity,
+      boolean all,
+      boolean isRecurrent,
+      boolean isHybrid,
+      Supplier<Runnable> memory) {
+    close();
+    inputIds = ids;
+    scores = logits;
+    contextLength = capacity;
+    logitsAll = all;
+    recurrent = isRecurrent;
+    hybrid = isHybrid;
+    memoryAccess = memory;
+    nTokens = 0;
+    requiresEval = true;
+    sampler = null;
+    cache = null;
+    services = new PythonLlamaServices(this);
+  }
+
+  boolean logitsAllEnabled() {
+    return logitsAll;
+  }
+
+  int configuredContextLength() {
+    return contextLength;
+  }
+
+  float[] scoreRow(int index) {
+    int size = sliceEnd(scores.length), row = index < 0 ? size + index : index;
+    if (row < 0 || row >= size)
+      throw PythonValues.error(
+          PythonErrorType.INDEX_ERROR,
+          "index " + index + " is out of bounds for axis 0 with size " + size);
+    return scores[row];
+  }
+
+  void diagnostic(String text) {
+    diagnostics.accept(text);
+  }
+
+  public PythonLlamaServices services() {
+    return services;
+  }
+
+  public Object createCompletion(java.util.Map<String, Object> options) {
+    return services.createCompletion(options);
+  }
+
+  public Object call(java.util.Map<String, Object> options) {
+    return services.call(options);
+  }
+
+  public Object createChatCompletion(java.util.Map<String, Object> options) {
+    return services.createChatCompletion(options);
+  }
+
+  public Object createChatCompletionOpenAiV1(java.util.Map<String, Object> options) {
+    return services.createChatCompletionOpenAiV1(options);
+  }
+
+  public Object embed(java.util.Map<String, Object> options) {
+    return services.embed(options);
+  }
+
+  public java.util.Map<String, Object> createEmbedding(java.util.Map<String, Object> options) {
+    return services.createEmbedding(options);
+  }
 
   /** Attaches caller-owned resources and wires execution and the default tokenizer. */
   public void attachNative(
@@ -40,14 +152,71 @@ public final class PythonLlama implements AutoCloseable {
     nativeContext = Objects.requireNonNull(context);
     setExecution(PythonLlamaExecution.fromContext(context));
     setTokenizerModel(PythonLlamaTokenizer.modelFromVocab(model.vocab()));
+    setSamplingBackend(() -> io.github.yaulun.javacpp.PythonNativeSampling.builder(model, context));
+    services.setEmbeddingBackend(context.embeddingBackend());
+    services.setModelPath(model.info().file().toString());
+    services.setCompletionModel(
+        new PythonCompletionModel() {
+          public int bos() {
+            return model.vocab().bos();
+          }
+
+          public int eos() {
+            return model.vocab().eos();
+          }
+
+          public int cls() {
+            return model.vocab().cls();
+          }
+
+          public int sep() {
+            return model.vocab().sep();
+          }
+
+          public boolean addBos() {
+            return model.vocab().addBos();
+          }
+
+          public boolean addEos() {
+            return model.vocab().addEos();
+          }
+
+          public boolean isEog(int token) {
+            return model.vocab().isEog(token);
+          }
+
+          public String tokenText(int token) {
+            return model.vocab().tokenText(token);
+          }
+
+          public String metadata(String key, String fallback) {
+            return model.metadata(key).orElse(fallback);
+          }
+
+          public int contextLength() {
+            return context.contextLength();
+          }
+
+          public String modelPath() {
+            return model.info().file().toString();
+          }
+
+          public void resetTimings() {
+            context.embeddingBackend().resetTimings();
+          }
+
+          public void printTimings() {
+            context.embeddingBackend().printTimings();
+          }
+        });
   }
 
   public io.github.yaulun.javacpp.LlamaContext ctx() {
-    return Objects.requireNonNull(nativeContext, "Attach native resources first");
+    return nativeContext == null || nativeContext.isClosed() ? null : nativeContext;
   }
 
   public io.github.yaulun.javacpp.LlamaModel model() {
-    return Objects.requireNonNull(nativeModel, "Attach native resources first");
+    return nativeModel == null || nativeModel.isClosed() ? null : nativeModel;
   }
 
   public int nCtx() {
@@ -80,21 +249,105 @@ public final class PythonLlama implements AutoCloseable {
 
   /** Installs caller-chosen ownership cleanup; the action is consumed even when it throws. */
   public void setCloseAction(Runnable action) {
-    if (closed) throw new IllegalStateException("Cleanup already consumed");
-    closeAction = Objects.requireNonNull(action);
+    cleanup.action = action;
   }
 
   @Override
   public void close() {
-    if (!closed) {
-      closed = true;
-      closeAction.run();
-    }
+    cleanup.run();
   }
 
   private PythonLlamaExecution execution;
   private PythonLlamaSampler sampler;
   private Supplier<PythonLlamaSampler> samplerFactory;
+  private Supplier<PythonSamplerBuilder> samplingBackend;
+  private int lastNTokensSize = 64;
+
+  public void setSamplingBackend(Supplier<PythonSamplerBuilder> value) {
+    samplingBackend = value;
+  }
+
+  public void setLastNTokensSize(int value) {
+    lastNTokensSize = value;
+  }
+
+  /** Complete original sampling-chain selection, including ignored legacy options. */
+  public PythonLlamaSampler initSampler(java.util.Map<String, Object> arguments) {
+    var options = PythonLlamaDefaults.bind("_init_sampler", arguments);
+    PythonSamplerBuilder builder = samplingBackend.get();
+    var processors = (PythonLogitsProcessorList) options.get("logits_processor");
+    if (processors != null)
+      builder.add(
+          "custom",
+          (java.util.function.Consumer<float[]>) values -> applyProcessors(processors, values));
+    builder.add(
+        "penalties",
+        scores.length == 0 ? 0 : scores[0].length,
+        lastNTokensSize,
+        options.get("repeat_penalty"),
+        options.get("frequency_penalty"),
+        options.get("presence_penalty"));
+    if (options.get("grammar") != null) builder.add("grammar", options.get("grammar"));
+    double temperature = ((Number) options.get("temp")).doubleValue();
+    int mirostat = ((Number) options.get("mirostat_mode")).intValue();
+    if (temperature < 0) builder.add("dist", seed);
+    else if (temperature == 0) builder.add("greedy");
+    else if (mirostat == 1)
+      builder.add(
+          "mirostat",
+          scores.length == 0 ? 0 : scores[0].length,
+          seed,
+          options.get("mirostat_tau"),
+          options.get("mirostat_eta"),
+          100);
+    else if (mirostat == 2)
+      builder.add("mirostat_v2", seed, options.get("mirostat_tau"), options.get("mirostat_eta"));
+    else {
+      builder.add("top_k", options.get("top_k"));
+      builder.add("typical", options.get("typical_p"), 1);
+      builder.add("top_p", options.get("top_p"), 1);
+      builder.add("min_p", options.get("min_p"), 1);
+      builder.add("temp", options.get("temp"));
+      builder.add("dist", seed);
+    }
+    return builder.build();
+  }
+
+  private void applyProcessors(PythonLogitsProcessorList processors, float[] values) {
+    for (int i = 0; i < processors.size(); i++) {
+      int[] ids = java.util.Arrays.copyOf(inputIds, sliceEnd(inputIds.length));
+      float[] result;
+      try {
+        if (processors.get(i) == null)
+          throw PythonValues.error(PythonErrorType.TYPE_ERROR, "'NoneType' object is not callable");
+        result = processors.get(i).apply(ids, values);
+      } finally {
+        System.arraycopy(ids, 0, inputIds, 0, ids.length);
+      }
+      if (result == null) java.util.Arrays.fill(values, Float.NaN);
+      else if (result.length == 1) java.util.Arrays.fill(values, result[0]);
+      else {
+        if (result.length != values.length)
+          throw broadcast("(" + result.length + ",)", "(" + values.length + ",)");
+        System.arraycopy(result, 0, values, 0, values.length);
+      }
+    }
+  }
+
+  public int sample(java.util.Map<String, Object> options, Integer index) {
+    var parameters = PythonLlamaDefaults.bind("sample", options);
+    parameters.remove("idx");
+    if (index == null && options.get("idx") != null)
+      index = ((Number) options.get("idx")).intValue();
+    PythonErrorBridge.requireEvaluatedTokens(nTokens);
+    boolean temporary = sampler == null;
+    if (temporary) sampler = initSampler(parameters);
+    if (execution == null) throw PythonValues.error(PythonErrorType.ASSERTION_ERROR, "");
+    int token = sampler.sample(index == null ? -1 : index - nTokens);
+    if (temporary) sampler = null;
+    return token;
+  }
+
   private java.util.function.Consumer<String> diagnostics = value -> {};
 
   public void setExecution(PythonLlamaExecution value) {
@@ -130,6 +383,24 @@ public final class PythonLlama implements AutoCloseable {
     return generate(tokens, true, null, null);
   }
 
+  public TokenGenerator generate(int[] tokens, java.util.Map<String, Object> arguments) {
+    var supplied = new java.util.LinkedHashMap<>(arguments);
+    supplied.put("tokens", tokens);
+    var options = PythonLlamaDefaults.bind("generate", supplied);
+    var sampling = new java.util.LinkedHashMap<>(options);
+    sampling.remove("tokens");
+    sampling.remove("reset");
+    sampling.remove("stopping_criteria");
+    var result =
+        new TokenGenerator(
+            tokens,
+            PythonValues.truth(options.get("reset")),
+            (PythonStoppingCriteriaList) options.get("stopping_criteria"),
+            null);
+    result.samplingOptions = sampling;
+    return result;
+  }
+
   /** Explicit send-style generator. A null return represents normal generator exhaustion. */
   public final class TokenGenerator implements AutoCloseable {
     private final int[] prompt;
@@ -142,6 +413,7 @@ public final class PythonLlama implements AutoCloseable {
     private int lastToken;
     private int sampleIndex;
     private java.util.ArrayList<Integer> pending;
+    private java.util.Map<String, Object> samplingOptions;
 
     private TokenGenerator(
         int[] tokens,
@@ -174,9 +446,10 @@ public final class PythonLlama implements AutoCloseable {
     private Integer resume(int[] additional) {
       if (!started) {
         started = true;
-        if (samplerFactory == null)
-          throw new IllegalStateException("Attach a sampler factory first");
-        sampler = samplerFactory.get();
+        sampler =
+            samplingOptions != null
+                ? initSampler(samplingOptions)
+                : samplerFactory != null ? samplerFactory.get() : initSampler(java.util.Map.of());
         pending = new java.util.ArrayList<>();
         for (int token : prompt) pending.add(token);
         boolean reset = resetRequested;
@@ -225,13 +498,21 @@ public final class PythonLlama implements AutoCloseable {
         }
       }
       if (sampleIndex >= nTokens) {
-        if (draft != null) {
+        java.util.function.UnaryOperator<int[]> draftFunction = draft != null ? draft : draftModel;
+        if (draftFunction != null) {
           int start = sliceIndex(nTokens, inputIds.length),
               end = sliceIndex((long) nTokens + pending.size(), inputIds.length);
-          if (end - start != pending.size())
+          if (end - start != pending.size() && pending.size() != 1)
             throw broadcast("(" + pending.size() + ",)", "(" + (end - start) + ",)");
-          for (int i = 0; i < pending.size(); i++) inputIds[start + i] = pending.get(i);
-          int[] proposed = draft.apply(java.util.Arrays.copyOf(inputIds, end));
+          for (int i = start; i < end; i++)
+            inputIds[i] = pending.get(pending.size() == 1 ? 0 : i - start);
+          int[] draftIds = java.util.Arrays.copyOf(inputIds, end);
+          int[] proposed;
+          try {
+            proposed = draftFunction.apply(draftIds);
+          } finally {
+            System.arraycopy(draftIds, 0, inputIds, 0, draftIds.length);
+          }
           int limit = sliceIndex((long) contextLength - nTokens - pending.size(), proposed.length);
           for (int i = 0; i < limit; i++) pending.add(proposed[i]);
         }
@@ -250,9 +531,14 @@ public final class PythonLlama implements AutoCloseable {
                   + (sampleIndex - nTokens)
                   + " is out of bounds for axis 0 with size "
                   + scoreRows);
-        if (stopping.test(
-            java.util.Arrays.copyOf(inputIds, sliceIndex(sampleIndex, inputIds.length)),
-            scores[row])) {
+        int[] stopIds = java.util.Arrays.copyOf(inputIds, sliceIndex(sampleIndex, inputIds.length));
+        boolean stop;
+        try {
+          stop = stopping.test(stopIds, scores[row]);
+        } finally {
+          System.arraycopy(stopIds, 0, inputIds, 0, stopIds.length);
+        }
+        if (stop) {
           ended = true;
           return null;
         }
@@ -305,8 +591,7 @@ public final class PythonLlama implements AutoCloseable {
     PythonErrorBridge.requireEvaluatedTokens(nTokens);
     boolean temporary = sampler == null;
     if (temporary) {
-      if (samplerFactory == null) throw new IllegalStateException("Attach a sampler factory first");
-      sampler = samplerFactory.get();
+      sampler = samplerFactory != null ? samplerFactory.get() : initSampler(java.util.Map.of());
     }
     if (execution == null) throw PythonValues.error(PythonErrorType.ASSERTION_ERROR, "");
     int token = sampler.sample(index == null ? -1 : index - nTokens);

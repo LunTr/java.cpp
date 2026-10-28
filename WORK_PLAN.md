@@ -1,5 +1,9 @@
 # Java.cpp 实施状态
 
+2026-10-29 本轮补充（实现状态待逐项复核后更新机器清单）：新增完整采样策略、custom logits 回调、embedding 批处理、completion 的 stop/echo/logprobs/流式状态机、chat/OpenAI 转发、配置快照/重建及 from_pretrained 离线仓库端口。新增 PythonNativeLlama 构造入口，按 Python 默认值直接设置 C 参数，并接入 LoRA 资源清理、Cleaner 和关闭后的 ctx/model 空值。删除关闭后重新安装清理动作的额外限制，保留已有 draft 空切片修复。
+
+新增固定原版对照：services 235 组、completion 140 组、configuration/repository 74 组，共 449 组；分词器调用轨迹、错误前流式块及随机种子也已核对。补充真实模型采样、embedding、构造、配置重建和 completion 测试。构造流程的完整 Jinja2 语义、动态参数类型转换和初始化中途失败的状态仍需继续核实；当前机器清单继续保留原状态，避免将新增代码直接计为完整一致。
+
 更新：2026-10-28。
 
 用户确认采用现有单工程结构。`src/Java_Cpp` 为封装源码根目录，仅包含必要迁移项；demo 位于 `src/main/java/io/github/yaulun/demo`，测试位于 `src/test/java`。根目录保留唯一 POM，通过 build-helper 添加封装源码根目录。根 JAR 仅打包类库；独立 assembly 生成 demo JAR。
@@ -44,3 +48,7 @@
 ## 测试数据维护规则
 
 测试数据及 Base64 样例文件统一保存在被 `.gitignore` 忽略的 `src/test/resources/`。旧桥接 TSV 已从 Git 索引移除，本地保留。生成脚本、来源、计数及摘要可以提交；根目录 `AGENTS.md` 记录后续规则。清洁检出先按 `tools/python_compat/README.md` 生成六组数据，再执行 Maven 测试；提交前确认 `git ls-files src/test/resources` 输出为空。
+
+2026-10-28 核实补充：全文件 49 项为定义映射，仍有 9 项部分实现和 12 项待实现。发现并修正 generate 的 draft 输入赋值额外长度限制，按 NumPy 保留单元素向空切片广播行为。固定原版执行对照由 206 增至 207 组；新增反例在修改前失败、修改后通过。全函数输入输出一致性仍待继续核实。
+
+2026-10-29 最终核验：补充实现后的完整 verify -Pnative、Google Java Format 和两个 JAR 打包均成功，测试数据 Git 跟踪清单为空。完整日志保留在被忽略的 .tools/llama-supplement-final.log。

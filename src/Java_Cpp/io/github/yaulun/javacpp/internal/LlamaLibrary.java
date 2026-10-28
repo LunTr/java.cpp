@@ -24,6 +24,20 @@ public interface LlamaLibrary extends Library {
 
   void llama_backend_init();
 
+  void llama_numa_init(int strategy);
+
+  long llama_max_devices();
+
+  long llama_max_parallel_sequences();
+
+  byte llama_model_is_recurrent(Pointer model);
+
+  Pointer llama_adapter_lora_init(Pointer model, String path);
+
+  void llama_adapter_lora_free(Pointer adapter);
+
+  int llama_set_adapters_lora(Pointer context, Pointer[] adapters, long count, float[] scales);
+
   byte llama_supports_gpu_offload();
 
   LlamaModelParams.ByValue llama_model_default_params();
@@ -70,6 +84,16 @@ public interface LlamaLibrary extends Library {
 
   int llama_vocab_nl(Pointer vocab);
 
+  int llama_vocab_cls(Pointer vocab);
+
+  int llama_vocab_sep(Pointer vocab);
+
+  byte llama_vocab_get_add_bos(Pointer vocab);
+
+  byte llama_vocab_get_add_eos(Pointer vocab);
+
+  String llama_vocab_get_text(Pointer vocab, int token);
+
   byte llama_vocab_is_eog(Pointer vocab, int token);
 
   int llama_tokenize(
@@ -115,6 +139,14 @@ public interface LlamaLibrary extends Library {
 
   int llama_pooling_type(Pointer context);
 
+  Pointer llama_get_embeddings(Pointer context);
+
+  Pointer llama_get_embeddings_seq(Pointer context, int sequence);
+
+  void llama_perf_context_reset(Pointer context);
+
+  void llama_perf_context_print(Pointer context);
+
   void llama_memory_clear(Pointer memory, byte data);
 
   int llama_memory_seq_pos_max(Pointer memory, int sequence);
@@ -141,6 +173,18 @@ public interface LlamaLibrary extends Library {
       int vocabSize, int lastN, float repeat, float frequency, float presence);
 
   Pointer llama_sampler_init_top_k(int topK);
+
+  Pointer llama_sampler_init_typical(float probability, long minKeep);
+
+  Pointer llama_sampler_init_mirostat(int vocabSize, int seed, float tau, float eta, int m);
+
+  Pointer llama_sampler_init_mirostat_v2(int seed, float tau, float eta);
+
+  Pointer llama_sampler_init_grammar(Pointer vocab, String grammar, String root);
+
+  void llama_sampler_apply(Pointer sampler, LlamaTokenDataArray candidates);
+
+  void llama_sampler_accept(Pointer sampler, int token);
 
   Pointer llama_sampler_init_top_p(float topP, long minKeep);
 

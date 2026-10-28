@@ -1,5 +1,7 @@
 # Python 原版对照数据生成
 
+2026-10-29 新增：generate_llama_defaults.py 从固定源码生成 Java 默认参数表；generate_services_contracts.py、generate_completion_contracts.py、generate_configuration_contracts.py 分别生成 235、140、74 组本地数据。generate_all_contracts.py 已接入四个脚本。数据仍放在被忽略的 src/test/resources，元数据为 docs/python-services-contracts.json、python-completion-contracts.json、python-configuration-contracts.json。
+
 所有测试数据放在 `src/test/resources/`，该目录由 `.gitignore` 忽略。测试输入、预期结果和 Base64 内容只保留本地；生成脚本、来源摘要及样例数量可以提交。维护规则见根目录 `AGENTS.md`。
 
 固定原版为 llama-cpp-python 0.3.36 / `1652066e0af45f2313b339670ef9555e8a54e545`。`--source-root` 指向包含原版 `llama_cpp/` 的目录；25 个文件均须通过 `docs/python-api-audit.json` 中的 SHA-256 / Git blob SHA-1 核验。本机已验证的源码目录为 `.tools/python-api-audit`。

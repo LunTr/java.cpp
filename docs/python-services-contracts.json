@@ -1,0 +1,16 @@
+{
+  "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
+  "fixtureRuntime": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]",
+  "numpyVersion": "2.4.3",
+  "caseCount": 235,
+  "casesByOperation": {
+    "sampling": 48,
+    "embedding": 119,
+    "completion": 16,
+    "call": 16,
+    "chat": 12,
+    "openai": 24
+  },
+  "fixtureSha256": "da340efe96773fbed4dade903d62ca9602650e79350e9738cf70a8d3a1ba9b9b",
+  "method": "Execute complete pinned sampler selection, embedding and forwarding functions; trace native/service ports and errors. Native inference checked separately."
+}

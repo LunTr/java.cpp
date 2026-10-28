@@ -20,9 +20,13 @@ public interface PythonLlamaExecution {
 
   /** Adapts an existing context without taking ownership. */
   static PythonLlamaExecution fromContext(LlamaContext context) {
+    return fromContext(context, context.batchSize());
+  }
+
+  static PythonLlamaExecution fromContext(LlamaContext context, int batchSize) {
     return new PythonLlamaExecution() {
       public int batchSize() {
-        return context.batchSize();
+        return batchSize;
       }
 
       public boolean removeSequence(int position) {

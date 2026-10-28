@@ -25,6 +25,14 @@ public final class PythonErrorBridge {
 
   private PythonErrorBridge() {}
 
+  public static PythonException error(PythonErrorType type, String message) {
+    return PythonValues.error(type, message);
+  }
+
+  public static String pythonString(Object value) {
+    return PythonValues.string(value);
+  }
+
   /** Returns a supported translation; unknown Java failures remain explicitly unmapped. */
   public static Optional<PythonException> translate(Throwable failure, PythonCall call) {
     Objects.requireNonNull(failure, "failure");

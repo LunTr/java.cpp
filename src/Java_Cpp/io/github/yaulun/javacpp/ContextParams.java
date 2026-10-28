@@ -9,6 +9,9 @@ public final class ContextParams {
   private final int threads;
   private final int threadsBatch;
   private final FlashAttention flashAttention;
+  private final boolean embeddings;
+  private final int poolingType;
+  private final int sequenceLimit;
 
   private ContextParams(Builder builder) {
     contextLength = builder.contextLength;
@@ -16,6 +19,9 @@ public final class ContextParams {
     threads = builder.threads;
     threadsBatch = builder.threadsBatch == 0 ? builder.threads : builder.threadsBatch;
     flashAttention = builder.flashAttention;
+    embeddings = builder.embeddings;
+    poolingType = builder.poolingType;
+    sequenceLimit = builder.sequenceLimit;
   }
 
   /** Creates a new builder with documented defaults. */
@@ -53,6 +59,18 @@ public final class ContextParams {
     return flashAttention;
   }
 
+  public boolean embeddings() {
+    return embeddings;
+  }
+
+  public int poolingType() {
+    return poolingType;
+  }
+
+  public int sequenceLimit() {
+    return sequenceLimit;
+  }
+
   /** Returns the physical batch limit, capped at 512 tokens. */
   public int microBatchSize() {
     return Math.min(batchSize, 512);
@@ -70,6 +88,24 @@ public final class ContextParams {
             Math.min(8, Runtime.getRuntime().availableProcessors() / 2));
     private int threadsBatch = 0;
     private FlashAttention flashAttention = FlashAttention.AUTO;
+    private boolean embeddings;
+    private int poolingType = -1;
+    private int sequenceLimit = 1;
+
+    public Builder embeddings(boolean value) {
+      embeddings = value;
+      return this;
+    }
+
+    public Builder poolingType(int value) {
+      poolingType = value;
+      return this;
+    }
+
+    public Builder sequenceLimit(int value) {
+      sequenceLimit = value;
+      return this;
+    }
 
     /** Sets contextLength; default: {@code 4096}. */
     public Builder contextLength(int value) {

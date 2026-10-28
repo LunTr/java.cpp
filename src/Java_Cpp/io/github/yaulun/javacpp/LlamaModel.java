@@ -41,7 +41,7 @@ public final class LlamaModel implements AutoCloseable {
   private final LlamaLibrary.ProgressCallback progressCallback;
   private volatile boolean closed;
 
-  private LlamaModel(
+  LlamaModel(
       LlamaLibrary library,
       Pointer handle,
       Path file,
@@ -147,6 +147,15 @@ public final class LlamaModel implements AutoCloseable {
                 "contextLength exceeds model contextTrain=" + info.contextTrain());
           }
           LlamaContext context = new LlamaContext(this, params);
+          contexts.add(context);
+          return context;
+        });
+  }
+
+  LlamaContext newPythonContext(Map<String, Object> options) {
+    return withOpen(
+        () -> {
+          LlamaContext context = new LlamaContext(this, options);
           contexts.add(context);
           return context;
         });

@@ -1,5 +1,7 @@
 # Java.cpp
 
+2026-10-29 实现补充：已加入 Python 默认采样策略、embedding、completion（stop/echo/logprobs/流式）、chat/OpenAI 转发、配置重建及仓库文件匹配端口；原生入口为 `PythonLlama.load(Map)`。新增 449 组固定原版对照。完整构造/Jinja2 和动态类型错误继续核实，实现状态与待验证范围见 [WORK_PLAN](WORK_PLAN.md)。本轮代码尚未换算为全函数一致性认证。
+
 Java 21 + JNA 5.19.1，直接调用 llama.cpp b11669 C API 的面向对象封装。
 
 工程保留一个根 Maven 项目。`src/Java_Cpp` 只存放必要封装源码，demo 与测试分别放在原工程的主源码和测试目录。原始 `llama.cpp/` 用作头文件与行为参考，构建过程直接使用官方 DLL。

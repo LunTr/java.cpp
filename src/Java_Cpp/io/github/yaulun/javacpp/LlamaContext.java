@@ -26,6 +26,8 @@ public final class LlamaContext implements AutoCloseable {
   private final Pointer batch;
   private final int contextLength;
   private final int batchSize;
+  private final boolean embeddings;
+  private final int sequenceLimit;
   private final ReentrantLock lock = new ReentrantLock();
   private volatile boolean closed;
   private boolean logitsReady;
@@ -33,16 +35,31 @@ public final class LlamaContext implements AutoCloseable {
   private boolean needsClear;
 
   LlamaContext(LlamaModel model, ContextParams params) {
+    this(model, params, null);
+  }
+
+  LlamaContext(LlamaModel model, java.util.Map<String, Object> options) {
+    this(model, ContextParams.defaults(), options);
+  }
+
+  private LlamaContext(
+      LlamaModel model, ContextParams params, java.util.Map<String, Object> options) {
     this.model = model;
     library = model.library();
     LlamaContextParams.ByValue nativeParams = library.llama_context_default_params();
     nativeParams.n_ctx = params.contextLength();
     nativeParams.n_batch = params.batchSize();
     nativeParams.n_ubatch = params.microBatchSize();
-    nativeParams.n_seq_max = 1;
+    nativeParams.n_seq_max = params.sequenceLimit();
+    nativeParams.embeddings = (byte) (params.embeddings() ? 1 : 0);
+    nativeParams.pooling_type = params.poolingType();
+    nativeParams.kv_unified = (byte) (params.embeddings() ? 1 : nativeParams.kv_unified);
     nativeParams.n_threads = params.threads();
     nativeParams.n_threads_batch = params.threadsBatch();
     nativeParams.flash_attn_type = params.flashAttention().nativeValue();
+    if (options != null) PythonNativeLlama.assign(nativeParams, options);
+    embeddings = nativeParams.embeddings != 0;
+    sequenceLimit = nativeParams.n_seq_max;
     handle = library.llama_init_from_model(model.handle(), nativeParams);
     if (handle == null) {
       throw new InferenceException(
@@ -82,6 +99,124 @@ public final class LlamaContext implements AutoCloseable {
   /** Returns the maximum number of tokens accepted by one native batch. */
   public int batchSize() {
     return guarded(() -> batchSize);
+  }
+
+  public boolean embeddingsEnabled() {
+    return guarded(() -> embeddings);
+  }
+
+  public int sequenceLimit() {
+    return guarded(() -> sequenceLimit);
+  }
+
+  public io.github.yaulun.javacpp.compat.python.PythonEmbeddingBackend embeddingBackend() {
+    return new io.github.yaulun.javacpp.compat.python.PythonEmbeddingBackend() {
+      private final java.util.List<int[]> pending = new java.util.ArrayList<>();
+      private int decoded;
+
+      public int dimensions() {
+        return model.info().embedding();
+      }
+
+      public int batchSize() {
+        return LlamaContext.this.batchSize();
+      }
+
+      public int sequenceLimit() {
+        return LlamaContext.this.sequenceLimit();
+      }
+
+      public int poolingType() {
+        return LlamaContext.this.poolingType();
+      }
+
+      public boolean enabled() {
+        return embeddingsEnabled();
+      }
+
+      public void resetTimings() {
+        guarded(
+            () -> {
+              library.llama_perf_context_reset(handle);
+              return null;
+            });
+      }
+
+      public void printTimings() {
+        guarded(
+            () -> {
+              library.llama_perf_context_print(handle);
+              return null;
+            });
+      }
+
+      public void resetBatch() {
+        pending.clear();
+      }
+
+      public void addSequence(int[] tokens, int sequence, boolean outputs) {
+        pending.add(tokens);
+      }
+
+      public void clearMemory() {
+        clear();
+      }
+
+      public void decode() {
+        decoded = pending.stream().mapToInt(a -> a.length).sum();
+        io.github.yaulun.javacpp.compat.python.PythonErrorBridge.run(
+            io.github.yaulun.javacpp.compat.python.PythonCall.decode(),
+            () -> decodeEmbedding(pending));
+      }
+
+      public double[] embeddings() {
+        return guarded(
+            () ->
+                asDoubles(
+                    library.llama_get_embeddings(handle).getFloatArray(0, decoded * dimensions())));
+      }
+
+      public double[] sequenceEmbedding(int sequence) {
+        return guarded(
+            () ->
+                asDoubles(
+                    library
+                        .llama_get_embeddings_seq(handle, sequence)
+                        .getFloatArray(0, dimensions())));
+      }
+    };
+  }
+
+  private static double[] asDoubles(float[] values) {
+    double[] result = new double[values.length];
+    for (int i = 0; i < values.length; i++) result[i] = values[i];
+    return result;
+  }
+
+  private void decodeEmbedding(java.util.List<int[]> sequences) {
+    guarded(
+        () -> {
+          library.llama_batch_ext_clear(batch);
+          int total = 0;
+          for (int seq = 0; seq < sequences.size(); seq++)
+            for (int pos = 0; pos < sequences.get(seq).length; pos++) {
+              int slot = library.llama_batch_ext_add_token(batch, seq, sequences.get(seq)[pos]);
+              library.llama_batch_ext_set_pos(batch, slot, new int[] {pos});
+              library.llama_batch_ext_set_output_logits(batch, slot, (byte) 1);
+              total++;
+            }
+          if (total != 0) {
+            int result = library.llama_process(handle, 1, batch);
+            if (result != 0)
+              throw new InferenceException(
+                  ErrorCode.E303,
+                  "llama_process returned " + result,
+                  NativeLogBridge.instance().recentProblems(),
+                  null,
+                  new NativeFailure("llama_process", result));
+          }
+          return null;
+        });
   }
 
   /** Returns the number of positions currently stored for the single sequence. */
@@ -309,8 +444,43 @@ public final class LlamaContext implements AutoCloseable {
     return model.vocab();
   }
 
+  int samplePolicy(
+      Pointer chain, LlamaModel owner, int index, java.util.function.Consumer<float[]> processor) {
+    return guarded(
+        () -> {
+          if (owner != model)
+            throw new IllegalArgumentException("Sampler belongs to another model");
+          ensureReady();
+          Pointer logits = library.llama_get_logits_ith(handle, index);
+          float[] values = logits.getFloatArray(0, model.vocab().size());
+          if (processor != null) processor.accept(values);
+          try (com.sun.jna.Memory data = new com.sun.jna.Memory((long) values.length * 12)) {
+            for (int i = 0; i < values.length; i++) {
+              data.setInt((long) i * 12, i);
+              data.setFloat((long) i * 12 + 4, values[i]);
+              data.setFloat((long) i * 12 + 8, 0);
+            }
+            var candidates = new io.github.yaulun.javacpp.internal.LlamaTokenDataArray();
+            candidates.data = data;
+            candidates.size = values.length;
+            candidates.selected = -1;
+            library.llama_sampler_apply(chain, candidates);
+            int token = candidates.data.getInt(candidates.selected * 12);
+            library.llama_sampler_accept(chain, token);
+            return token;
+          }
+        });
+  }
+
   private int usedLocked() {
     return Math.max(0, library.llama_memory_seq_pos_max(memory, 0) + 1);
+  }
+
+  int setLora(Pointer adapter, float scale) {
+    return guarded(
+        () ->
+            library.llama_set_adapters_lora(
+                handle, new Pointer[] {adapter}, 1, new float[] {scale}));
   }
 
   private void ensureReady() {

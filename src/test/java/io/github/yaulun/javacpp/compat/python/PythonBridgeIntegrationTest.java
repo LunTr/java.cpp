@@ -100,6 +100,16 @@ class PythonBridgeIntegrationTest {
       assertEquals(prompt.length, context.usedTokens());
       PythonLlamaState saved = state.saveState();
       int token = state.sample();
+      assertEquals(token, state.sample(java.util.Map.of("temp", 0), null));
+      PythonLogitsProcessorList processors = new PythonLogitsProcessorList();
+      processors.add(
+          (ids, logits) -> {
+            java.util.Arrays.fill(logits, Float.NEGATIVE_INFINITY);
+            logits[1] = 0;
+            return logits;
+          });
+      assertEquals(
+          1, state.sample(java.util.Map.of("temp", 0, "logits_processor", processors), null));
       state.eval(new int[] {token});
       assertEquals(prompt.length + 1, state.nTokens());
       state.loadState(saved);
@@ -111,6 +121,126 @@ class PythonBridgeIntegrationTest {
         assertEquals(token, generator.next());
         assertTrue(generator.next() >= 0);
       }
+    }
+  }
+
+  @Test
+  void constructsAndRebuildsWithPythonDefaultsAndRunsCompletion() throws Exception {
+    var options = new java.util.LinkedHashMap<String, Object>();
+    options.put("model_path", modelFile.toString());
+    options.put("n_ctx", 64);
+    options.put("n_batch", 8);
+    options.put("n_threads", 2);
+    options.put("n_threads_batch", 2);
+    options.put("logits_all", true);
+    options.put("seed", 0);
+    options.put("verbose", false);
+    PythonLlama state = PythonLlama.load(options);
+    try (state) {
+      assertEquals(java.math.BigInteger.valueOf(4294967295L), state.seed());
+      var configuration = state.getState();
+      assertEquals(8, configuration.get("n_batch"));
+      assertEquals(8, configuration.get("n_ubatch"));
+      assertEquals(false, configuration.get("vocab_only"));
+      state.setState(configuration);
+      String prompt;
+      try (var input =
+          java.util.Objects.requireNonNull(
+              getClass().getResourceAsStream("/python-0.3.36-tokenizer-contracts.tsv"))) {
+        String line =
+            new String(input.readAllBytes(), StandardCharsets.US_ASCII)
+                .lines()
+                .skip(32)
+                .findFirst()
+                .orElseThrow();
+        var arg =
+            (java.util.Map<?, ?>)
+                PythonContractData.read(
+                    new java.io.DataInputStream(
+                        new java.io.ByteArrayInputStream(
+                            java.util.Base64.getDecoder().decode(line.split("\t")[0]))));
+        prompt = (String) arg.get("text");
+      }
+      var response =
+          (java.util.Map<?, ?>)
+              state.createCompletion(
+                  java.util.Map.of(
+                      "prompt", prompt, "temperature", 0.0, "seed", 0, "max_tokens", 2));
+      assertEquals("text_completion", response.get("object"));
+      var usage = (java.util.Map<?, ?>) response.get("usage");
+      assertTrue(((Number) usage.get("completion_tokens")).intValue() <= 2);
+      var chunks =
+          (java.util.Iterator<?>)
+              state.createCompletion(
+                  java.util.Map.of(
+                      "prompt",
+                      prompt,
+                      "temperature",
+                      0.0,
+                      "seed",
+                      0,
+                      "max_tokens",
+                      2,
+                      "stream",
+                      true));
+      int count = 0;
+      while (chunks.hasNext()) {
+        assertTrue(chunks.next() instanceof java.util.Map<?, ?>);
+        count++;
+      }
+      assertTrue(count >= 1);
+    }
+    org.junit.jupiter.api.Assertions.assertNull(state.ctx());
+    org.junit.jupiter.api.Assertions.assertNull(state.model());
+  }
+
+  @Test
+  void nativeEmbeddingsUseTheSameBatchOrchestration() throws Exception {
+    try (LlamaModel model =
+            PythonErrorBridge.loadModel(modelFile, ModelParams.builder().gpuLayers(0).build());
+        LlamaContext context =
+            model.newContext(
+                ContextParams.builder()
+                    .contextLength(64)
+                    .batchSize(32)
+                    .embeddings(true)
+                    .poolingType(1)
+                    .build())) {
+      PythonLlama state =
+          new PythonLlama(
+              new int[64],
+              new float[32][model.vocab().size()],
+              0,
+              64,
+              false,
+              false,
+              model.info().hybrid(),
+              () -> context::clear);
+      state.attachNative(model, context);
+      String text;
+      try (var input =
+          java.util.Objects.requireNonNull(
+              getClass().getResourceAsStream("/python-0.3.36-tokenizer-contracts.tsv"))) {
+        String line =
+            new String(input.readAllBytes(), StandardCharsets.US_ASCII)
+                .lines()
+                .skip(32)
+                .findFirst()
+                .orElseThrow();
+        var arg =
+            (java.util.Map<?, ?>)
+                PythonContractData.read(
+                    new java.io.DataInputStream(
+                        new java.io.ByteArrayInputStream(
+                            java.util.Base64.getDecoder().decode(line.split("\t")[0]))));
+        text = (String) arg.get("text");
+      }
+      var response = state.createEmbedding(java.util.Map.of("input", text));
+      var data = (java.util.List<?>) response.get("data");
+      var embedding = (java.util.List<?>) ((java.util.Map<?, ?>) data.getFirst()).get("embedding");
+      assertEquals(model.info().embedding(), embedding.size());
+      assertTrue(embedding.stream().allMatch(v -> Double.isFinite(((Number) v).doubleValue())));
+      assertEquals(0, state.nTokens());
     }
   }
 
