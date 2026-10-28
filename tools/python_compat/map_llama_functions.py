@@ -118,6 +118,16 @@ for row in inventory:
     node = definitions[name]
     visitor = DirectVisitor()
     for statement in node.body: visitor.visit(statement)
+    for event in visitor.events:
+        if event["kind"] == "assert": category = "AssertionError"
+        elif event["kind"] == "warning": category = "RuntimeWarning"
+        else:
+            expression = next(n for n in ast.walk(node) if isinstance(n, ast.Raise) and n.lineno == event["line"]).exc
+            category = ast.unparse(expression.func) if isinstance(expression, ast.Call) else "propagated"
+        enumName = {"ValueError": "VALUE_ERROR", "RuntimeError": "RUNTIME_ERROR", "AssertionError": "ASSERTION_ERROR", "RuntimeWarning": "RUNTIME_WARNING"}.get(category)
+        event["pythonCategory"] = category
+        event["javaErrorTarget"] = "PythonException / PythonErrorType." + enumName if enumName else "计划：" + category + " 的依赖/provider 异常桥接"
+        event["translationStatus"] = "executed-contract" if name in {"Llama.sample", "Llama.save_state", "Llama.load_state"} else "bridge-or-planned; see implementationStatus"
     mapping.append({"function": name, "line": node.lineno, "endLine": node.end_lineno,
                     "signature": ast.unparse(node.args), "decorators": [ast.unparse(d) for d in node.decorator_list],
                     "javaTarget": targets.get(name, row["java"]), "implementationStatus": row["status"],
@@ -149,7 +159,7 @@ for row in mapping:
     for event in row["directErrorSites"]:
         expression = event.get("expression", event.get("condition", ""))
         condition = "；触发分支：" + " → ".join(event["guards"]) if event["guards"] else ""
-        parts.append(f"- L{event['line']} / {event['kind']}：`{expression.replace('`', chr(39))}`{condition}\n")
+        parts.append(f"- L{event['line']} / {event['kind']}：`{expression.replace('`', chr(39))}`{condition}；Java：{event['javaErrorTarget']}（{event['translationStatus']}）\n")
     if not row["directErrorSites"]: parts.append("显式异常站点：0；依赖调用及运行时隐式错误继续按该项契约核对。\n")
     parts.append("\n")
 parts.append("## 复现\n\n```powershell\n& E:/soft/Anaconda/python.exe tools/python_compat/map_llama_functions.py --source-root .tools/python-api-audit\n```\n\n机器清单保留完整签名、装饰器、直接调用依赖、错误站点和实现证据，见 [python-llama-mapping.json](python-llama-mapping.json)。求值与状态实现记录见 [执行链路记录](PYTHON_EXECUTION_COMPATIBILITY.md)。\n")
