@@ -168,6 +168,10 @@ class PythonExecutionContractTest {
     llama.setExecution(backend);
     llama.setDiagnostics(logs::add);
     llama.setSeed(new BigInteger((String) arg.get("seed")));
+    llama.setCloseAction(() -> {
+      trace.add(List.of("close"));
+      if (failure.equals("close")) throw PythonValues.error(PythonErrorType.RUNTIME_ERROR, "close failed");
+    });
     llama.setSamplerFactory(
         () -> {
           trace.add(List.of("factory"));
@@ -180,6 +184,11 @@ class PythonExecutionContractTest {
         });
     Object result;
     switch ((String) arg.get("kind")) {
+      case "close" -> {
+        List<Object> events = new ArrayList<>();
+        for (int i=0;i<2;i++) events.add(capture(() -> { llama.close(); return null; }));
+        result = events;
+      }
       case "eval" ->
           result =
               capture(

@@ -22,7 +22,7 @@ for item in audit["baseline"]["files"]:
     data = (args.source_root / item["path"]).read_bytes()
     assert hashlib.sha256(data).hexdigest() == item["sha256"]
     assert hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest() == item["sha"]
-names = {"_input_ids", "_scores", "reset", "eval", "sample", "generate", "save_state", "load_state"}
+names = {"_input_ids", "_scores", "reset", "eval", "sample", "generate", "save_state", "load_state", "close"}
 tree = ast.parse((args.source_root / "llama_cpp/llama.py").read_text(encoding="utf-8"))
 llama = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "Llama")
 llama.body = [n for n in llama.body if isinstance(n, ast.FunctionDef) and n.name in names]
@@ -83,6 +83,11 @@ def run(arg):
     obj._batch = types.SimpleNamespace(set_batch=setBatch)
     obj._init_sampler = factory
     obj._sampler = None
+    obj._stack = contextlib.ExitStack()
+    def cleanup():
+        trace.append(["close"])
+        if arg["failure"] == "close": raise RuntimeError("close failed")
+    obj._stack.callback(cleanup)
 
     def stateSize(ctx): trace.append(["stateSize"]); return arg["size"]
     def stateCopy(ctx, target, size):
@@ -100,6 +105,7 @@ def run(arg):
     with contextlib.redirect_stderr(logs):
         kind = arg["kind"]
         if kind == "eval": result = capture(lambda: obj.eval(arg["tokens"]))
+        elif kind == "close": result = [capture(obj.close), capture(obj.close)]
         elif kind == "sample":
             result = [capture(lambda: obj.sample(idx=arg["index"])) for _ in range(2)]
         elif kind == "save": result = capture(lambda: stateValue(obj.save_state()))
@@ -170,6 +176,7 @@ for draft in [[], [3], [5, 7], [9, 9, 9]]:
         record(dict(base, kind="generate", draft=draft, stopAfter=stop))
 for failure in ["decode", "logits", "sample", "stop", "draft"]:
     record(dict(base, kind="generate", draft=[5], stopAfter=8, failure=failure))
+for failure in ["", "close"]: record(dict(base, kind="close", failure=failure))
 
 fixture = root / "src/test/resources/python-0.3.36-execution-contracts.tsv"
 fixture.write_text("\n".join(rows) + "\n", encoding="ascii")

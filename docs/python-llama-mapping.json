@@ -20,32 +20,62 @@
         {
           "kind": "raise",
           "line": 237,
-          "expression": "ValueError(f'Attempt to split tensors that exceed maximum supported devices. Current LLAMA_MAX_DEVICES={llama_cpp.LLAMA_MAX_DEVICES}')"
+          "expression": "ValueError(f'Attempt to split tensors that exceed maximum supported devices. Current LLAMA_MAX_DEVICES={llama_cpp.LLAMA_MAX_DEVICES}')",
+          "guards": [
+            "self.tensor_split is not None",
+            "len(self.tensor_split) > llama_cpp.LLAMA_MAX_DEVICES"
+          ]
         },
         {
           "kind": "raise",
           "line": 286,
-          "expression": "ValueError(f'Value for {k} is too long: {v}')"
+          "expression": "ValueError(f'Value for {k} is too long: {v}')",
+          "guards": [
+            "kv_overrides is not None",
+            "not (isinstance(v, bool))",
+            "not (isinstance(v, int))",
+            "not (isinstance(v, float))",
+            "isinstance(v, str)",
+            "len(v_bytes) > 128"
+          ]
         },
         {
           "kind": "raise",
           "line": 304,
-          "expression": "ValueError(f'Unknown value type for {k}: {v}')"
+          "expression": "ValueError(f'Unknown value type for {k}: {v}')",
+          "guards": [
+            "kv_overrides is not None",
+            "not (isinstance(v, bool))",
+            "not (isinstance(v, int))",
+            "not (isinstance(v, float))",
+            "not (isinstance(v, str))"
+          ]
         },
         {
           "kind": "raise",
           "line": 384,
-          "expression": "ValueError(f'Model path does not exist: {model_path}')"
+          "expression": "ValueError(f'Model path does not exist: {model_path}')",
+          "guards": [
+            "not os.path.exists(model_path)"
+          ]
         },
         {
           "kind": "raise",
           "line": 442,
-          "expression": "RuntimeError(f'Failed to initialize LoRA adapter from lora path: {self.lora_path}')"
+          "expression": "RuntimeError(f'Failed to initialize LoRA adapter from lora path: {self.lora_path}')",
+          "guards": [
+            "self.lora_path",
+            "self._lora_adapter is None"
+          ]
         },
         {
           "kind": "raise",
           "line": 457,
-          "expression": "RuntimeError(f'Failed to set LoRA adapter from lora path: {self.lora_path}')"
+          "expression": "RuntimeError(f'Failed to set LoRA adapter from lora path: {self.lora_path}')",
+          "guards": [
+            "self.lora_path",
+            "llama_cpp.llama_set_adapters_lora(self._ctx.ctx, adapters, 1, scales)"
+          ]
         }
       ],
       "dependencies": [
@@ -332,8 +362,8 @@
       "signature": "self, tokens: Sequence[int]",
       "decorators": [],
       "javaTarget": "PythonLlama.eval / PythonLlamaExecution",
-      "implementationStatus": "partial",
-      "contractEvidence": null,
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-execution-contracts.json",
       "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L666",
       "directErrorSites": [],
       "dependencies": [
@@ -409,20 +439,22 @@
       "decorators": [],
       "javaTarget": "PythonLlama.sample（采样器工厂注入，完整参数链待连接）",
       "implementationStatus": "partial",
-      "contractEvidence": null,
+      "contractEvidence": "docs/python-execution-contracts.json",
       "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L792",
       "directErrorSites": [
         {
           "kind": "assert",
           "line": 822,
           "condition": "self.n_tokens > 0",
-          "message": ""
+          "message": "",
+          "guards": []
         },
         {
           "kind": "assert",
           "line": 848,
           "condition": "self.ctx is not None",
-          "message": ""
+          "message": "",
+          "guards": []
         }
       ],
       "dependencies": [
@@ -440,7 +472,7 @@
       "decorators": [],
       "javaTarget": "PythonLlama.generate / TokenGenerator.send（状态机已接入，采样策略参数待连接）",
       "implementationStatus": "partial",
-      "contractEvidence": null,
+      "contractEvidence": "docs/python-execution-contracts.json",
       "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L854",
       "directErrorSites": [],
       "dependencies": [
@@ -497,12 +529,18 @@
         {
           "kind": "raise",
           "line": 1097,
-          "expression": "RuntimeError('Llama model must be created with embedding=True to call this method')"
+          "expression": "RuntimeError('Llama model must be created with embedding=True to call this method')",
+          "guards": [
+            "self.context_params.embeddings is False"
+          ]
         },
         {
           "kind": "raise",
           "line": 1160,
-          "expression": "ValueError(f'Requested tokens ({n_tokens}) exceed batch size of {n_batch}')"
+          "expression": "ValueError(f'Requested tokens ({n_tokens}) exceed batch size of {n_batch}')",
+          "guards": [
+            "n_tokens > n_batch"
+          ]
         }
       ],
       "dependencies": [
@@ -567,22 +605,32 @@
           "kind": "assert",
           "line": 1225,
           "condition": "suffix is None or suffix.__class__ is str",
-          "message": ""
+          "message": "",
+          "guards": []
         },
         {
           "kind": "warning",
           "line": 1314,
-          "expression": "warnings.warn(f'Detected duplicate leading \"{self._model.token_get_text(self.token_bos())}\" in prompt, this will likely reduce response quality, consider removing it...', RuntimeWarning)"
+          "expression": "warnings.warn(f'Detected duplicate leading \"{self._model.token_get_text(self.token_bos())}\" in prompt, this will likely reduce response quality, consider removing it...', RuntimeWarning)",
+          "guards": [
+            "prompt_tokens[:2] == [self.token_bos()] * 2"
+          ]
         },
         {
           "kind": "raise",
           "line": 1345,
-          "expression": "ValueError(f'Requested tokens ({len(prompt_tokens)}) exceed context window of {llama_cpp.llama_n_ctx(self.ctx)}')"
+          "expression": "ValueError(f'Requested tokens ({len(prompt_tokens)}) exceed context window of {llama_cpp.llama_n_ctx(self.ctx)}')",
+          "guards": [
+            "len(prompt_tokens) >= self._n_ctx"
+          ]
         },
         {
           "kind": "raise",
           "line": 1366,
-          "expression": "ValueError('logprobs is not supported for models created with logits_all=False')"
+          "expression": "ValueError('logprobs is not supported for models created with logits_all=False')",
+          "guards": [
+            "logprobs is not None and self._logits_all is False"
+          ]
         }
       ],
       "dependencies": [
@@ -744,12 +792,16 @@
           "kind": "assert",
           "line": 2129,
           "condition": "isinstance(stream, bool)",
-          "message": ""
+          "message": "",
+          "guards": []
         },
         {
           "kind": "raise",
           "line": 2138,
-          "expression": "ImportError('To use create_chat_completion_openai_v1, you must install the openai package.You can install it with `pip install openai`.')"
+          "expression": "ImportError('To use create_chat_completion_openai_v1, you must install the openai package.You can install it with `pip install openai`.')",
+          "guards": [
+            "except ImportError"
+          ]
         }
       ],
       "dependencies": [
@@ -804,14 +856,17 @@
       "signature": "self",
       "decorators": [],
       "javaTarget": "PythonLlama.saveState / PythonLlamaExecution.copyState",
-      "implementationStatus": "missing",
-      "contractEvidence": null,
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-execution-contracts.json",
       "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2214",
       "directErrorSites": [
         {
           "kind": "raise",
           "line": 2227,
-          "expression": "RuntimeError('Failed to copy llama state data')"
+          "expression": "RuntimeError('Failed to copy llama state data')",
+          "guards": [
+            "int(n_bytes) > int(state_size)"
+          ]
         }
       ],
       "dependencies": [
@@ -838,14 +893,17 @@
       "signature": "self, state: LlamaState",
       "decorators": [],
       "javaTarget": "PythonLlama.loadState / PythonLlamaExecution.restoreState",
-      "implementationStatus": "missing",
-      "contractEvidence": null,
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-execution-contracts.json",
       "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2244",
       "directErrorSites": [
         {
           "kind": "raise",
           "line": 2261,
-          "expression": "RuntimeError('Failed to set llama state data')"
+          "expression": "RuntimeError('Failed to set llama state data')",
+          "guards": [
+            "llama_cpp.llama_state_set_data(self._ctx.ctx, llama_state, state_size) != state_size"
+          ]
         }
       ],
       "dependencies": [
@@ -967,8 +1025,8 @@
       "signature": "self",
       "decorators": [],
       "javaTarget": "PythonLlama.tokenNl",
-      "implementationStatus": "missing",
-      "contractEvidence": null,
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-execution-contracts.json",
       "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2287",
       "directErrorSites": [],
       "dependencies": [
@@ -984,8 +1042,8 @@
       "signature": "self",
       "decorators": [],
       "javaTarget": "PythonLlama.poolingType（按实际返回 int）",
-      "implementationStatus": "missing",
-      "contractEvidence": null,
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-execution-contracts.json",
       "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2291",
       "directErrorSites": [],
       "dependencies": [
@@ -1001,8 +1059,8 @@
       "signature": "self",
       "decorators": [],
       "javaTarget": "PythonLlama.close / setCloseAction",
-      "implementationStatus": "partial",
-      "contractEvidence": null,
+      "implementationStatus": "covered",
+      "contractEvidence": "docs/python-execution-contracts.json",
       "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2295",
       "directErrorSites": [],
       "dependencies": [
@@ -1088,27 +1146,44 @@
         {
           "kind": "raise",
           "line": 2359,
-          "expression": "ImportError('Llama.from_pretrained requires the huggingface-hub package. You can install it with `pip install huggingface-hub`.')"
+          "expression": "ImportError('Llama.from_pretrained requires the huggingface-hub package. You can install it with `pip install huggingface-hub`.')",
+          "guards": [
+            "except ImportError"
+          ]
         },
         {
           "kind": "raise",
           "line": 2383,
-          "expression": "ValueError(f'No file found in {repo_id} that match {filename}\\n\\nAvailable Files:\\n{json.dumps(file_list)}')"
+          "expression": "ValueError(f'No file found in {repo_id} that match {filename}\\n\\nAvailable Files:\\n{json.dumps(file_list)}')",
+          "guards": [
+            "len(matching_files) == 0"
+          ]
         },
         {
           "kind": "raise",
           "line": 2389,
-          "expression": "ValueError(f'Multiple files found in {repo_id} matching {filename}\\n\\nAvailable Files:\\n{json.dumps(files)}')"
+          "expression": "ValueError(f'Multiple files found in {repo_id} matching {filename}\\n\\nAvailable Files:\\n{json.dumps(files)}')",
+          "guards": [
+            "len(matching_files) > 1"
+          ]
         },
         {
           "kind": "raise",
           "line": 2419,
-          "expression": "ValueError(f'No file found in {repo_id} that match {additonal_file_name}\\n\\nAvailable Files:\\n{json.dumps(file_list)}')"
+          "expression": "ValueError(f'No file found in {repo_id} that match {additonal_file_name}\\n\\nAvailable Files:\\n{json.dumps(file_list)}')",
+          "guards": [
+            "additional_files",
+            "len(matching_additional_files) == 0"
+          ]
         },
         {
           "kind": "raise",
           "line": 2425,
-          "expression": "ValueError(f'Multiple files found in {repo_id} matching {additonal_file_name}\\n\\nAvailable Files:\\n{json.dumps(files)}')"
+          "expression": "ValueError(f'Multiple files found in {repo_id} matching {additonal_file_name}\\n\\nAvailable Files:\\n{json.dumps(files)}')",
+          "guards": [
+            "additional_files",
+            "len(matching_additional_files) > 1"
+          ]
         }
       ],
       "dependencies": [

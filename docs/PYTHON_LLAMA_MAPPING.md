@@ -21,7 +21,7 @@
 | `Llama.set_cache` | compat.python.PythonLlama.setCache | 已有窄范围实现 |
 | `Llama.set_seed` | compat.python.PythonLlama.setSeed | 已有窄范围实现 |
 | `Llama.reset` | compat.python.PythonLlama.reset | 已有窄范围实现 |
-| `Llama.eval` | PythonLlama.eval / PythonLlamaExecution | 部分实现 |
+| `Llama.eval` | PythonLlama.eval / PythonLlamaExecution | 已有窄范围实现 |
 | `Llama._init_sampler` | 计划：完整 Python 采样链构造策略 | 待实现 |
 | `Llama._init_sampler.apply_func` | 计划：采样候选数组与 logits processor 的共享内存适配 | 待实现 |
 | `Llama.sample` | PythonLlama.sample（采样器工厂注入，完整参数链待连接） | 部分实现 |
@@ -37,17 +37,17 @@
 | `Llama.create_chat_completion_openai_v1` | 计划：Java OpenAI 类型 provider，依赖与转换异常策略 | 待实现 |
 | `Llama.__getstate__` | 计划：Python 构造配置序列化（区别于推理快照） | 待实现 |
 | `Llama.__setstate__` | 计划：通过完整构造器重建配置 | 待实现 |
-| `Llama.save_state` | PythonLlama.saveState / PythonLlamaExecution.copyState | 待实现 |
-| `Llama.load_state` | PythonLlama.loadState / PythonLlamaExecution.restoreState | 待实现 |
+| `Llama.save_state` | PythonLlama.saveState / PythonLlamaExecution.copyState | 已有窄范围实现 |
+| `Llama.load_state` | PythonLlama.loadState / PythonLlamaExecution.restoreState | 已有窄范围实现 |
 | `Llama.n_ctx` | PythonLlama.nCtx | 已有窄范围实现 |
 | `Llama.n_embd` | PythonLlama.nEmbd | 已有窄范围实现 |
 | `Llama.n_vocab` | PythonLlama.nVocab | 已有窄范围实现 |
 | `Llama.tokenizer` | compat.python.PythonLlama.tokenizer | 已有窄范围实现 |
 | `Llama.token_eos` | PythonLlama.tokenEos | 已有窄范围实现 |
 | `Llama.token_bos` | PythonLlama.tokenBos | 已有窄范围实现 |
-| `Llama.token_nl` | PythonLlama.tokenNl | 待实现 |
-| `Llama.pooling_type` | PythonLlama.poolingType（按实际返回 int） | 待实现 |
-| `Llama.close` | PythonLlama.close / setCloseAction | 部分实现 |
+| `Llama.token_nl` | PythonLlama.tokenNl | 已有窄范围实现 |
+| `Llama.pooling_type` | PythonLlama.poolingType（按实际返回 int） | 已有窄范围实现 |
+| `Llama.close` | PythonLlama.close / setCloseAction | 已有窄范围实现 |
 | `Llama.__del__` | AutoCloseable.close；Java 自动清理策略待实现 | 待实现 |
 | `Llama.logits_to_logprobs` | compat.python.PythonLlama.logitsToLogprobs | 已有窄范围实现 |
 | `Llama.longest_token_prefix` | compat.python.PythonTokens.longestTokenPrefix | 已有窄范围实现 |
@@ -64,12 +64,12 @@
 
 [固定源码第 60 行](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L60)。按源码顺序处理设备数、kv_overrides、路径、原生资源和 LoRA；参数默认值与 Java 默认值逐项跟踪。
 
-- L237 / raise：`ValueError(f'Attempt to split tensors that exceed maximum supported devices. Current LLAMA_MAX_DEVICES={llama_cpp.LLAMA_MAX_DEVICES}')`
-- L286 / raise：`ValueError(f'Value for {k} is too long: {v}')`
-- L304 / raise：`ValueError(f'Unknown value type for {k}: {v}')`
-- L384 / raise：`ValueError(f'Model path does not exist: {model_path}')`
-- L442 / raise：`RuntimeError(f'Failed to initialize LoRA adapter from lora path: {self.lora_path}')`
-- L457 / raise：`RuntimeError(f'Failed to set LoRA adapter from lora path: {self.lora_path}')`
+- L237 / raise：`ValueError(f'Attempt to split tensors that exceed maximum supported devices. Current LLAMA_MAX_DEVICES={llama_cpp.LLAMA_MAX_DEVICES}')`；触发分支：self.tensor_split is not None → len(self.tensor_split) > llama_cpp.LLAMA_MAX_DEVICES
+- L286 / raise：`ValueError(f'Value for {k} is too long: {v}')`；触发分支：kv_overrides is not None → not (isinstance(v, bool)) → not (isinstance(v, int)) → not (isinstance(v, float)) → isinstance(v, str) → len(v_bytes) > 128
+- L304 / raise：`ValueError(f'Unknown value type for {k}: {v}')`；触发分支：kv_overrides is not None → not (isinstance(v, bool)) → not (isinstance(v, int)) → not (isinstance(v, float)) → not (isinstance(v, str))
+- L384 / raise：`ValueError(f'Model path does not exist: {model_path}')`；触发分支：not os.path.exists(model_path)
+- L442 / raise：`RuntimeError(f'Failed to initialize LoRA adapter from lora path: {self.lora_path}')`；触发分支：self.lora_path → self._lora_adapter is None
+- L457 / raise：`RuntimeError(f'Failed to set LoRA adapter from lora path: {self.lora_path}')`；触发分支：self.lora_path → llama_cpp.llama_set_adapters_lora(self._ctx.ctx, adapters, 1, scales)
 
 ### Llama.__init__.free_lora_adapter
 
@@ -184,8 +184,8 @@
 
 [固定源码第 1067 行](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1067)。先查询维度/池化，再检查 embeddings；按容量和序列数批处理；仅在成功路径清空 KV 并 reset。
 
-- L1097 / raise：`RuntimeError('Llama model must be created with embedding=True to call this method')`
-- L1160 / raise：`ValueError(f'Requested tokens ({n_tokens}) exceed batch size of {n_batch}')`
+- L1097 / raise：`RuntimeError('Llama model must be created with embedding=True to call this method')`；触发分支：self.context_params.embeddings is False
+- L1160 / raise：`ValueError(f'Requested tokens ({n_tokens}) exceed batch size of {n_batch}')`；触发分支：n_tokens > n_batch
 
 ### Llama.embed.decode_batch
 
@@ -198,9 +198,9 @@
 [固定源码第 1195 行](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1195)。校验 suffix、准备 prompt、重复 BOS 警告、bias、上下文上限、stop 编码、logprobs 限制、缓存/生成；异常发生在首次迭代时。
 
 - L1225 / assert：`suffix is None or suffix.__class__ is str`
-- L1314 / warning：`warnings.warn(f'Detected duplicate leading "{self._model.token_get_text(self.token_bos())}" in prompt, this will likely reduce response quality, consider removing it...', RuntimeWarning)`
-- L1345 / raise：`ValueError(f'Requested tokens ({len(prompt_tokens)}) exceed context window of {llama_cpp.llama_n_ctx(self.ctx)}')`
-- L1366 / raise：`ValueError('logprobs is not supported for models created with logits_all=False')`
+- L1314 / warning：`warnings.warn(f'Detected duplicate leading "{self._model.token_get_text(self.token_bos())}" in prompt, this will likely reduce response quality, consider removing it...', RuntimeWarning)`；触发分支：prompt_tokens[:2] == [self.token_bos()] * 2
+- L1345 / raise：`ValueError(f'Requested tokens ({len(prompt_tokens)}) exceed context window of {llama_cpp.llama_n_ctx(self.ctx)}')`；触发分支：len(prompt_tokens) >= self._n_ctx
+- L1366 / raise：`ValueError('logprobs is not supported for models created with logits_all=False')`；触发分支：logprobs is not None and self._logits_all is False
 
 ### Llama._create_completion.logit_bias_processor
 
@@ -231,7 +231,7 @@
 [固定源码第 2107 行](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2107)。import 在 stream bool 检查之前；流式对象转换惰性执行；捕获范围包含同步 create_chat_completion 的 ImportError。
 
 - L2129 / assert：`isinstance(stream, bool)`
-- L2138 / raise：`ImportError('To use create_chat_completion_openai_v1, you must install the openai package.You can install it with 'pip install openai'.')`
+- L2138 / raise：`ImportError('To use create_chat_completion_openai_v1, you must install the openai package.You can install it with 'pip install openai'.')`；触发分支：except ImportError
 
 ### Llama.__getstate__
 
@@ -249,13 +249,13 @@
 
 [固定源码第 2214 行](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2214)。按原版顺序输出诊断；实际拷贝数可小于分配量；大于分配量抛错；仅复制有效 scores，复制全部 input_ids。
 
-- L2227 / raise：`RuntimeError('Failed to copy llama state data')`
+- L2227 / raise：`RuntimeError('Failed to copy llama state data')`；触发分支：int(n_bytes) > int(state_size)
 
 ### Llama.load_state
 
 [固定源码第 2244 行](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2244)。先广播 scores 并清除尾部正数，替换 input_ids/游标/种子，再检查 byte buffer 并恢复原生状态；失败保留已完成修改。
 
-- L2261 / raise：`RuntimeError('Failed to set llama state data')`
+- L2261 / raise：`RuntimeError('Failed to set llama state data')`；触发分支：llama_cpp.llama_state_set_data(self._ctx.ctx, llama_state, state_size) != state_size
 
 ### Llama.n_ctx
 
@@ -333,11 +333,11 @@
 
 [固定源码第 2331 行](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2331)。先导入依赖并校验 repo，再匹配唯一文件；主文件先下载，随后校验/下载附加文件；无 local_dir 时再次取得缓存路径。
 
-- L2359 / raise：`ImportError('Llama.from_pretrained requires the huggingface-hub package. You can install it with 'pip install huggingface-hub'.')`
-- L2383 / raise：`ValueError(f'No file found in {repo_id} that match {filename}\n\nAvailable Files:\n{json.dumps(file_list)}')`
-- L2389 / raise：`ValueError(f'Multiple files found in {repo_id} matching {filename}\n\nAvailable Files:\n{json.dumps(files)}')`
-- L2419 / raise：`ValueError(f'No file found in {repo_id} that match {additonal_file_name}\n\nAvailable Files:\n{json.dumps(file_list)}')`
-- L2425 / raise：`ValueError(f'Multiple files found in {repo_id} matching {additonal_file_name}\n\nAvailable Files:\n{json.dumps(files)}')`
+- L2359 / raise：`ImportError('Llama.from_pretrained requires the huggingface-hub package. You can install it with 'pip install huggingface-hub'.')`；触发分支：except ImportError
+- L2383 / raise：`ValueError(f'No file found in {repo_id} that match {filename}\n\nAvailable Files:\n{json.dumps(file_list)}')`；触发分支：len(matching_files) == 0
+- L2389 / raise：`ValueError(f'Multiple files found in {repo_id} matching {filename}\n\nAvailable Files:\n{json.dumps(files)}')`；触发分支：len(matching_files) > 1
+- L2419 / raise：`ValueError(f'No file found in {repo_id} that match {additonal_file_name}\n\nAvailable Files:\n{json.dumps(file_list)}')`；触发分支：additional_files → len(matching_additional_files) == 0
+- L2425 / raise：`ValueError(f'Multiple files found in {repo_id} matching {additonal_file_name}\n\nAvailable Files:\n{json.dumps(files)}')`；触发分支：additional_files → len(matching_additional_files) > 1
 
 ### LlamaState.__init__
 

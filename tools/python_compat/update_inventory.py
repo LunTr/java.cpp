@@ -132,6 +132,37 @@ for row in audit["functions"]:
                    reason="固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照",
                    contractEvidence="docs/python-tokenizer-contracts.json")
 assert foundTokenizer == set(tokenizerMappings)
+executionContracts = json.loads((root / "docs/python-execution-contracts.json").read_text(encoding="utf-8"))
+executionMappings = {
+    "Llama.eval": "PythonLlama.eval",
+    "Llama.save_state": "PythonLlama.saveState",
+    "Llama.load_state": "PythonLlama.loadState",
+    "Llama.token_nl": "PythonLlama.tokenNl",
+    "Llama.pooling_type": "PythonLlama.poolingType",
+    "Llama.close": "PythonLlama.close",
+}
+queryMappings = {"Llama.n_ctx": "nCtx", "Llama.n_embd": "nEmbd", "Llama.n_vocab": "nVocab",
+                 "Llama.token_eos": "tokenEos", "Llama.token_bos": "tokenBos"}
+nativeAdditions = {"llama_memory_seq_rm", "llama_get_logits_ith", "llama_state_get_size", "llama_state_get_data",
+                   "llama_state_set_data", "llama_pooling_type", "llama_vocab_nl"}
+for row in audit["functions"]:
+    if row["file"] == "llama_cpp/llama.py":
+        name = row["qualname"]
+        if name in executionMappings:
+            row.update(status="covered", checked=True, pythonExactParity="not-certified",
+                       java="compat.python." + executionMappings[name],
+                       reason="原版求值/状态/清理完整函数体已有调用顺序及错误后状态对照；查询使用原生整数返回；Java 使用 intc/single 矩形数组及显式执行端口，全输入一致性继续验收",
+                       contractEvidence="docs/python-execution-contracts.json")
+        elif name in queryMappings:
+            row["java"] = "compat.python.PythonLlama." + queryMappings[name]
+        elif name in ["Llama.sample", "Llama.generate"]:
+            row.update(java="compat.python.PythonLlama." + ("sample" if name.endswith("sample") else "generate"),
+                       reason="已逐句移植并对照执行/采样器工厂注入下的状态机、相对索引、send、停止和草稿分支；完整采样参数链及回调输入视图协议继续连接",
+                       contractEvidence="docs/python-execution-contracts.json")
+    elif row["file"] == "llama_cpp/llama_cpp.py" and row["qualname"] in nativeAdditions:
+        row.update(status="bound", checked=True, java="internal.LlamaLibrary." + row["qualname"],
+                   reason="按固定 b11669 头文件核对 Windows x64 签名，新增求值/状态原生测试已调用；跨 Python vendor revision 的行为继续核对",
+                   pythonExactParity="not-certified", contractEvidence="docs/python-execution-contracts.json")
 states = collections.Counter(row["status"] for row in audit["functions"])
 summary = audit["summary"]
 summary.update(boundCount=states["bound"], coveredCount=states["covered"],
@@ -142,12 +173,15 @@ publicLlama = [row for row in audit["functions"]
                if row["file"] == "llama_cpp/llama.py" and row["qualname"].startswith("Llama.")
                and row["qualname"].count(".") == 1 and not row["qualname"].split(".")[1].startswith("_")]
 summary.update(publicLlamaMembers=len(publicLlama), publicLlamaCovered=sum(row["checked"] for row in publicLlama))
+summary.update(sameNamedNativeBindings=states["bound"] + 2, javaNativeBindingCount=states["bound"] + 2 + 9)
 assert sum(states.values()) == 751
 auditPath.write_text(json.dumps(audit, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 readmePath = root / "README.md"
 readme = readmePath.read_text(encoding="utf-8")
 start, oldList = readme.split("### 全量函数清单", 1)
+start = re.sub(r"Java 已声明其中 \d+ 个同名入口；上下文结构相关 2 项列为部分覆盖，其余 \d+ 项标记绑定完成。",
+               f"Java 已声明其中 {summary['sameNamedNativeBindings']} 个同名入口；上下文结构相关 2 项列为部分覆盖，其余 {states['bound']} 项标记绑定完成。", start)
 start = re.sub(r"高层 `Llama` 有[^\n]*",
                f"高层 `Llama` 有 {summary['publicLlamaMembers']} 个普通公开命名成员（含 4 个属性 getter），其中 {summary['publicLlamaCovered']} 项已有查询或窄范围辅助能力；构造、生成、聊天、分词等继续逐项对照。构造器、`__call__`、析构、私有辅助成员在下表另行完整列出。", start)
 start = re.sub(r"\| 已覆盖独立[^\n]*", f"| 已覆盖独立能力（含聊天、缓存、处理器及 Llama 辅助方法） | {states['covered']} |", start)
@@ -185,7 +219,7 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 
 ### 测试数据管理
 
-`src/test/resources/` 全部由 `.gitignore` 忽略，测试数据及 Base64 样例保留本地。生成脚本、固定来源和小型摘要元数据纳入版本控制。清洁检出后先使用 [生成说明](tools/python_compat/README.md) 恢复五组数据，再执行 Maven 验证；`AGENTS.md` 已记录后续维护规则。
+`src/test/resources/` 全部由 `.gitignore` 忽略，测试数据及 Base64 样例保留本地。生成脚本、固定来源和小型摘要元数据纳入版本控制。清洁检出后先使用 [生成说明](tools/python_compat/README.md) 恢复六组数据，再执行 Maven 验证；`AGENTS.md` 已记录后续维护规则。
 
 """
 parts = ["### 全量函数清单\n\n"]

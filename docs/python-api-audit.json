@@ -242,17 +242,17 @@
     "nestedCount": 49,
     "libraryCount": 712,
     "serverCount": 39,
-    "boundCount": 55,
-    "coveredCount": 79,
-    "checkedCount": 134,
-    "partialCount": 50,
-    "missingCount": 567,
+    "boundCount": 62,
+    "coveredCount": 85,
+    "checkedCount": 147,
+    "partialCount": 48,
+    "missingCount": 556,
     "exactParityCertifiedCount": 0,
-    "sameNamedNativeBindings": 57,
-    "javaNativeBindingCount": 66,
+    "sameNamedNativeBindings": 64,
+    "javaNativeBindingCount": 73,
     "publicLlamaMembers": 31,
-    "publicLlamaCovered": 15,
-    "uncheckedCount": 617
+    "publicLlamaCovered": 21,
+    "uncheckedCount": 604
   },
   "functions": [
     {
@@ -3031,12 +3031,13 @@
       "method": true,
       "async": false,
       "signature": "self, tokens: Sequence[int]",
-      "status": "partial",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "LlamaContext.decode",
-      "reason": "缺少 Python input_ids、scores、logits_all 和增量状态契约",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L666"
+      "java": "compat.python.PythonLlama.eval",
+      "reason": "原版求值/状态/清理完整函数体已有调用顺序及错误后状态对照；查询使用原生整数返回；Java 使用 intc/single 矩形数组及显式执行端口，全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L666",
+      "contractEvidence": "docs/python-execution-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama._init_sampler",
@@ -3091,9 +3092,10 @@
       "status": "partial",
       "checked": false,
       "pythonExactParity": "not-certified",
-      "java": "LlamaContext.sample / Sampler.Builder",
-      "reason": "缺少 typical、mirostat、grammar、logits_processor 等参数",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L792"
+      "java": "compat.python.PythonLlama.sample",
+      "reason": "已逐句移植并对照执行/采样器工厂注入下的状态机、相对索引、send、停止和草稿分支；完整采样参数链及回调输入视图协议继续连接",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L792",
+      "contractEvidence": "docs/python-execution-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.generate",
@@ -3110,9 +3112,10 @@
       "status": "partial",
       "checked": false,
       "pythonExactParity": "not-certified",
-      "java": "LlamaContext.generate",
-      "reason": "Python 为可 send 注入 token 的生成器；Java 为回调和结果对象，停止及重置契约不同",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L854"
+      "java": "compat.python.PythonLlama.generate",
+      "reason": "已逐句移植并对照执行/采样器工厂注入下的状态机、相对索引、send、停止和草稿分支；完整采样参数链及回调输入视图协议继续连接",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L854",
+      "contractEvidence": "docs/python-execution-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.create_embedding",
@@ -3335,12 +3338,13 @@
       "method": true,
       "async": false,
       "signature": "self",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2214"
+      "java": "compat.python.PythonLlama.saveState",
+      "reason": "原版求值/状态/清理完整函数体已有调用顺序及错误后状态对照；查询使用原生整数返回；Java 使用 intc/single 矩形数组及显式执行端口，全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2214",
+      "contractEvidence": "docs/python-execution-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.load_state",
@@ -3354,12 +3358,13 @@
       "method": true,
       "async": false,
       "signature": "self, state: LlamaState",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2244"
+      "java": "compat.python.PythonLlama.loadState",
+      "reason": "原版求值/状态/清理完整函数体已有调用顺序及错误后状态对照；查询使用原生整数返回；Java 使用 intc/single 矩形数组及显式执行端口，全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2244",
+      "contractEvidence": "docs/python-execution-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.n_ctx",
@@ -3376,7 +3381,7 @@
       "status": "covered",
       "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "LlamaContext.contextLength",
+      "java": "compat.python.PythonLlama.nCtx",
       "reason": "查询能力已覆盖；仅对有效且打开的资源确认对应，关闭后行为与跨版本结果未完成 Python 对照验收",
       "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2263"
     },
@@ -3395,7 +3400,7 @@
       "status": "covered",
       "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "LlamaModel.info().embedding",
+      "java": "compat.python.PythonLlama.nEmbd",
       "reason": "查询能力已覆盖；仅对有效且打开的资源确认对应，关闭后行为与跨版本结果未完成 Python 对照验收",
       "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2267"
     },
@@ -3414,7 +3419,7 @@
       "status": "covered",
       "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "Vocab.size",
+      "java": "compat.python.PythonLlama.nVocab",
       "reason": "查询能力已覆盖；仅对有效且打开的资源确认对应，关闭后行为与跨版本结果未完成 Python 对照验收",
       "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2271"
     },
@@ -3453,7 +3458,7 @@
       "status": "covered",
       "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "Vocab.eos",
+      "java": "compat.python.PythonLlama.tokenEos",
       "reason": "查询能力已覆盖；仅对有效且打开的资源确认对应，关闭后行为与跨版本结果未完成 Python 对照验收",
       "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2279"
     },
@@ -3472,7 +3477,7 @@
       "status": "covered",
       "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "Vocab.bos",
+      "java": "compat.python.PythonLlama.tokenBos",
       "reason": "查询能力已覆盖；仅对有效且打开的资源确认对应，关闭后行为与跨版本结果未完成 Python 对照验收",
       "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2283"
     },
@@ -3488,12 +3493,13 @@
       "method": true,
       "async": false,
       "signature": "self",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2287"
+      "java": "compat.python.PythonLlama.tokenNl",
+      "reason": "原版求值/状态/清理完整函数体已有调用顺序及错误后状态对照；查询使用原生整数返回；Java 使用 intc/single 矩形数组及显式执行端口，全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2287",
+      "contractEvidence": "docs/python-execution-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.pooling_type",
@@ -3507,12 +3513,13 @@
       "method": true,
       "async": false,
       "signature": "self",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2291"
+      "java": "compat.python.PythonLlama.poolingType",
+      "reason": "原版求值/状态/清理完整函数体已有调用顺序及错误后状态对照；查询使用原生整数返回；Java 使用 intc/single 矩形数组及显式执行端口，全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2291",
+      "contractEvidence": "docs/python-execution-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.close",
@@ -3526,12 +3533,13 @@
       "method": true,
       "async": false,
       "signature": "self",
-      "status": "partial",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "LlamaModel.close / LlamaContext.close / Sampler.close",
-      "reason": "Java 资源分离且有并发/重入检查；生命周期错误文本有差异",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2295"
+      "java": "compat.python.PythonLlama.close",
+      "reason": "原版求值/状态/清理完整函数体已有调用顺序及错误后状态对照；查询使用原生整数返回；Java 使用 intc/single 矩形数组及显式执行端口，全输入一致性继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2295",
+      "contractEvidence": "docs/python-execution-contracts.json"
     },
     {
       "id": "llama_cpp.llama.Llama.__del__",
@@ -7080,12 +7088,13 @@
       "method": false,
       "async": false,
       "signature": "ctx: llama_context_p, /",
-      "status": "missing",
-      "checked": false,
+      "status": "bound",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1790"
+      "java": "internal.LlamaLibrary.llama_pooling_type",
+      "reason": "按固定 b11669 头文件核对 Windows x64 签名，新增求值/状态原生测试已调用；跨 Python vendor revision 的行为继续核对",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1790",
+      "contractEvidence": "docs/python-execution-contracts.json"
     },
     {
       "id": "llama_cpp.llama_cpp.llama_model_get_vocab",
@@ -7992,12 +8001,13 @@
       "method": false,
       "async": false,
       "signature": "mem: llama_memory_t, seq_id: Union[llama_seq_id, int], p0: Union[llama_pos, int], p1: Union[llama_pos, int], /",
-      "status": "missing",
-      "checked": false,
+      "status": "bound",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L2414"
+      "java": "internal.LlamaLibrary.llama_memory_seq_rm",
+      "reason": "按固定 b11669 头文件核对 Windows x64 签名，新增求值/状态原生测试已调用；跨 Python vendor revision 的行为继续核对",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L2414",
+      "contractEvidence": "docs/python-execution-contracts.json"
     },
     {
       "id": "llama_cpp.llama_cpp.llama_memory_seq_cp",
@@ -8144,12 +8154,13 @@
       "method": false,
       "async": false,
       "signature": "ctx: llama_context_p, /",
-      "status": "missing",
-      "checked": false,
+      "status": "bound",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L2597"
+      "java": "internal.LlamaLibrary.llama_state_get_size",
+      "reason": "按固定 b11669 头文件核对 Windows x64 签名，新增求值/状态原生测试已调用；跨 Python vendor revision 的行为继续核对",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L2597",
+      "contractEvidence": "docs/python-execution-contracts.json"
     },
     {
       "id": "llama_cpp.llama_cpp.llama_get_state_size",
@@ -8183,12 +8194,13 @@
       "method": false,
       "async": false,
       "signature": "ctx: llama_context_p, dst: CtypesArray[ctypes.c_uint8], size: Union[ctypes.c_size_t, int], /",
-      "status": "missing",
-      "checked": false,
+      "status": "bound",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L2636"
+      "java": "internal.LlamaLibrary.llama_state_get_data",
+      "reason": "按固定 b11669 头文件核对 Windows x64 签名，新增求值/状态原生测试已调用；跨 Python vendor revision 的行为继续核对",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L2636",
+      "contractEvidence": "docs/python-execution-contracts.json"
     },
     {
       "id": "llama_cpp.llama_cpp.llama_copy_state_data",
@@ -8222,12 +8234,13 @@
       "method": false,
       "async": false,
       "signature": "ctx: llama_context_p, src: CtypesArray[ctypes.c_uint8], size: Union[ctypes.c_size_t, int], /",
-      "status": "missing",
-      "checked": false,
+      "status": "bound",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L2688"
+      "java": "internal.LlamaLibrary.llama_state_set_data",
+      "reason": "按固定 b11669 头文件核对 Windows x64 签名，新增求值/状态原生测试已调用；跨 Python vendor revision 的行为继续核对",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L2688",
+      "contractEvidence": "docs/python-execution-contracts.json"
     },
     {
       "id": "llama_cpp.llama_cpp.llama_set_state_data",
@@ -9023,12 +9036,13 @@
       "method": false,
       "async": false,
       "signature": "ctx: llama_context_p, i: Union[ctypes.c_int32, int], /",
-      "status": "missing",
-      "checked": false,
+      "status": "bound",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L3545"
+      "java": "internal.LlamaLibrary.llama_get_logits_ith",
+      "reason": "按固定 b11669 头文件核对 Windows x64 签名，新增求值/状态原生测试已调用；跨 Python vendor revision 的行为继续核对",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L3545",
+      "contractEvidence": "docs/python-execution-contracts.json"
     },
     {
       "id": "llama_cpp.llama_cpp.llama_get_embeddings",
@@ -9403,12 +9417,13 @@
       "method": false,
       "async": false,
       "signature": "vocab: llama_vocab_p, /",
-      "status": "missing",
-      "checked": false,
+      "status": "bound",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L3790"
+      "java": "internal.LlamaLibrary.llama_vocab_nl",
+      "reason": "按固定 b11669 头文件核对 Windows x64 签名，新增求值/状态原生测试已调用；跨 Python vendor revision 的行为继续核对",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L3790",
+      "contractEvidence": "docs/python-execution-contracts.json"
     },
     {
       "id": "llama_cpp.llama_cpp.llama_vocab_pad",
