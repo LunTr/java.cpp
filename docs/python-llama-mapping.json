@@ -24,7 +24,10 @@
           "guards": [
             "self.tensor_split is not None",
             "len(self.tensor_split) > llama_cpp.LLAMA_MAX_DEVICES"
-          ]
+          ],
+          "pythonCategory": "ValueError",
+          "javaErrorTarget": "PythonException / PythonErrorType.VALUE_ERROR",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         },
         {
           "kind": "raise",
@@ -37,7 +40,10 @@
             "not (isinstance(v, float))",
             "isinstance(v, str)",
             "len(v_bytes) > 128"
-          ]
+          ],
+          "pythonCategory": "ValueError",
+          "javaErrorTarget": "PythonException / PythonErrorType.VALUE_ERROR",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         },
         {
           "kind": "raise",
@@ -49,7 +55,10 @@
             "not (isinstance(v, int))",
             "not (isinstance(v, float))",
             "not (isinstance(v, str))"
-          ]
+          ],
+          "pythonCategory": "ValueError",
+          "javaErrorTarget": "PythonException / PythonErrorType.VALUE_ERROR",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         },
         {
           "kind": "raise",
@@ -57,7 +66,10 @@
           "expression": "ValueError(f'Model path does not exist: {model_path}')",
           "guards": [
             "not os.path.exists(model_path)"
-          ]
+          ],
+          "pythonCategory": "ValueError",
+          "javaErrorTarget": "PythonException / PythonErrorType.VALUE_ERROR",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         },
         {
           "kind": "raise",
@@ -66,7 +78,10 @@
           "guards": [
             "self.lora_path",
             "self._lora_adapter is None"
-          ]
+          ],
+          "pythonCategory": "RuntimeError",
+          "javaErrorTarget": "PythonException / PythonErrorType.RUNTIME_ERROR",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         },
         {
           "kind": "raise",
@@ -75,7 +90,10 @@
           "guards": [
             "self.lora_path",
             "llama_cpp.llama_set_adapters_lora(self._ctx.ctx, adapters, 1, scales)"
-          ]
+          ],
+          "pythonCategory": "RuntimeError",
+          "javaErrorTarget": "PythonException / PythonErrorType.RUNTIME_ERROR",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         }
       ],
       "dependencies": [
@@ -447,14 +465,20 @@
           "line": 822,
           "condition": "self.n_tokens > 0",
           "message": "",
-          "guards": []
+          "guards": [],
+          "pythonCategory": "AssertionError",
+          "javaErrorTarget": "PythonException / PythonErrorType.ASSERTION_ERROR",
+          "translationStatus": "executed-contract"
         },
         {
           "kind": "assert",
           "line": 848,
           "condition": "self.ctx is not None",
           "message": "",
-          "guards": []
+          "guards": [],
+          "pythonCategory": "AssertionError",
+          "javaErrorTarget": "PythonException / PythonErrorType.ASSERTION_ERROR",
+          "translationStatus": "executed-contract"
         }
       ],
       "dependencies": [
@@ -532,7 +556,10 @@
           "expression": "RuntimeError('Llama model must be created with embedding=True to call this method')",
           "guards": [
             "self.context_params.embeddings is False"
-          ]
+          ],
+          "pythonCategory": "RuntimeError",
+          "javaErrorTarget": "PythonException / PythonErrorType.RUNTIME_ERROR",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         },
         {
           "kind": "raise",
@@ -540,7 +567,10 @@
           "expression": "ValueError(f'Requested tokens ({n_tokens}) exceed batch size of {n_batch}')",
           "guards": [
             "n_tokens > n_batch"
-          ]
+          ],
+          "pythonCategory": "ValueError",
+          "javaErrorTarget": "PythonException / PythonErrorType.VALUE_ERROR",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         }
       ],
       "dependencies": [
@@ -606,7 +636,10 @@
           "line": 1225,
           "condition": "suffix is None or suffix.__class__ is str",
           "message": "",
-          "guards": []
+          "guards": [],
+          "pythonCategory": "AssertionError",
+          "javaErrorTarget": "PythonException / PythonErrorType.ASSERTION_ERROR",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         },
         {
           "kind": "warning",
@@ -614,7 +647,10 @@
           "expression": "warnings.warn(f'Detected duplicate leading \"{self._model.token_get_text(self.token_bos())}\" in prompt, this will likely reduce response quality, consider removing it...', RuntimeWarning)",
           "guards": [
             "prompt_tokens[:2] == [self.token_bos()] * 2"
-          ]
+          ],
+          "pythonCategory": "RuntimeWarning",
+          "javaErrorTarget": "PythonException / PythonErrorType.RUNTIME_WARNING",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         },
         {
           "kind": "raise",
@@ -622,7 +658,10 @@
           "expression": "ValueError(f'Requested tokens ({len(prompt_tokens)}) exceed context window of {llama_cpp.llama_n_ctx(self.ctx)}')",
           "guards": [
             "len(prompt_tokens) >= self._n_ctx"
-          ]
+          ],
+          "pythonCategory": "ValueError",
+          "javaErrorTarget": "PythonException / PythonErrorType.VALUE_ERROR",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         },
         {
           "kind": "raise",
@@ -630,7 +669,10 @@
           "expression": "ValueError('logprobs is not supported for models created with logits_all=False')",
           "guards": [
             "logprobs is not None and self._logits_all is False"
-          ]
+          ],
+          "pythonCategory": "ValueError",
+          "javaErrorTarget": "PythonException / PythonErrorType.VALUE_ERROR",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         }
       ],
       "dependencies": [
@@ -793,7 +835,10 @@
           "line": 2129,
           "condition": "isinstance(stream, bool)",
           "message": "",
-          "guards": []
+          "guards": [],
+          "pythonCategory": "AssertionError",
+          "javaErrorTarget": "PythonException / PythonErrorType.ASSERTION_ERROR",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         },
         {
           "kind": "raise",
@@ -801,7 +846,10 @@
           "expression": "ImportError('To use create_chat_completion_openai_v1, you must install the openai package.You can install it with `pip install openai`.')",
           "guards": [
             "except ImportError"
-          ]
+          ],
+          "pythonCategory": "ImportError",
+          "javaErrorTarget": "计划：ImportError 的依赖/provider 异常桥接",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         }
       ],
       "dependencies": [
@@ -866,7 +914,10 @@
           "expression": "RuntimeError('Failed to copy llama state data')",
           "guards": [
             "int(n_bytes) > int(state_size)"
-          ]
+          ],
+          "pythonCategory": "RuntimeError",
+          "javaErrorTarget": "PythonException / PythonErrorType.RUNTIME_ERROR",
+          "translationStatus": "executed-contract"
         }
       ],
       "dependencies": [
@@ -903,7 +954,10 @@
           "expression": "RuntimeError('Failed to set llama state data')",
           "guards": [
             "llama_cpp.llama_state_set_data(self._ctx.ctx, llama_state, state_size) != state_size"
-          ]
+          ],
+          "pythonCategory": "RuntimeError",
+          "javaErrorTarget": "PythonException / PythonErrorType.RUNTIME_ERROR",
+          "translationStatus": "executed-contract"
         }
       ],
       "dependencies": [
@@ -1149,7 +1203,10 @@
           "expression": "ImportError('Llama.from_pretrained requires the huggingface-hub package. You can install it with `pip install huggingface-hub`.')",
           "guards": [
             "except ImportError"
-          ]
+          ],
+          "pythonCategory": "ImportError",
+          "javaErrorTarget": "计划：ImportError 的依赖/provider 异常桥接",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         },
         {
           "kind": "raise",
@@ -1157,7 +1214,10 @@
           "expression": "ValueError(f'No file found in {repo_id} that match {filename}\\n\\nAvailable Files:\\n{json.dumps(file_list)}')",
           "guards": [
             "len(matching_files) == 0"
-          ]
+          ],
+          "pythonCategory": "ValueError",
+          "javaErrorTarget": "PythonException / PythonErrorType.VALUE_ERROR",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         },
         {
           "kind": "raise",
@@ -1165,7 +1225,10 @@
           "expression": "ValueError(f'Multiple files found in {repo_id} matching {filename}\\n\\nAvailable Files:\\n{json.dumps(files)}')",
           "guards": [
             "len(matching_files) > 1"
-          ]
+          ],
+          "pythonCategory": "ValueError",
+          "javaErrorTarget": "PythonException / PythonErrorType.VALUE_ERROR",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         },
         {
           "kind": "raise",
@@ -1174,7 +1237,10 @@
           "guards": [
             "additional_files",
             "len(matching_additional_files) == 0"
-          ]
+          ],
+          "pythonCategory": "ValueError",
+          "javaErrorTarget": "PythonException / PythonErrorType.VALUE_ERROR",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         },
         {
           "kind": "raise",
@@ -1183,7 +1249,10 @@
           "guards": [
             "additional_files",
             "len(matching_additional_files) > 1"
-          ]
+          ],
+          "pythonCategory": "ValueError",
+          "javaErrorTarget": "PythonException / PythonErrorType.VALUE_ERROR",
+          "translationStatus": "bridge-or-planned; see implementationStatus"
         }
       ],
       "dependencies": [

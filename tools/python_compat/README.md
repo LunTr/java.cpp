@@ -12,7 +12,7 @@
 .\mvnw.cmd verify
 ```
 
-`generate_bridge_contracts.py` 生成错误/警告数据；`generate_chat_contracts.py` 生成静态聊天和 CPython repr 数据；`generate_state_contracts.py` 生成缓存、状态和处理器数据；`generate_llama_contracts.py` 生成首轮 8 项 Llama 状态访问、重置和 log-softmax 数据；`generate_tokenizer_contracts.py` 生成第二轮 8 项分词链路数据。五组数据分别写入 `python-0.3.36-contracts.tsv`、`python-0.3.36-chat-contracts.tsv`、`python-0.3.36-state-contracts.tsv`、`python-0.3.36-llama-contracts.tsv`、`python-0.3.36-tokenizer-contracts.tsv`。生成器执行原版函数体并保留来源核验，预期结果来源为 Python 原版。
+`generate_bridge_contracts.py` 生成错误/警告数据；`generate_chat_contracts.py` 生成静态聊天和 CPython repr 数据；`generate_state_contracts.py` 生成缓存、状态和处理器数据；`generate_llama_contracts.py` 生成首轮 8 项 Llama 状态访问、重置和 log-softmax 数据；`generate_tokenizer_contracts.py` 生成第二轮 8 项分词链路数据；`generate_execution_contracts.py` 生成求值、状态、采样和生成器执行数据。六组数据分别写入 `python-0.3.36-contracts.tsv`、`python-0.3.36-chat-contracts.tsv`、`python-0.3.36-state-contracts.tsv`、`python-0.3.36-llama-contracts.tsv`、`python-0.3.36-tokenizer-contracts.tsv`、`python-0.3.36-execution-contracts.tsv`。生成器执行原版函数体并保留来源核验，预期结果来源为 Python 原版。
 
 单独恢复首轮状态数据：
 
@@ -37,3 +37,14 @@ Python 仅用于维护阶段生成对照数据。Java 类库、打包产物及�
 ```
 
 324 组对照与显式 codec 测试替身说明见 [分词迁移记录](../../docs/PYTHON_TOKENIZER_COMPATIBILITY.md)。原生集成测试复用其中由 Python 产生的 UTF-8 字节作为往返输入。
+
+恢复第三轮执行数据并更新全文件映射：
+
+```powershell
+& E:/soft/Anaconda/python.exe tools/python_compat/generate_execution_contracts.py --source-root .tools/python-api-audit
+& E:/soft/Anaconda/python.exe tools/python_compat/update_inventory.py
+& E:/soft/Anaconda/python.exe tools/python_compat/map_llama_functions.py --source-root .tools/python-api-audit
+.\mvnw.cmd "-Dtest=PythonExecutionContractTest" test
+```
+
+206 组对照比较执行结果、异常消息、错误后的状态和回调时序。map_llama_functions.py 校验 llama.py 的全部 49 个定义项、4 个嵌套函数与 23 处显式异常/警告站点，生成文档和 JSON；其中实现状态来自审计清单。全文件映射在更新 inventory 后生成，详见 [执行链路记录](../../docs/PYTHON_EXECUTION_COMPATIBILITY.md)。

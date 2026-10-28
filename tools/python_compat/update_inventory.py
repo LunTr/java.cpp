@@ -217,6 +217,14 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 
 `PythonLlamaTokenizer.modelFromVocab(model.vocab())` 可接入现有模型；字节反分词保留原版 32 字节 piece 缓冲及 BOS 首空格规则。原生依赖继续锁定 b11669，固定 Python vendor revision 的全模型分词对照列入后续范围。8 项映射、用法和验证结果见 [分词迁移记录](docs/PYTHON_TOKENIZER_COMPATIBILITY.md)。
 
+### llama.py 全文件映射与执行链路（2026-10-28，第三轮）
+
+已为 llama.py 全部 49 个定义项建立 [函数与异常映射](docs/PYTHON_LLAMA_MAPPING.md)，覆盖 4 个嵌套函数和 23 处显式 raise/assert/警告站点。机器清单保存完整签名、Java 去向、触发分支、异常类别、调用依赖和实现状态；计划中的实现继续单独标注。
+
+本轮补齐 eval、save_state、load_state、token_nl、pooling_type 和 close 的窄范围实现，并接入 sample/generate 的执行状态机。{executionContracts['caseCount']} 组固定原版对照核对批处理、数组广播、错误后的状态、诊断顺序、临时采样器引用、前缀复用、send、停止条件和草稿路径；原生测试验证实际模型求值、保存恢复及继续生成。新增 7 项 b11669 C 入口，接口保持 JNA 类型封装。
+
+完整构造参数、采样策略链、embedding、completion/chat handler 全流程、配置重建和通用 from_pretrained 在映射表中列出后续目标及异常要求。sample/generate 的完整参数策略及回调输入视图协议继续标为部分实现。用法、验证与适用范围见 [执行链路记录](docs/PYTHON_EXECUTION_COMPATIBILITY.md)。
+
 ### 测试数据管理
 
 `src/test/resources/` 全部由 `.gitignore` 忽略，测试数据及 Base64 样例保留本地。生成脚本、固定来源和小型摘要元数据纳入版本控制。清洁检出后先使用 [生成说明](tools/python_compat/README.md) 恢复六组数据，再执行 Maven 验证；`AGENTS.md` 已记录后续维护规则。

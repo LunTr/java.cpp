@@ -1,5 +1,11 @@
 # 实现与验证记录
 
+## 2026-10-28：全文件映射与求值状态链路
+
+llama.py 全部 49 个定义项已映射，包含 4 个嵌套函数、23 处显式异常/断言/警告。206 组固定原版对照覆盖 eval、sample、generate、save_state、load_state、close 的调用时序、报错与错误后状态。新增真实模型测试验证实际求值、状态保存恢复、查询及继续生成。
+
+最终完整 `verify -Pnative` 共 **12,359 项通过，0 失败、0 错误、0 跳过**，包含 13 项真实模型测试；格式、公开 API 检查及类库/demo 打包通过。定义集合和错误站点均有 AST 完整性核验。函数实现状态和具体边界见 [全文件映射](PYTHON_LLAMA_MAPPING.md) 与 [执行记录](PYTHON_EXECUTION_COMPATIBILITY.md)。
+
 ## 2026-10-28：第二轮分词链路 8 项迁移
 
 Llama 与 LlamaTokenizer 的分词、反分词、UTF-8 encode/decode 和模型包装器已实现。324 组固定原版契约与 1 项新增真实模型测试通过；完整 `verify -Pnative` 共 **12,152 项通过，0 失败、0 错误、0 跳过**。Google Java Format、公开 API 检查、类库和 demo 打包通过。数据继续保存在被忽略的资源目录。适用范围和重建步骤见 [分词迁移记录](PYTHON_TOKENIZER_COMPATIBILITY.md)。

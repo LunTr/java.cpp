@@ -30,7 +30,8 @@ public interface PythonLlamaExecution {
       }
 
       public void decode(int[] tokens, int position, boolean logitsAll) {
-        PythonErrorBridge.run(PythonCall.decode(), () -> context.evaluateAt(tokens, position, logitsAll));
+        PythonErrorBridge.run(
+            PythonCall.decode(), () -> context.evaluateAt(tokens, position, logitsAll));
       }
 
       public float[][] logits(int rows, int columns) {

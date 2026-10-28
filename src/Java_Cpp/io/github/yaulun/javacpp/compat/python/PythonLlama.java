@@ -9,9 +9,10 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * State, token generation and numerical helpers from Llama in Python 0.3.36. The supplied intc/single
- * arrays remain caller-owned; synchronize access externally. Execution and sampling are explicit
- * ports; the complete Python constructor and completion/chat policies have separate mappings.
+ * State, token generation and numerical helpers from Llama in Python 0.3.36. The supplied
+ * intc/single arrays remain caller-owned; synchronize access externally. Execution and sampling are
+ * explicit ports; the complete Python constructor and completion/chat policies have separate
+ * mappings.
  */
 public final class PythonLlama implements AutoCloseable {
   private int[] inputIds;

@@ -175,23 +175,26 @@ public final class LlamaContext implements AutoCloseable {
         () -> {
           int used = usedLocked();
           boolean removed = library.llama_memory_seq_rm(memory, -1, position, -1) != 0;
-      if (removed && position < used) { logitsReady = false; outputCount = 0; }
+          if (removed && position < used) {
+            logitsReady = false;
+            outputCount = 0;
+          }
           return removed;
         });
   }
 
-  /** Evaluates one explicit-position batch for the Python adapter and copies requested logits. */
+  /** Evaluates one explicit-position batch; outputLogits copies its rows separately. */
   public void evaluateAt(int[] tokens, int position, boolean logitsAll) {
     int[] copy = Objects.requireNonNull(tokens, "tokens").clone();
     guarded(
         () -> {
           ensureReady();
+          if (copy.length == 0) return null;
           validateTokens(copy);
           if (position < 0
               || (long) position + copy.length > contextLength
               || copy.length > batchSize)
             throw new IllegalArgumentException("Explicit batch outside context dimensions");
-          if (copy.length == 0) return null;
           logitsReady = false;
           outputCount = 0;
           library.llama_batch_ext_clear(batch);

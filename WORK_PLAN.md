@@ -31,7 +31,7 @@
 
 ## Python 全量函数复刻进度
 
-用户要求以固定 Python 原版的输出、异常和警告为逐项复刻标准。最新清单为 751 项：55 项同名绑定、79 项独立能力实现、50 项部分覆盖、567 项尚无对应实现。617 项尚未打勾，全输入一致性认证继续为 0 项。
+用户要求以固定 Python 原版的输出、异常和警告为逐项复刻标准。最新清单为 751 项：62 项同名绑定、85 项独立能力实现、48 项部分覆盖、556 项尚无对应实现。604 项尚未打勾，全输入一致性认证继续为 0 项。
 
 静态聊天模块已移植 37 项，本批新增 RAM 缓存、状态和处理器 12 项，分别有 10,376 条及 738 组原版/CPython 对照。完整 `verify -Pnative` 为 11,452 项通过、0 跳过。记录见 `docs/PYTHON_CHAT_COMPATIBILITY.md` 和 `docs/PYTHON_STATE_COMPATIBILITY.md`，生成器位于 `tools/python_compat`。继续工作优先处理同原生 revision 的完整 Python 推理基准、Jinja2/chat handler、生成与缓存复用，并保持机器清单与 README 同步。
 
@@ -39,6 +39,8 @@
 
 2026-10-28 第二轮迁移 Llama/LlamaTokenizer 的 8 项分词接口；324 组原版对照及 1 项新增真实模型测试通过。完整 `verify -Pnative` 为 12,152 项通过，0 跳过，格式和 JAR 打包通过。分词开关、UTF-8 ignore、prev_tokens、自定义分词器和 Vocab 接入见 `docs/PYTHON_TOKENIZER_COMPATIBILITY.md`。
 
+2026-10-28 第三轮按全文件范围建立 llama.py 的 49 项函数与异常映射，包含 4 个嵌套函数、23 处显式异常/断言/警告。新增求值/状态/清理及原生查询，sample/generate 状态机已有工厂注入下的对照，完整参数策略继续列为部分实现。206 组原版对照及新增原生求值、保存恢复、继续生成测试通过；完整 verify -Pnative 为 12,359 项通过，0 跳过。文件内 28 项窄范围实现、9 项部分实现、12 项待实现，具体目标和异常要求见 `docs/PYTHON_LLAMA_MAPPING.md`。映射中的待实现目标保持原计数。
+
 ## 测试数据维护规则
 
-测试数据及 Base64 样例文件统一保存在被 `.gitignore` 忽略的 `src/test/resources/`。旧桥接 TSV 已从 Git 索引移除，本地保留。生成脚本、来源、计数及摘要可以提交；根目录 `AGENTS.md` 记录后续规则。清洁检出先按 `tools/python_compat/README.md` 生成五组数据，再执行 Maven 测试；提交前确认 `git ls-files src/test/resources` 输出为空。
+测试数据及 Base64 样例文件统一保存在被 `.gitignore` 忽略的 `src/test/resources/`。旧桥接 TSV 已从 Git 索引移除，本地保留。生成脚本、来源、计数及摘要可以提交；根目录 `AGENTS.md` 记录后续规则。清洁检出先按 `tools/python_compat/README.md` 生成六组数据，再执行 Maven 测试；提交前确认 `git ls-files src/test/resources` 输出为空。
