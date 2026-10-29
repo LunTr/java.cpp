@@ -77,6 +77,7 @@ class PythonConfigurationContractTest {
               });
       return dict("result", result, "restored", restored, "trace", trace);
     }
+    List<Map<String, Object>> requests = new ArrayList<>();
     PythonPretrained.Repository repository =
         !(boolean) arg.get("installed")
             ? null
@@ -91,6 +92,7 @@ class PythonConfigurationContractTest {
               }
 
               public String download(Map<String, Object> args) {
+                requests.add(args);
                 trace.add(List.of("download", new LinkedHashMap<>(args)));
                 return "cached.gguf";
               }
@@ -105,6 +107,12 @@ class PythonConfigurationContractTest {
                       trace.add(List.of("construct", options));
                       return options;
                     }));
-    return dict("result", result, "trace", trace);
+    return dict(
+        "result",
+        result,
+        "trace",
+        trace,
+        "requestFlags",
+        requests.stream().map(request -> request.containsKey("local_files_only")).toList());
   }
 }

@@ -35,7 +35,14 @@ public final class PythonPretrained {
     List<String> files = new ArrayList<>(), relative = new ArrayList<>();
     for (Object item : repository.files(repo))
       files.add((String) (item instanceof Map<?, ?> map ? get(map, "name") : item));
-    for (String file : files) relative.add(Path.of(repo).relativize(Path.of(file)).toString());
+    for (String file : files) {
+      Path base = Path.of(repo), target = Path.of(file);
+      if (!target.startsWith(base))
+        throw error(
+            PythonErrorType.VALUE_ERROR,
+            repr(target.toString()) + " is not in the subpath of " + repr(base.toString()));
+      relative.add(base.relativize(target).toString());
+    }
     String matched = match(repo, options.get("filename"), relative, files);
     Path path = Path.of(matched);
     String filename = path.getFileName().toString();
@@ -75,8 +82,9 @@ public final class PythonPretrained {
       }
     String model;
     if (options.get("local_dir") == null) {
-      download.put("local_files_only", true);
-      model = repository.download(download);
+      var cachedRequest = new LinkedHashMap<>(download);
+      cachedRequest.put("local_files_only", true);
+      model = repository.download(cachedRequest);
     } else model = Path.of(options.get("local_dir").toString(), filename).toString();
     var kwargs = new LinkedHashMap<>(supplied);
     for (String name :
@@ -135,16 +143,62 @@ public final class PythonPretrained {
       if (c == '*') result.append(".*");
       else if (c == '?') result.append('.');
       else if (c == '[') {
-        int end = pattern.indexOf(']', i + 1);
+        int first = i + 1;
+        if (first < pattern.length() && pattern.charAt(first) == '!') first++;
+        if (first < pattern.length() && pattern.charAt(first) == ']') first++;
+        int end = pattern.indexOf(']', first);
         if (end < 0) result.append("\\[");
         else {
           String range = pattern.substring(i + 1, end);
+          if (range.indexOf('-') >= 0) {
+            List<String> chunks = new ArrayList<>();
+            int begin = i + 1, k = begin + (range.startsWith("!") ? 2 : 1);
+            while (true) {
+              k = pattern.indexOf('-', k);
+              if (k < 0 || k >= end) break;
+              chunks.add(pattern.substring(begin, k));
+              begin = k + 1;
+              k += 3;
+            }
+            String last = pattern.substring(begin, end);
+            if (!last.isEmpty()) chunks.add(last);
+            else chunks.set(chunks.size() - 1, chunks.getLast() + "-");
+            for (int n = chunks.size() - 1; n > 0; n--) {
+              String left = chunks.get(n - 1), right = chunks.get(n);
+              if (left.codePointBefore(left.length()) > right.codePointAt(0)) {
+                chunks.set(
+                    n - 1,
+                    left.substring(0, left.offsetByCodePoints(left.length(), -1))
+                        + right.substring(right.offsetByCodePoints(0, 1)));
+                chunks.remove(n);
+              }
+            }
+            List<String> encoded = new ArrayList<>();
+            for (String chunk : chunks)
+              encoded.add(chunk.replace("\\", "\\\\").replace("-", "\\-"));
+            range = String.join("-", encoded);
+          } else range = range.replace("\\", "\\\\");
+          if (range.isEmpty()) {
+            result.append("(?!)");
+            i = end;
+            continue;
+          }
+          if (range.equals("!")) {
+            result.append('.');
+            i = end;
+            continue;
+          }
           result.append('[');
           if (range.startsWith("!")) {
             result.append('^');
             range = range.substring(1);
           } else if (range.startsWith("^")) result.append("\\");
-          result.append(range.replace("\\", "\\\\")).append(']');
+          for (char value : range.toCharArray()) {
+            if (value == '[' || value == ']' || value == '&' || value == '~' || value == '|')
+              result.append('\\');
+            result.append(value);
+          }
+          result.append(']');
           i = end;
         }
       } else result.append(Pattern.quote(String.valueOf(c)));

@@ -163,7 +163,62 @@ for row in audit["functions"]:
         row.update(status="bound", checked=True, java="internal.LlamaLibrary." + row["qualname"],
                    reason="按固定 b11669 头文件核对 Windows x64 签名，新增求值/状态原生测试已调用；跨 Python vendor revision 的行为继续核对",
                    pythonExactParity="not-certified", contractEvidence="docs/python-execution-contracts.json")
+supplementCounts = {name: json.loads((root / f"docs/python-{name}-contracts.json").read_text(encoding="utf-8"))["caseCount"]
+                    for name in ("services", "completion", "configuration")}
+supplements = {
+    "Llama._init_sampler": ("covered", "PythonLlama.initSampler", "services"),
+    "Llama._init_sampler.apply_func": ("covered", "PythonLlama.applyProcessors", "services"),
+    "Llama.create_embedding": ("covered", "PythonLlamaServices.createEmbedding", "services"),
+    "Llama.embed": ("covered", "PythonLlamaServices.embed", "services"),
+    "Llama.embed.decode_batch": ("covered", "PythonLlamaServices.decodeEmbedding", "services"),
+    "Llama._create_completion": ("partial", "PythonCompletion", "completion"),
+    "Llama._create_completion.logit_bias_processor": ("partial", "PythonCompletion.logitBias", "completion"),
+    "Llama.create_completion": ("covered", "PythonLlamaServices.createCompletion", "services"),
+    "Llama.__call__": ("covered", "PythonLlamaServices.call", "services"),
+    "Llama.create_chat_completion": ("covered", "PythonLlamaServices.createChatCompletion", "services"),
+    "Llama.create_chat_completion_openai_v1": ("covered", "PythonLlamaServices.createChatCompletionOpenAiV1", "services"),
+    "Llama.__getstate__": ("covered", "PythonLlamaConfiguration.getState", "configuration"),
+    "Llama.__setstate__": ("partial", "PythonLlamaConfiguration.setState", "configuration"),
+    "Llama.from_pretrained": ("covered", "PythonPretrained.fromPretrained", "configuration"),
+}
+for row in audit["functions"]:
+    if row["file"] != "llama_cpp/llama.py": continue
+    name = row["qualname"]
+    if name in supplements:
+        status, target, evidence = supplements[name]
+        row.update(status=status, checked=status == "covered", java="compat.python." + target,
+                   pythonExactParity="not-certified", contractEvidence=f"docs/python-{evidence}-contracts.json",
+                   reason="已实现并执行固定原版完整函数体对照；covered 仅指已测端口/类型范围的能力，partial 保留缓存时序、动态类型、完整 provider 或初始化失败状态的后续核实；全行为一致性未认证")
+    elif name == "Llama.__init__":
+        row.update(java="PythonNativeLlama.load / compat.python.PythonLlama.load",
+                   reason="原生构造、Python 默认参数、LoRA 和配置重建已实现并有模型测试；完整 Jinja2、动态参数转换及初始化失败状态继续核实")
+    elif name in {"Llama.__init__.free_lora_adapter", "Llama.__del__"}:
+        row.update(status="partial", checked=False, java="compat.python.PythonLlamaResource.free" if name.endswith("free_lora_adapter") else "compat.python.PythonLlama.close / Cleaner",
+                   reason="已有资源清理实现；完整原版释放失败路径及自动析构时序待逐项对照", pythonExactParity="not-certified")
+    elif name in {"Llama.sample", "Llama.generate"}:
+        row["reason"] = "完整采样参数入口和状态机已接入；原版执行对照及原生测试已通过；动态类型和回调共享视图语义继续核实"
+declared = {line.split("(")[0].split()[-1] for line in (root / "src/Java_Cpp/io/github/yaulun/javacpp/internal/LlamaLibrary.java").read_text(encoding="utf-8").splitlines() if " llama_" in line and "(" in line}
+for row in audit["functions"]:
+    if row["file"] == "llama_cpp/llama_cpp.py" and row["qualname"] in declared and row["status"] == "missing":
+        row.update(status="bound", checked=True, java="internal.LlamaLibrary." + row["qualname"],
+                   reason="已声明 b11669 Windows x64 JNA 入口，完整 native verify 已验证加载；Python vendor 同版本行为对照继续核实", pythonExactParity="not-certified")
+for row in audit["functions"]:
+    if row["file"] != "llama_cpp/llama_cache.py": continue
+    owner, method = row["qualname"].split(".")
+    methods = {"__init__": "<init>", "cache_size": "cacheSize",
+               "_find_longest_prefix_key": "findLongestPrefixKey", "__getitem__": "get",
+               "__contains__": "contains", "__setitem__": "put"}
+    if owner == "BaseLlamaCache":
+        status = "covered" if method in {"__init__", "_find_longest_prefix_key"} else "partial"
+        row.update(status=status, checked=status == "covered", java="compat.python.PythonLlamaCache." + methods[method],
+                   pythonExactParity="not-certified", contractEvidence="docs/python-cache-contracts.json",
+                   reason="构造及空前缀方法已有固定原版对照；4 个 Python abstractmethod 以 Java abstract 声明，显式调用原版基类抛错方法体及动态 ABC 实例化规则待迁移")
+    elif owner == "LlamaDiskCache":
+        row.update(status="partial", checked=False, java="compat.python.PythonLlamaDiskCache." + methods[method],
+                   pythonExactParity="not-certified", contractEvidence="docs/python-cache-contracts.json",
+                   reason="6 项完整控制流程已有固定原版存储端口对照，包含 pop 删除、日志分片、失败后状态及淘汰时序；实际 diskcache SQLite 体积、键排序、pickle 存储及动态类型继续核实")
 states = collections.Counter(row["status"] for row in audit["functions"])
+llamaStates = collections.Counter(row["status"] for row in audit["functions"] if row["file"] == "llama_cpp/llama.py")
 summary = audit["summary"]
 summary.update(boundCount=states["bound"], coveredCount=states["covered"],
                checkedCount=states["bound"] + states["covered"], partialCount=states["partial"],
@@ -185,6 +240,7 @@ start = re.sub(r"Java 已声明其中 \d+ 个同名入口；上下文结构相�
 start = re.sub(r"高层 `Llama` 有[^\n]*",
                f"高层 `Llama` 有 {summary['publicLlamaMembers']} 个普通公开命名成员（含 4 个属性 getter），其中 {summary['publicLlamaCovered']} 项已有查询或窄范围辅助能力；构造、生成、聊天、分词等继续逐项对照。构造器、`__call__`、析构、私有辅助成员在下表另行完整列出。", start)
 start = re.sub(r"\| 已覆盖独立[^\n]*", f"| 已覆盖独立能力（含聊天、缓存、处理器及 Llama 辅助方法） | {states['covered']} |", start)
+start = re.sub(r"\| 已有完整同名 JNA 绑定[^\n]*", f"| 已有完整同名 JNA 绑定 | {states['bound']} |", start)
 start = re.sub(r"\| 本清单打勾项合计[^\n]*", f"| 本清单打勾项合计 | {summary['checkedCount']} / 751（{summary['checkedCount'] / 751:.2%}） |", start)
 start = re.sub(r"\| 部分覆盖，保持未勾选[^\n]*", f"| 部分覆盖，保持未勾选 | {states['partial']} |", start)
 start = re.sub(r"\| 当前缺少明确对应迁移项[^\n]*", f"| 当前缺少明确对应迁移项 | {states['missing']} |", start)
@@ -223,9 +279,15 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 
 本轮补齐 eval、save_state、load_state、token_nl、pooling_type 和 close 的窄范围实现，并接入 sample/generate 的执行状态机。{executionContracts['caseCount']} 组固定原版对照核对批处理、数组广播、错误后的状态、诊断顺序、临时采样器引用、前缀复用、send、停止条件和草稿路径；原生测试验证实际模型求值、保存恢复及继续生成。新增 7 项 b11669 C 入口，接口保持 JNA 类型封装。
 
-完整构造参数、采样策略链、embedding、completion/chat handler 全流程、配置重建和通用 from_pretrained 在映射表中列出后续目标及异常要求。sample/generate 的完整参数策略及回调输入视图协议继续标为部分实现。用法、验证与适用范围见 [执行链路记录](docs/PYTHON_EXECUTION_COMPATIBILITY.md)。
+采样、embedding、completion/chat 转发、配置重建及仓库匹配已有实现；2026-10-29 已同步机器映射。services {supplementCounts['services']}、completion {supplementCounts['completion']}、configuration/repository {supplementCounts['configuration']} 组原版对照，共 {sum(supplementCounts.values())} 组。保留完整 Jinja2、初始化失败状态、动态类型、缓存时序及同版本原生推理对照。验证结果见 [缓存记录](docs/PYTHON_CACHE_COMPATIBILITY.md)，用法和既有记录见 [执行链路记录](docs/PYTHON_EXECUTION_COMPATIBILITY.md)。
+
+### llama_cache.py 缓存补充（2026-10-29）
+
+18 项定义中，RAM 6 项与基础类构造/空前缀 2 项已有窄范围覆盖，基础类抽象方法 4 项、磁盘缓存 6 项保留部分覆盖。磁盘控制流程经固定原版存储端口对照；SQLite 体积、pickle 和实际键排序继续核实。RAM cache_size 已按原版先收集属性再求和，保留异常优先顺序。详见 [缓存迁移记录](docs/PYTHON_CACHE_COMPATIBILITY.md)。
 
 ### 测试数据管理
+
+本轮补齐 `from_pretrained` 的 Windows 字符串仓库匹配路径：保留无效范围、字面括号、仓库外路径异常原文及各次下载请求的独立性。配置/仓库原版对照现为 {json.loads((root / 'docs/python-configuration-contracts.json').read_text(encoding='utf-8'))['caseCount']} 组。llama.py 已测窄范围能力 **{llamaStates['covered']}/49（{llamaStates['covered']/49:.2%}）**，部分实现 {llamaStates['partial']} 项；全函数行为一致验收继续进行。
 
 `src/test/resources/` 全部由 `.gitignore` 忽略，测试数据及 Base64 样例保留本地。生成脚本、固定来源和小型摘要元数据纳入版本控制。清洁检出后先使用 [生成说明](tools/python_compat/README.md) 恢复六组数据，再执行 Maven 验证；`AGENTS.md` 已记录后续维护规则。
 

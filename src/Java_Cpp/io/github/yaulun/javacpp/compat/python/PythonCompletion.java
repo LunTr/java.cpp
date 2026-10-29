@@ -21,9 +21,10 @@ final class PythonCompletion implements Iterator<Map<String, Object>> {
   private String id, modelName, reason = "length";
   private long created;
   private Object prompt;
-  private int promptLength, bos, maximum, returned, multibyte, phase;
+  private int promptLength, bos, returned, multibyte, phase;
+  private double maximum;
   private boolean stream, echo;
-  private Integer logprobs;
+  private Object logprobs;
   private List<Integer> promptTokens, completionTokens, remaining;
   private List<byte[]> stops;
   private byte[] text = new byte[0], remainingText;
@@ -232,8 +233,7 @@ final class PythonCompletion implements Iterator<Map<String, Object>> {
             endings);
     stream = truth(options.get("stream"));
     echo = truth(options.get("echo"));
-    logprobs =
-        options.get("logprobs") == null ? null : ((Number) options.get("logprobs")).intValue();
+    logprobs = options.get("logprobs");
     List<?> stopOptions =
         options.get("stop") instanceof List<?> values
             ? values
@@ -267,9 +267,11 @@ final class PythonCompletion implements Iterator<Map<String, Object>> {
               + ") exceed context window of "
               + model.contextLength());
     maximum =
-        options.get("max_tokens") == null ? 0 : ((Number) options.get("max_tokens")).intValue();
+        options.get("max_tokens") == null
+            ? 0
+            : PythonNumbers.compareNumber(options.get("max_tokens"), "<=", "int");
     if (maximum <= 0) maximum = capacity - promptTokens.size();
-    else maximum = Math.min(maximum, capacity - promptTokens.size());
+    maximum = maximum + promptTokens.size() < capacity ? maximum : capacity - promptTokens.size();
     stops = new ArrayList<>();
     for (Object value : stopOptions) stops.add(PythonLlamaServices.strictUtf8(value));
     if (logprobs != null && !llama.logitsAllEnabled())
@@ -295,8 +297,8 @@ final class PythonCompletion implements Iterator<Map<String, Object>> {
     }
     llama.setSeed(
         options.get("seed") != null
-            ? integer(options.get("seed"))
-            : BigInteger.valueOf(new PythonRandom(llama.seed()).completionSeed()));
+            ? options.get("seed")
+            : BigInteger.valueOf(new PythonRandom(llama.seedObject()).completionSeed()));
     Map<String, Object> sampling = new LinkedHashMap<>();
     for (String name :
         List.of(
@@ -321,20 +323,13 @@ final class PythonCompletion implements Iterator<Map<String, Object>> {
   }
 
   static PythonLogitsProcessor logitBias(Map<?, ?> values) {
-    Map<Integer, Double> bias = new LinkedHashMap<>();
+    Map<BigInteger, Double> bias = new LinkedHashMap<>();
     for (var entry : values.entrySet())
-      bias.put(integer(entry.getKey()).intValue(), ((Number) entry.getValue()).doubleValue());
+      bias.put(PythonNumbers.integer(entry.getKey()), PythonNumbers.floating(entry.getValue()));
     return (ids, scores) -> {
       float[] result = scores.clone();
       for (var entry : bias.entrySet()) {
-        int index = entry.getKey() < 0 ? scores.length + entry.getKey() : entry.getKey();
-        if (index < 0 || index >= scores.length)
-          throw error(
-              PythonErrorType.INDEX_ERROR,
-              "index "
-                  + entry.getKey()
-                  + " is out of bounds for axis 0 with size "
-                  + scores.length);
+        int index = PythonNumbers.arrayIndex(entry.getKey(), scores.length);
         result[index] = (float) (entry.getValue() + scores[index]);
       }
       return result;
@@ -525,8 +520,18 @@ final class PythonCompletion implements Iterator<Map<String, Object>> {
           float x = probabilities[a], y = probabilities[b];
           return x < y ? 1 : x > y ? -1 : x == y ? Integer.compare(b, a) : 0;
         });
+    BigInteger stop;
+    try {
+      stop = PythonNumbers.index(logprobs);
+    } catch (PythonException failure) {
+      throw error(
+          PythonErrorType.TYPE_ERROR,
+          "slice indices must be integers or None or have an __index__ method");
+    }
     int end =
-        logprobs < 0 ? Math.max(0, indices.size() + logprobs) : Math.min(indices.size(), logprobs);
+        stop.signum() < 0
+            ? stop.add(BigInteger.valueOf(indices.size())).max(BigInteger.ZERO).intValue()
+            : stop.min(BigInteger.valueOf(indices.size())).intValue();
     Map<String, Object> result = new LinkedHashMap<>();
     for (int i = 0; i < end; i++) {
       int token = indices.get(i);

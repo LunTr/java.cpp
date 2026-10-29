@@ -27,7 +27,8 @@ def run(arg):
     def validate(repo):trace.append(["validate",repo])
     class Files:
         def ls(self,repo,recursive):trace.append(["files",repo]);return arg["files"]
-    def download(**kwargs):trace.append(["download",kwargs.copy()]);return "cached.gguf"
+    requests=[]
+    def download(**kwargs):requests.append(kwargs);trace.append(["download",kwargs.copy()]);return "cached.gguf"
     def importing(name,*args,**kwargs):
         if name=="huggingface_hub":
             if not arg["installed"]:raise ImportError("missing")
@@ -38,7 +39,7 @@ def run(arg):
     def init(self,**kwargs):self.arguments=kwargs;trace.append(["construct",kwargs])
     Llama.__init__=init
     result=capture(lambda:Llama.from_pretrained(**arg["options"]).arguments)
-    return dict(result=result,trace=trace)
+    return dict(result=result,trace=trace,requestFlags=["local_files_only" in request for request in requests])
 def record(arg):
     rows.append("\t".join(base64.b64encode(wire(value)).decode() for value in [arg,run(arg)]));counts[arg["kind"]]=counts.get(arg["kind"],0)+1
 state=next(n for n in node.body if n.name=="__getstate__");fields=next(n for n in ast.walk(state) if isinstance(n,ast.Call)).keywords
@@ -59,6 +60,11 @@ for filename in ["*.gguf","sub/*.gguf","MODEL.GGUF","none","*",None,"[a-z]*.gguf
 record(dict(kind="repository",installed=False,files=[],options=dict(repo_id="owner/repo",filename="*")))
 record(dict(kind="repository",installed=True,files=[{"name":x} for x in files],options=dict(repo_id="owner/repo",filename="*.gguf")))
 record(dict(kind="repository",installed=True,files=files,options=dict(repo_id="owner/repo",filename="*.gguf",model_path="duplicate")))
+for pattern in ["[]].gguf", "[!]].gguf", "[[]model.gguf"]:
+    record(dict(kind="repository",installed=True,files=["owner/repo/].gguf", "owner/repo/[model.gguf"],options=dict(repo_id="owner/repo",filename=pattern)))
+for pattern in ["[z-a].gguf","[!z-a].gguf","[a--b].gguf","[a-z--].gguf","[--a].gguf","[-a].gguf","[a-].gguf","[&&].gguf","[|~].gguf","[]","[!]"]:
+    record(dict(kind="repository",installed=True,files=["owner/repo/a.gguf","owner/repo/-.gguf","owner/repo/&.gguf"],options=dict(repo_id="owner/repo",filename=pattern)))
+record(dict(kind="repository",installed=True,files=["other/model.gguf"],options=dict(repo_id="owner/repo",filename="*")))
 fixture=root/"src/test/resources/python-0.3.36-configuration-contracts.tsv";fixture.write_text("\n".join(rows)+"\n",encoding="ascii")
 meta=dict(sourceCommit=audit["baseline"]["commit"],fixtureRuntime=sys.version,caseCount=len(rows),casesByOperation=counts,fixtureSha256=hashlib.sha256(fixture.read_bytes()).hexdigest(),method="Complete original __getstate__/__setstate__/from_pretrained functions with tracing constructor and repository ports; no network downloads.")
 (root/"docs/python-configuration-contracts.json").write_text(json.dumps(meta,indent=2)+"\n",encoding="utf-8");print(json.dumps(meta,indent=2))

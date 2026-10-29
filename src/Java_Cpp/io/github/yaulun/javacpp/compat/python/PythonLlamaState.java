@@ -12,7 +12,7 @@ public final class PythonLlamaState {
   private int nTokens;
   private byte[] llamaState;
   private BigInteger llamaStateSize;
-  private BigInteger seed;
+  private Object seed;
 
   /** Stores the six supplied fields without validation or copying, as LlamaState.__init__ does. */
   public PythonLlamaState(
@@ -98,7 +98,7 @@ public final class PythonLlamaState {
 
   /** Returns seed. */
   public long seed() {
-    return seed.longValueExact();
+    return seedValue().longValueExact();
   }
 
   /** Replaces seed. */
@@ -107,7 +107,21 @@ public final class PythonLlamaState {
   }
 
   public BigInteger seedValue() {
+    return PythonNumbers.integer(seed);
+  }
+
+  public Object seedObject() {
     return seed;
+  }
+
+  public PythonLlamaState(
+      int[] inputIds, float[][] scores, int nTokens, byte[] data, BigInteger size, Object seed) {
+    this.inputIds = inputIds;
+    this.scores = scores;
+    this.nTokens = nTokens;
+    llamaState = data;
+    llamaStateSize = size;
+    this.seed = seed;
   }
 
   public void setSeedValue(BigInteger value) {

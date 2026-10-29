@@ -24,8 +24,8 @@ public final class PythonLlama implements AutoCloseable {
   private Supplier<Runnable> memoryAccess;
   private int nTokens;
   private boolean requiresEval;
-  private BigInteger seed = BigInteger.ZERO;
-  private PythonLlamaRamCache cache;
+  private Object seed = BigInteger.ZERO;
+  private PythonLlamaCache cache;
   private PythonTokenizerModel tokenizerModel;
   private PythonTokenizer activeTokenizer;
   private io.github.yaulun.javacpp.LlamaModel nativeModel;
@@ -288,11 +288,11 @@ public final class PythonLlama implements AutoCloseable {
         options.get("frequency_penalty"),
         options.get("presence_penalty"));
     if (options.get("grammar") != null) builder.add("grammar", options.get("grammar"));
-    double temperature = ((Number) options.get("temp")).doubleValue();
-    int mirostat = ((Number) options.get("mirostat_mode")).intValue();
+    double temperature = PythonNumbers.compareNumber(options.get("temp"), "<", "float");
+    Object mirostat = options.get("mirostat_mode");
     if (temperature < 0) builder.add("dist", seed);
     else if (temperature == 0) builder.add("greedy");
-    else if (mirostat == 1)
+    else if (PythonNumbers.equal(mirostat, 1))
       builder.add(
           "mirostat",
           scores.length == 0 ? 0 : scores[0].length,
@@ -300,7 +300,7 @@ public final class PythonLlama implements AutoCloseable {
           options.get("mirostat_tau"),
           options.get("mirostat_eta"),
           100);
-    else if (mirostat == 2)
+    else if (PythonNumbers.equal(mirostat, 2))
       builder.add("mirostat_v2", seed, options.get("mirostat_tau"), options.get("mirostat_eta"));
     else {
       builder.add("top_k", options.get("top_k"));
@@ -337,13 +337,14 @@ public final class PythonLlama implements AutoCloseable {
   public int sample(java.util.Map<String, Object> options, Integer index) {
     var parameters = PythonLlamaDefaults.bind("sample", options);
     parameters.remove("idx");
-    if (index == null && options.get("idx") != null)
-      index = ((Number) options.get("idx")).intValue();
     PythonErrorBridge.requireEvaluatedTokens(nTokens);
     boolean temporary = sampler == null;
     if (temporary) sampler = initSampler(parameters);
+    Object requestedIndex = index == null ? options.get("idx") : index;
+    Object relativeIndex =
+        requestedIndex == null ? -1 : PythonNumbers.subtract(requestedIndex, nTokens);
     if (execution == null) throw PythonValues.error(PythonErrorType.ASSERTION_ERROR, "");
-    int token = sampler.sample(index == null ? -1 : index - nTokens);
+    int token = sampler.sampleAt(relativeIndex);
     if (temporary) sampler = null;
     return token;
   }
@@ -627,7 +628,7 @@ public final class PythonLlama implements AutoCloseable {
     inputIds = state.inputIds().clone();
     nTokens = state.nTokens();
     requiresEval = true;
-    seed = state.seedValue();
+    seed = state.seedObject();
     int size = state.llamaStateSize().intValueExact();
     if (size < 0)
       throw PythonValues.error(
@@ -795,22 +796,30 @@ public final class PythonLlama implements AutoCloseable {
   }
 
   /** Assigns the cache reference, including null, without clearing state. */
-  public void setCache(PythonLlamaRamCache value) {
+  public void setCache(PythonLlamaCache value) {
     cache = value;
   }
 
   /** Returns the currently attached cache reference. */
-  public PythonLlamaRamCache cache() {
+  public PythonLlamaCache cache() {
     return cache;
   }
 
   /** Assigns the Python integer seed without reseeding an existing sampler. */
   public void setSeed(BigInteger value) {
-    seed = Objects.requireNonNull(value, "seed");
+    seed = value;
   }
 
   /** Returns the assigned seed. */
   public BigInteger seed() {
+    return PythonNumbers.integer(seed);
+  }
+
+  public void setSeed(Object value) {
+    seed = value;
+  }
+
+  public Object seedObject() {
     return seed;
   }
 

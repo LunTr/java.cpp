@@ -25,7 +25,7 @@ public final class PythonLlamaConfiguration {
   }
 
   public Map<String, Object> getState() {
-    values.put("_seed", llama.seed());
+    values.put("_seed", llama.seedObject());
     values.put("_logits_all", llama.logitsAllEnabled());
     return PythonLlamaDefaults.snapshot(values, modelParameters, contextParameters);
   }

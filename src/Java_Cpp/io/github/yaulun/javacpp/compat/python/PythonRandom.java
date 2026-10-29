@@ -7,6 +7,54 @@ final class PythonRandom {
   private final int[] state = new int[624];
   private int index = 624;
 
+  PythonRandom(Object value) {
+    this(seedInteger(value));
+  }
+
+  private static BigInteger seedInteger(Object value) {
+    if (value == null) return new BigInteger(19968, new java.security.SecureRandom());
+    if (value instanceof String || value instanceof byte[]) {
+      byte[] bytes =
+          value instanceof String ? PythonLlamaServices.strictUtf8(value) : (byte[]) value;
+      try {
+        byte[] hash = java.security.MessageDigest.getInstance("SHA-512").digest(bytes);
+        byte[] joined = java.util.Arrays.copyOf(bytes, bytes.length + hash.length);
+        System.arraycopy(hash, 0, joined, bytes.length, hash.length);
+        return new BigInteger(1, joined);
+      } catch (java.security.NoSuchAlgorithmException failure) {
+        throw new AssertionError(failure);
+      }
+    }
+    if (value instanceof Float || value instanceof Double) {
+      double x = ((Number) value).doubleValue();
+      long hash;
+      if (Double.isNaN(x)) hash = System.identityHashCode(value);
+      else if (Double.isInfinite(x)) hash = x > 0 ? 314159 : -314159;
+      else {
+        long bits = Double.doubleToRawLongBits(x);
+        int exponent = (int) ((bits >>> 52) & 2047);
+        long mantissa = bits & 0xfffffffffffffL;
+        if (exponent != 0) mantissa |= 1L << 52;
+        int shift = exponent == 0 ? -1074 : exponent - 1075;
+        BigInteger modulus = BigInteger.ONE.shiftLeft(61).subtract(BigInteger.ONE),
+            power = BigInteger.TWO.modPow(BigInteger.valueOf(Math.abs((long) shift)), modulus);
+        BigInteger result =
+            BigInteger.valueOf(mantissa)
+                .multiply(shift < 0 ? power.modInverse(modulus) : power)
+                .mod(modulus);
+        hash = (bits < 0 ? -1 : 1) * result.longValue();
+        if (hash == -1) hash = -2;
+      }
+      return hash < 0
+          ? BigInteger.valueOf(hash).add(BigInteger.ONE.shiftLeft(64))
+          : BigInteger.valueOf(hash);
+    }
+    if (value instanceof Number || value instanceof Boolean) return PythonNumbers.integer(value);
+    throw PythonErrorBridge.error(
+        PythonErrorType.TYPE_ERROR,
+        "The only supported seed types are: None,\nint, float, str, bytes, and bytearray.");
+  }
+
   PythonRandom(BigInteger seed) {
     seed = seed.abs();
     int[] key = new int[Math.max(1, (seed.bitLength() + 31) / 32)];

@@ -1,5 +1,11 @@
 # Java.cpp 实施状态
 
+2026-10-29 本轮补齐 from_pretrained 的 Windows 字符串/provider 路径：修正无效字符范围的 fnmatch 处理、仓库外文件路径的 ValueError 原文（包含路径 repr），并令缓存下载参数使用独立 Map，避免后一次调用修改首次下载请求。新增 12 组固定原版对照并在全部仓库样例中比较请求参数保留状态；配置/仓库共 89 组通过。机器清单与 README 同步为 llama.py 39/49（79.59%）已测窄范围能力、10 项部分实现。完整 verify -Pnative 为 12,942 项通过、0 失败、0 跳过；包含工作区同步进行的缓存工作。全行为一致认证继续为 0，测试数据 Git 跟踪清单为空。
+
+2026-10-29 缓存续作：核对 llama_cache.py 全部 18 项定义，新增 PythonLlamaCache 基类和 PythonLlamaDiskCache 的 6 项存储端口控制流程，Llama.setCache 接入共同基类。修正 RAM cache_size 的列表推导先于 sum 的异常优先顺序。新增 114 组固定原版缓存对照，状态对照增至 739 组。同步已有补充映射及仓库匹配复核后，全清单为 84 项绑定、98 项局部能力覆盖、59 项部分覆盖、510 项未迁移，未勾选 569 项；全输入一致性认证仍为 0 项。最终 clean verify -Pnative 为 12,942 项通过，0 失败、0 错误、0 跳过，格式和两个 JAR 打包通过，日志 .tools/cache-full-verify.log。历史段落计数保留其对应轮次，最新逐项状态见 README、docs/python-api-audit.json 和 docs/PYTHON_CACHE_COMPATIBILITY.md。
+
+2026-10-29 机器映射同步：已将新增实现及 services/completion/configuration 对照证据纳入生成器，更新 README、python-api-audit.json 与全文件映射。llama.py 当前为 38 项已测窄范围能力、11 项部分实现、0 项缺少对应实现；全部 49 项的全行为一致验收继续进行。原版未充分覆盖的构造、资源释放/自动析构、completion 缓存与动态类型、配置重建、仓库 provider 和回调视图路径保留部分实现标记。全项目为 84 项绑定、95 项已测能力，合计 179/751；全行为认证保持 0。使用者核实的最近完整验证为 12,814 项通过，0 失败、0 跳过。本次仅同步元数据和文档，重生成幂等、49 项集合与 Git 忽略检查通过。
+
 2026-10-29 本轮补充（实现状态待逐项复核后更新机器清单）：新增完整采样策略、custom logits 回调、embedding 批处理、completion 的 stop/echo/logprobs/流式状态机、chat/OpenAI 转发、配置快照/重建及 from_pretrained 离线仓库端口。新增 PythonNativeLlama 构造入口，按 Python 默认值直接设置 C 参数，并接入 LoRA 资源清理、Cleaner 和关闭后的 ctx/model 空值。删除关闭后重新安装清理动作的额外限制，保留已有 draft 空切片修复。
 
 新增固定原版对照：services 235 组、completion 140 组、configuration/repository 74 组，共 449 组；分词器调用轨迹、错误前流式块及随机种子也已核对。补充真实模型采样、embedding、构造、配置重建和 completion 测试。构造流程的完整 Jinja2 语义、动态参数类型转换和初始化中途失败的状态仍需继续核实；当前机器清单继续保留原状态，避免将新增代码直接计为完整一致。
@@ -52,3 +58,5 @@
 2026-10-28 核实补充：全文件 49 项为定义映射，仍有 9 项部分实现和 12 项待实现。发现并修正 generate 的 draft 输入赋值额外长度限制，按 NumPy 保留单元素向空切片广播行为。固定原版执行对照由 206 增至 207 组；新增反例在修改前失败、修改后通过。全函数输入输出一致性仍待继续核实。
 
 2026-10-29 最终核验：补充实现后的完整 verify -Pnative、Google Java Format 和两个 JAR 打包均成功，测试数据 Git 跟踪清单为空。完整日志保留在被忽略的 .tools/llama-supplement-final.log。
+
+2026-10-29 更新后复核：检查 5427fc3 新增实现，复现并修正 PythonPretrained 字符组 glob 转换对字面方括号的处理，新增 3 组固定原版执行对照（修改前均触发 Java 正则语法错误，修改后通过）。configuration/repository 对照增至 77 组。完整 verify -Pnative：12,814 项通过，0 失败、0 错误、0 跳过，格式和打包通过，日志 .tools/review-updated.log。机器映射仍为补全前状态；完整 Jinja2、构造失败中间状态、动态类型及同原生版本的端到端 Python 推理对照继续待核实。

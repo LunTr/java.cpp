@@ -11,8 +11,7 @@ import java.util.Map;
  * and state sizes use arbitrary-precision integers. This mutable object requires caller
  * synchronization when shared between threads.
  */
-public final class PythonLlamaRamCache {
-  private BigInteger capacityBytes;
+public final class PythonLlamaRamCache extends PythonLlamaCache {
   private final LinkedHashMap<List<BigInteger>, PythonLlamaState> cacheState =
       new LinkedHashMap<>();
 
@@ -23,17 +22,7 @@ public final class PythonLlamaRamCache {
 
   /** Ports LlamaRAMCache.__init__; negative and zero capacities are retained. */
   public PythonLlamaRamCache(BigInteger capacityBytes) {
-    this.capacityBytes = capacityBytes;
-  }
-
-  /** Returns capacity_bytes. */
-  public BigInteger capacityBytes() {
-    return capacityBytes;
-  }
-
-  /** Replaces capacity_bytes; eviction waits until the next put, matching Python assignment. */
-  public void setCapacityBytes(BigInteger value) {
-    capacityBytes = value;
+    super(capacityBytes);
   }
 
   /** Exposes the ordered cache_state mapping with its original state references. */
@@ -43,16 +32,21 @@ public final class PythonLlamaRamCache {
 
   /** Ports cache_size by summing current fields on every query, including negative sizes. */
   public BigInteger cacheSize() {
-    BigInteger size = BigInteger.ZERO;
+    List<BigInteger> sizes = new ArrayList<>();
     for (PythonLlamaState state : cacheState.values()) {
       if (state == null)
         throw PythonValues.error(
             PythonErrorType.ATTRIBUTE_ERROR,
             "'NoneType' object has no attribute 'llama_state_size'");
-      if (state.llamaStateSize() == null)
+      sizes.add(state.llamaStateSize());
+    }
+    // The original list comprehension reads every attribute before sum starts adding.
+    BigInteger size = BigInteger.ZERO;
+    for (BigInteger stateSize : sizes) {
+      if (stateSize == null)
         throw PythonValues.error(
             PythonErrorType.TYPE_ERROR, "unsupported operand type(s) for +: 'int' and 'NoneType'");
-      size = size.add(state.llamaStateSize());
+      size = size.add(stateSize);
     }
     return size;
   }
@@ -93,7 +87,7 @@ public final class PythonLlamaRamCache {
     cacheState.remove(tuple);
     cacheState.put(tuple, value);
     // Python evaluates cache_size before testing len(cache_state), including for an empty cache.
-    while (cacheSize().compareTo(capacityBytes) > 0 && !cacheState.isEmpty()) {
+    while (cacheSize().compareTo(capacityBytes()) > 0 && !cacheState.isEmpty()) {
       cacheState.remove(cacheState.keySet().iterator().next());
     }
   }

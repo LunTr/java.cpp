@@ -1,11 +1,11 @@
 {
   "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
   "fixtureRuntime": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]",
-  "caseCount": 74,
+  "caseCount": 89,
   "casesByOperation": {
     "config": 15,
-    "repository": 59
+    "repository": 74
   },
-  "fixtureSha256": "1ab5f28bf0fce51648f4cbb60ee5f490c036e13690f768288483dd42d26ddca9",
+  "fixtureSha256": "ff41dd49ff01d1da504a1204b83a0b2502e04e40360f6688077596ba1815c0c1",
   "method": "Complete original __getstate__/__setstate__/from_pretrained functions with tracing constructor and repository ports; no network downloads."
 }

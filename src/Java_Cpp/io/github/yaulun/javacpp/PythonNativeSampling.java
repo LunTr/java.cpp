@@ -4,7 +4,6 @@ import com.sun.jna.Pointer;
 import io.github.yaulun.javacpp.compat.python.*;
 import io.github.yaulun.javacpp.internal.LlamaLibrary;
 import java.lang.ref.Cleaner;
-import java.math.BigInteger;
 import java.util.function.Consumer;
 
 /** Native execution of the original Python sampling policy without Builder range restrictions. */
@@ -36,11 +35,11 @@ public final class PythonNativeSampling {
     }
 
     private static float f(Object value) {
-      return ((Number) value).floatValue();
+      return PythonNumbers.cFloat(value, 1);
     }
 
     private static int i(Object value) {
-      return ((Number) value).intValue();
+      return PythonNumbers.cInt(value, 1);
     }
 
     @SuppressWarnings("unchecked")
@@ -55,7 +54,11 @@ public final class PythonNativeSampling {
                 switch (operation) {
                   case "penalties" ->
                       library.llama_sampler_init_penalties(
-                          i(a[0]), i(a[1]), f(a[2]), f(a[3]), f(a[4]));
+                          i(a[0]),
+                          PythonNumbers.cInt(a[1], 2),
+                          PythonNumbers.cFloat(a[2], 3),
+                          PythonNumbers.cFloat(a[3], 4),
+                          PythonNumbers.cFloat(a[4], 5));
                   case "grammar" -> {
                     var grammar = (PythonGrammar) a[0];
                     yield library.llama_sampler_init_grammar(
@@ -63,14 +66,20 @@ public final class PythonNativeSampling {
                         grammar.grammar(),
                         grammar.root());
                   }
-                  case "dist" -> library.llama_sampler_init_dist(((BigInteger) a[0]).intValue());
+                  case "dist" -> library.llama_sampler_init_dist(PythonNumbers.cInt(a[0], 1));
                   case "greedy" -> library.llama_sampler_init_greedy();
                   case "mirostat" ->
                       library.llama_sampler_init_mirostat(
-                          i(a[0]), ((BigInteger) a[1]).intValue(), f(a[2]), f(a[3]), i(a[4]));
+                          i(a[0]),
+                          PythonNumbers.cInt(a[1], 2),
+                          PythonNumbers.cFloat(a[2], 3),
+                          PythonNumbers.cFloat(a[3], 4),
+                          PythonNumbers.cInt(a[4], 5));
                   case "mirostat_v2" ->
                       library.llama_sampler_init_mirostat_v2(
-                          ((BigInteger) a[0]).intValue(), f(a[1]), f(a[2]));
+                          PythonNumbers.cInt(a[0], 1),
+                          PythonNumbers.cFloat(a[1], 2),
+                          PythonNumbers.cFloat(a[2], 3));
                   case "top_k" -> library.llama_sampler_init_top_k(i(a[0]));
                   case "typical" ->
                       library.llama_sampler_init_typical(f(a[0]), ((Number) a[1]).longValue());

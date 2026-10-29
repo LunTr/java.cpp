@@ -8,10 +8,10 @@
 
 | Python 定义 | Java 去向 | 实现状态 |
 |---|---|---|
-| `Llama.__init__` | PythonErrorBridge.loadModel/createContext + ModelParams/ContextParams（参数全集待连接） | 部分实现 |
-| `Llama.__init__.free_lora_adapter` | 计划：LoRA AutoCloseable 资源回调 | 待实现 |
-| `Llama.ctx` | PythonLlama.ctx（Java 上下文对象） | 部分实现 |
-| `Llama.model` | PythonLlama.model（Java 模型对象） | 部分实现 |
+| `Llama.__init__` | PythonNativeLlama.load / compat.python.PythonLlama.load | 部分实现 |
+| `Llama.__init__.free_lora_adapter` | compat.python.PythonLlamaResource.free | 部分实现 |
+| `Llama.ctx` | LlamaContext | 部分实现 |
+| `Llama.model` | LlamaModel | 部分实现 |
 | `Llama._input_ids` | compat.python.PythonLlama.inputIds | 已有窄范围实现 |
 | `Llama._scores` | compat.python.PythonLlama.scores | 已有窄范围实现 |
 | `Llama.eval_tokens` | compat.python.PythonLlama.evalTokens | 已有窄范围实现 |
@@ -21,37 +21,37 @@
 | `Llama.set_cache` | compat.python.PythonLlama.setCache | 已有窄范围实现 |
 | `Llama.set_seed` | compat.python.PythonLlama.setSeed | 已有窄范围实现 |
 | `Llama.reset` | compat.python.PythonLlama.reset | 已有窄范围实现 |
-| `Llama.eval` | PythonLlama.eval / PythonLlamaExecution | 已有窄范围实现 |
-| `Llama._init_sampler` | 计划：完整 Python 采样链构造策略 | 待实现 |
-| `Llama._init_sampler.apply_func` | 计划：采样候选数组与 logits processor 的共享内存适配 | 待实现 |
-| `Llama.sample` | PythonLlama.sample（采样器工厂注入，完整参数链待连接） | 部分实现 |
-| `Llama.generate` | PythonLlama.generate / TokenGenerator.send（状态机已接入，采样策略参数待连接） | 部分实现 |
-| `Llama.create_embedding` | 计划：embedding 结果对象与 usage 组装 | 待实现 |
-| `Llama.embed` | 计划：多序列 embedding 批处理与归一化 | 待实现 |
-| `Llama.embed.decode_batch` | 计划：embedding 解码、池化与输出拷贝 | 待实现 |
-| `Llama._create_completion` | 计划：completion 生成、stop/echo/logprobs、缓存和流式 UTF-8 | 待实现 |
-| `Llama._create_completion.logit_bias_processor` | 计划：logit bias 拷贝、索引与列表扩展语义 | 待实现 |
-| `Llama.create_completion` | 现有 LlamaContext.generate；计划：完整 completion 参数转发和响应 | 部分实现 |
-| `Llama.__call__` | 计划：createCompletion 参数别名 | 部分实现 |
-| `Llama.create_chat_completion` | 现有 ChatSession / PythonChatFormats；计划：chat handler 优先级和参数转发 | 部分实现 |
-| `Llama.create_chat_completion_openai_v1` | 计划：Java OpenAI 类型 provider，依赖与转换异常策略 | 待实现 |
-| `Llama.__getstate__` | 计划：Python 构造配置序列化（区别于推理快照） | 待实现 |
-| `Llama.__setstate__` | 计划：通过完整构造器重建配置 | 待实现 |
-| `Llama.save_state` | PythonLlama.saveState / PythonLlamaExecution.copyState | 已有窄范围实现 |
-| `Llama.load_state` | PythonLlama.loadState / PythonLlamaExecution.restoreState | 已有窄范围实现 |
-| `Llama.n_ctx` | PythonLlama.nCtx | 已有窄范围实现 |
-| `Llama.n_embd` | PythonLlama.nEmbd | 已有窄范围实现 |
-| `Llama.n_vocab` | PythonLlama.nVocab | 已有窄范围实现 |
+| `Llama.eval` | compat.python.PythonLlama.eval | 已有窄范围实现 |
+| `Llama._init_sampler` | compat.python.PythonLlama.initSampler | 已有窄范围实现 |
+| `Llama._init_sampler.apply_func` | compat.python.PythonLlama.applyProcessors | 已有窄范围实现 |
+| `Llama.sample` | compat.python.PythonLlama.sample | 部分实现 |
+| `Llama.generate` | compat.python.PythonLlama.generate | 部分实现 |
+| `Llama.create_embedding` | compat.python.PythonLlamaServices.createEmbedding | 已有窄范围实现 |
+| `Llama.embed` | compat.python.PythonLlamaServices.embed | 已有窄范围实现 |
+| `Llama.embed.decode_batch` | compat.python.PythonLlamaServices.decodeEmbedding | 已有窄范围实现 |
+| `Llama._create_completion` | compat.python.PythonCompletion | 部分实现 |
+| `Llama._create_completion.logit_bias_processor` | compat.python.PythonCompletion.logitBias | 部分实现 |
+| `Llama.create_completion` | compat.python.PythonLlamaServices.createCompletion | 已有窄范围实现 |
+| `Llama.__call__` | compat.python.PythonLlamaServices.call | 已有窄范围实现 |
+| `Llama.create_chat_completion` | compat.python.PythonLlamaServices.createChatCompletion | 已有窄范围实现 |
+| `Llama.create_chat_completion_openai_v1` | compat.python.PythonLlamaServices.createChatCompletionOpenAiV1 | 已有窄范围实现 |
+| `Llama.__getstate__` | compat.python.PythonLlamaConfiguration.getState | 已有窄范围实现 |
+| `Llama.__setstate__` | compat.python.PythonLlamaConfiguration.setState | 部分实现 |
+| `Llama.save_state` | compat.python.PythonLlama.saveState | 已有窄范围实现 |
+| `Llama.load_state` | compat.python.PythonLlama.loadState | 已有窄范围实现 |
+| `Llama.n_ctx` | compat.python.PythonLlama.nCtx | 已有窄范围实现 |
+| `Llama.n_embd` | compat.python.PythonLlama.nEmbd | 已有窄范围实现 |
+| `Llama.n_vocab` | compat.python.PythonLlama.nVocab | 已有窄范围实现 |
 | `Llama.tokenizer` | compat.python.PythonLlama.tokenizer | 已有窄范围实现 |
-| `Llama.token_eos` | PythonLlama.tokenEos | 已有窄范围实现 |
-| `Llama.token_bos` | PythonLlama.tokenBos | 已有窄范围实现 |
-| `Llama.token_nl` | PythonLlama.tokenNl | 已有窄范围实现 |
-| `Llama.pooling_type` | PythonLlama.poolingType（按实际返回 int） | 已有窄范围实现 |
-| `Llama.close` | PythonLlama.close / setCloseAction | 已有窄范围实现 |
-| `Llama.__del__` | AutoCloseable.close；Java 自动清理策略待实现 | 待实现 |
+| `Llama.token_eos` | compat.python.PythonLlama.tokenEos | 已有窄范围实现 |
+| `Llama.token_bos` | compat.python.PythonLlama.tokenBos | 已有窄范围实现 |
+| `Llama.token_nl` | compat.python.PythonLlama.tokenNl | 已有窄范围实现 |
+| `Llama.pooling_type` | compat.python.PythonLlama.poolingType | 已有窄范围实现 |
+| `Llama.close` | compat.python.PythonLlama.close | 已有窄范围实现 |
+| `Llama.__del__` | compat.python.PythonLlama.close / Cleaner | 部分实现 |
 | `Llama.logits_to_logprobs` | compat.python.PythonLlama.logitsToLogprobs | 已有窄范围实现 |
 | `Llama.longest_token_prefix` | compat.python.PythonTokens.longestTokenPrefix | 已有窄范围实现 |
-| `Llama.from_pretrained` | 现有 ModelDownloader；计划：repo 校验、文件匹配与 Hugging Face provider | 部分实现 |
+| `Llama.from_pretrained` | compat.python.PythonPretrained.fromPretrained | 已有窄范围实现 |
 | `LlamaState.__init__` | compat.python.PythonLlamaState | 已有窄范围实现 |
 | `LogitsProcessorList.__call__` | compat.python.PythonLogitsProcessorList.apply | 已有窄范围实现 |
 | `StoppingCriteriaList.__call__` | compat.python.PythonStoppingCriteriaList.test | 已有窄范围实现 |

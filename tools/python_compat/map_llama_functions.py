@@ -130,7 +130,7 @@ for row in inventory:
         event["translationStatus"] = "executed-contract" if name in {"Llama.sample", "Llama.save_state", "Llama.load_state"} else "bridge-or-planned; see implementationStatus"
     mapping.append({"function": name, "line": node.lineno, "endLine": node.end_lineno,
                     "signature": ast.unparse(node.args), "decorators": [ast.unparse(d) for d in node.decorator_list],
-                    "javaTarget": targets.get(name, row["java"]), "implementationStatus": row["status"],
+                    "javaTarget": row["java"] or targets.get(name), "implementationStatus": row["status"],
                     "contractEvidence": row.get("contractEvidence"), "source": row["source"],
                     "directErrorSites": sorted(visitor.events, key=lambda event: event["line"]),
                     "dependencies": sorted(visitor.calls),

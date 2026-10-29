@@ -118,6 +118,8 @@ for first, second in [([], []), (["1"], ["1", "2"]), ([str(2**100)], [str(2**100
     record("prefix", [first, second], lambda: namespace["longest_token_prefix"](key(first), key(second)))
 
 cacheCases = [
+    {"capacity": "20", "sizes": [None, "nullState"], "steps": [
+        ["put", ["1"], 0], ["put", ["2"], 1], ["get", ["1"]], ["put", ["3"], 0]]},
     {"capacity": "20", "sizes": ["4", "4", "4"], "steps": [
         ["put", ["1", "2"], 0], ["put", ["1", "3"], 1], ["find", ["1", "9"]],
         ["contains", ["1", "2"]], ["get", ["1", "9"]], ["find", ["1", "9"]],

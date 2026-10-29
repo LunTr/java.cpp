@@ -4,15 +4,15 @@
   "fixtureRuntime": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]",
   "numpyVersion": "2.4.3",
   "uniqueFunctions": 12,
-  "caseCount": 738,
+  "caseCount": 739,
   "casesByOperation": {
     "prefix": 244,
-    "cache": 133,
+    "cache": 134,
     "minTokens": 196,
     "processors": 105,
     "stopping": 12,
     "state": 48
   },
-  "fixtureSha256": "5ec39617b4d570306f026d92cf8746b45ee7edf47c138888dd7be5a88b235534",
+  "fixtureSha256": "115b23e3f5b7ee7c4759066e593fbd8d8de4954cf1df72156ecdad2e61b67307",
   "method": "Execute complete hash-verified original state, RAM cache, prefix and processor bodies; NumPy uses intc/single arrays. Capture per-step errors, order, mutable state, references and callback traces."
 }
