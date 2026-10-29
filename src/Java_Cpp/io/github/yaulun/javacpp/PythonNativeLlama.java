@@ -19,31 +19,24 @@ public final class PythonNativeLlama {
     return loadInto(null, arguments);
   }
 
-  private static int i(Object value) {
-    return value instanceof Boolean flag ? flag ? 1 : 0 : ((Number) value).intValue();
-  }
-
-  private static boolean truth(Object value) {
-    return value != null
-        && (!(value instanceof Boolean flag) || flag)
-        && (!(value instanceof Number n) || n.doubleValue() != 0)
-        && (!(value instanceof String s) || !s.isEmpty());
-  }
-
   @SuppressWarnings("unchecked")
   private static PythonLlama loadInto(PythonLlama existing, Map<String, Object> supplied) {
     var options = PythonLlama.constructorArguments(supplied);
     LlamaLibrary library = LlamaRuntime.get().library();
-    int numa = i(options.get("numa"));
-    if (numa != 0) library.llama_numa_init(numa);
+    Object numa =
+        options.get("numa") instanceof Boolean flag
+            ? (flag ? BigInteger.ONE : BigInteger.ZERO)
+            : options.get("numa");
+    if (Py.compare(numa, Py.Op.NE, BigInteger.ZERO))
+      library.llama_numa_init(PythonNumbers.cInt(numa, 1));
     var params = library.llama_model_default_params();
-    int layers = i(options.get("n_gpu_layers"));
+    int layers = Py.cInt(options.get("n_gpu_layers"));
     params.n_gpu_layers = layers == -1 ? Integer.MAX_VALUE : layers;
-    params.split_mode = i(options.get("split_mode"));
-    params.main_gpu = i(options.get("main_gpu"));
-    params.vocab_only = (byte) (truth(options.get("vocab_only")) ? 1 : 0);
-    boolean mmap = truth(options.get("use_mmap")) && options.get("lora_path") == null,
-        mlock = truth(options.get("use_mlock"));
+    params.split_mode = Py.cInt(options.get("split_mode"));
+    params.main_gpu = Py.cInt(options.get("main_gpu"));
+    params.vocab_only = (byte) (Py.truth(options.get("vocab_only")) ? 1 : 0);
+    boolean mmap = Py.truth(options.get("use_mmap")) && options.get("lora_path") == null,
+        mlock = Py.truth(options.get("use_mlock"));
     params.load_mode = mmap ? mlock ? 3 : 1 : mlock ? 2 : 0;
     List<Memory> retained = new ArrayList<>();
     LlamaModel model = null;
@@ -90,7 +83,11 @@ public final class PythonNativeLlama {
               || value instanceof Long
               || value instanceof BigInteger) {
             memory.setInt(offset, 0);
-            memory.setLong(offset + 136, ((Number) value).longValue());
+            try {
+              memory.setLong(offset + 136, Py.index(value).longValueExact());
+            } catch (ArithmeticException overflow) {
+              throw error(PythonErrorType.OVERFLOW_ERROR, "int too long to convert");
+            }
           } else if (value instanceof Number number) {
             memory.setInt(offset, 1);
             memory.setDouble(offset + 136, number.doubleValue());
@@ -125,16 +122,16 @@ public final class PythonNativeLlama {
                 library,
                 handle,
                 path,
-                ModelParams.builder().vocabOnly(truth(options.get("vocab_only"))).build(),
+                ModelParams.builder().vocabOnly(Py.truth(options.get("vocab_only"))).build(),
                 null);
       } catch (RuntimeException | Error failure) {
         library.llama_model_free(handle);
         throw failure;
       }
-      int requested = i(options.get("n_ctx")),
+      int requested = Py.cInt(options.get("n_ctx")),
           ctx = requested == 0 ? model.info().contextTrain() : requested;
-      int batch = Math.min(ctx, i(options.get("n_batch"))),
-          micro = Math.min(batch, i(options.get("n_ubatch")));
+      int batch = Math.min(ctx, Py.cInt(options.get("n_batch"))),
+          micro = Math.min(batch, Py.cInt(options.get("n_ubatch")));
       var contextOptions = new LinkedHashMap<String, Object>();
       for (String name :
           List.of(
@@ -155,18 +152,17 @@ public final class PythonNativeLlama {
       int cpu = Runtime.getRuntime().availableProcessors();
       contextOptions.put(
           "n_threads",
-          truth(options.get("n_threads")) ? options.get("n_threads") : Math.max(cpu / 2, 1));
+          Py.orElse(options.get("n_threads"), () -> Math.max(cpu / 2, 1)));
       contextOptions.put(
-          "n_threads_batch",
-          truth(options.get("n_threads_batch")) ? options.get("n_threads_batch") : cpu);
+          "n_threads_batch", Py.orElse(options.get("n_threads_batch"), () -> cpu));
       contextOptions.put(
           "rope_scaling_type",
           options.get("rope_scaling_type") == null ? -1 : options.get("rope_scaling_type"));
       contextOptions.put("embeddings", options.get("embedding"));
-      contextOptions.put("flash_attn_type", truth(options.get("flash_attn")) ? 1 : 0);
+      contextOptions.put("flash_attn_type", Py.truth(options.get("flash_attn")) ? 1 : 0);
       for (String name : List.of("op_offload", "swa_full", "type_k", "type_v"))
         if (options.get(name) != null) contextOptions.put(name, options.get(name));
-      if (truth(options.get("embedding"))) {
+      if (Py.truth(options.get("embedding"))) {
         contextOptions.put(
             "n_seq_max", Math.min(batch, (int) library.llama_max_parallel_sequences()));
         contextOptions.put("kv_unified", true);
@@ -181,22 +177,25 @@ public final class PythonNativeLlama {
           throw error(PythonErrorType.VALUE_ERROR, "Failed to create llama_context");
         throw failure;
       }
-      if (truth(options.get("lora_path"))) {
+      if (Py.truth(options.get("lora_path"))) {
         String lora = options.get("lora_path").toString();
         adapter = library.llama_adapter_lora_init(model.handle(), lora);
         if (adapter == null)
           throw error(
               PythonErrorType.RUNTIME_ERROR,
               "Failed to initialize LoRA adapter from lora path: " + lora);
-        if (context.setLora(adapter, ((Number) options.get("lora_scale")).floatValue()) != 0)
+        if (context.setLora(adapter, PythonNumbers.cFloat(options.get("lora_scale"), 3)) != 0)
           throw error(
               PythonErrorType.RUNTIME_ERROR, "Failed to set LoRA adapter from lora path: " + lora);
       }
-      boolean all = truth(options.get("logits_all")) || options.get("draft_model") != null;
+      boolean all =
+          options.get("draft_model") != null || Py.truth(options.get("logits_all"));
       int[] ids = new int[ctx];
       float[][] scores =
           new float
-              [Boolean.TRUE.equals(options.get("logits_all")) ? ctx : i(options.get("n_batch"))]
+              [Py.equal(options.get("logits_all"), Boolean.TRUE)
+                  ? ctx
+                  : Py.cInt(options.get("n_batch"))]
               [model.vocab().size()];
       LlamaModel owner = model;
       LlamaContext active = context;
@@ -231,19 +230,16 @@ public final class PythonNativeLlama {
           });
       state.attachNative(model, context);
       state.setExecution(PythonLlamaExecution.fromContext(context, batch));
-      state.setLastNTokensSize(i(options.get("last_n_tokens_size")));
-      BigInteger seed =
-          truth(options.get("seed"))
-              ? new BigInteger(options.get("seed").toString())
-              : BigInteger.valueOf(4294967295L);
-      state.setSeed(seed);
+      state.setLastNTokensSize(Py.cInt(options.get("last_n_tokens_size")));
+      state.setSeed(
+          Py.orElse(options.get("seed"), () -> BigInteger.valueOf(4294967295L)));
       if (options.get("tokenizer") != null)
         state.setTokenizer((PythonTokenizer) options.get("tokenizer"));
       state.setDraftModel((java.util.function.UnaryOperator<int[]>) options.get("draft_model"));
-      boolean verbose = truth(options.get("verbose"));
+      boolean verbose = Py.truth(options.get("verbose"));
       state.services().setVerbose(verbose);
       state.services().setModelPath(modelPath);
-      state.services().setSpmInfill(truth(options.get("spm_infill")));
+      state.services().setSpmInfill(Py.truth(options.get("spm_infill")));
       if (verbose) state.setDiagnostics(System.err::println);
       state
           .services()
@@ -273,7 +269,8 @@ public final class PythonNativeLlama {
                             "response_format",
                             "top_logprobs")) call.remove(key);
                     Object logprobs = forwarded.get("logprobs");
-                    call.put("logprobs", truth(logprobs) ? forwarded.get("top_logprobs") : null);
+                    call.put(
+                        "logprobs", Py.truth(logprobs) ? forwarded.get("top_logprobs") : null);
                     call.put(
                         "prompt",
                         Arrays.stream(
@@ -291,7 +288,7 @@ public final class PythonNativeLlama {
                       call.put("stop", stops);
                     }
                     return PythonChatCompletions.convertCompletionToChat(
-                        state.createCompletion(call), truth(forwarded.get("stream")));
+                        state.createCompletion(call), Py.truth(forwarded.get("stream")));
                   });
       Map<String, String> metadata = model.metadata();
       Map<String, String> templates = new LinkedHashMap<>();
@@ -329,7 +326,7 @@ public final class PythonNativeLlama {
                           .toList());
                   call.put(
                       "logprobs",
-                      truth(forwarded.get("logprobs")) ? forwarded.get("top_logprobs") : null);
+                      Py.truth(forwarded.get("logprobs")) ? forwarded.get("top_logprobs") : null);
                   List<Object> stops = new ArrayList<>();
                   Object stop = forwarded.get("stop");
                   if (stop instanceof List<?> list) stops.addAll(list);
@@ -341,7 +338,7 @@ public final class PythonNativeLlama {
                   stopping.add((tokens, logits) -> tokens[tokens.length - 1] == eos);
                   call.put("stopping_criteria", stopping);
                   return PythonChatCompletions.convertCompletionToChat(
-                      state.createCompletion(call), truth(forwarded.get("stream")));
+                      state.createCompletion(call), Py.truth(forwarded.get("stream")));
                 });
       String chatFormat = (String) options.get("chat_format");
       if (chatFormat == null
@@ -356,10 +353,11 @@ public final class PythonNativeLlama {
       values.put("n_batch", batch);
       values.put("numa", numa);
       values.put("chat_format", chatFormat);
+
       Map<String, Object> nativeContextValues = snapshot(library.llama_context_default_params());
       nativeContextValues.putAll(contextOptions);
       for (String field : List.of("embeddings", "offload_kqv", "no_perf", "op_offload", "swa_full"))
-        nativeContextValues.put(field, truth(nativeContextValues.get(field)));
+        nativeContextValues.put(field, Py.truth(nativeContextValues.get(field)));
       Map<String, Object> nativeModelValues = snapshot(params);
       nativeModelValues.put("vocab_only", params.vocab_only != 0);
       state.setConfiguration(
@@ -387,17 +385,27 @@ public final class PythonNativeLlama {
     }
   }
 
+  private static float cFloat(Object value) {
+    if (!(value instanceof Number) && !(value instanceof Boolean))
+      throw error(
+          PythonErrorType.ARGUMENT_ERROR, "argument 1: TypeError: wrong type");
+    return ((Number) value).floatValue();
+  }
+
   static void assign(Structure structure, Map<String, Object> values) {
     for (var entry : values.entrySet())
       try {
         Field field = structure.getClass().getField(entry.getKey());
         Object value = entry.getValue();
-        if (field.getType() == int.class) field.setInt(structure, i(value));
-        else if (field.getType() == byte.class) field.setByte(structure, (byte) i(value));
-        else if (field.getType() == float.class)
-          field.setFloat(structure, ((Number) value).floatValue());
+        if (field.getType() == int.class) field.setInt(structure, Py.cInt(value));
+        else if (field.getType() == byte.class) field.setByte(structure, (byte) Py.cInt(value));
+        else if (field.getType() == float.class) field.setFloat(structure, cFloat(value));
         else if (field.getType() == long.class)
-          field.setLong(structure, ((Number) value).longValue());
+          try {
+            field.setLong(structure, Py.index(value).longValueExact());
+          } catch (ArithmeticException overflow) {
+            throw error(PythonErrorType.OVERFLOW_ERROR, "int too long to convert");
+          }
       } catch (ReflectiveOperationException failure) {
         throw new IllegalArgumentException(entry.getKey(), failure);
       }

@@ -1,8 +1,6 @@
 package io.github.yaulun.javacpp.compat.python;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -13,21 +11,21 @@ import java.util.function.Consumer;
 public final class PythonLlamaDiskCache extends PythonLlamaCache {
   /** Operations used by the original diskcache.Cache calls, in their original evaluation order. */
   public interface Store {
-    BigInteger volume();
+    Object volume();
 
-    Iterable<List<BigInteger>> iterKeys();
+    Iterable<List<Object>> iterKeys();
 
-    PythonLlamaState pop(List<BigInteger> key);
+    Object pop(List<Object> key);
 
-    boolean contains(List<BigInteger> key);
+    boolean contains(List<Object> key);
 
-    void delete(List<BigInteger> key);
+    void delete(List<Object> key);
 
-    void put(List<BigInteger> key, PythonLlamaState value);
+    void put(List<Object> key, Object value);
 
     BigInteger size();
 
-    List<BigInteger> firstKey();
+    List<Object> firstKey();
   }
 
   @FunctionalInterface
@@ -43,7 +41,7 @@ public final class PythonLlamaDiskCache extends PythonLlamaCache {
   }
 
   public PythonLlamaDiskCache(
-      String directory, BigInteger capacityBytes, Factory factory, Consumer<String> stderr) {
+      String directory, Object capacityBytes, Factory factory, Consumer<String> stderr) {
     super(capacityBytes);
     cache = factory.open(directory);
     this.stderr = stderr;
@@ -54,15 +52,15 @@ public final class PythonLlamaDiskCache extends PythonLlamaCache {
   }
 
   @Override
-  public BigInteger cacheSize() {
+  public Object cacheSize() {
     return cache.volume();
   }
 
   @Override
-  public List<BigInteger> findLongestPrefixKey(List<BigInteger> key) {
+  public List<Object> findLongestPrefixKey(List<Object> key) {
     int minimumLength = 0;
-    List<BigInteger> minimumKey = null;
-    for (List<BigInteger> candidate : cache.iterKeys()) {
+    List<Object> minimumKey = null;
+    for (List<Object> candidate : cache.iterKeys()) {
       int length = PythonTokens.longestTokenPrefix(candidate, key);
       if (length > minimumLength) {
         minimumLength = length;
@@ -73,28 +71,28 @@ public final class PythonLlamaDiskCache extends PythonLlamaCache {
   }
 
   @Override
-  public PythonLlamaState get(List<BigInteger> key) {
-    List<BigInteger> found = findLongestPrefixKey(tuple(key));
-    if (found == null) throw PythonValues.error(PythonErrorType.KEY_ERROR, "'Key not found'");
+  public Object get(List<Object> key) {
+    List<Object> found = findLongestPrefixKey(tuple(key));
+    if (found == null) throw Py.error(PythonErrorType.KEY_ERROR, "'Key not found'");
     return cache.pop(found);
   }
 
   @Override
-  public boolean contains(List<BigInteger> key) {
+  public boolean contains(List<Object> key) {
     return findLongestPrefixKey(tuple(key)) != null;
   }
 
   @Override
-  public void put(List<BigInteger> key, PythonLlamaState value) {
+  public void put(List<Object> key, Object value) {
     print("called");
-    List<BigInteger> converted = tuple(key);
+    List<Object> converted = tuple(key);
     if (cache.contains(converted)) {
       print("delete");
       cache.delete(converted);
     }
     cache.put(converted, value);
     print("set");
-    while (cacheSize().compareTo(capacityBytes()) > 0 && cache.size().signum() > 0) {
+    while (Py.compare(cacheSize(), Py.Op.GT, capacityBytes()) && cache.size().signum() > 0) {
       cache.delete(cache.firstKey());
     }
     print("trim");
@@ -106,7 +104,7 @@ public final class PythonLlamaDiskCache extends PythonLlamaCache {
     stderr.accept("\n");
   }
 
-  private static List<BigInteger> tuple(List<BigInteger> key) {
-    return Collections.unmodifiableList(new ArrayList<>(key));
+  private static List<Object> tuple(List<Object> key) {
+    return Py.tuple(key);
   }
 }

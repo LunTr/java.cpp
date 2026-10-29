@@ -1,39 +1,54 @@
 package io.github.yaulun.javacpp.compat.python;
 
-import java.math.BigInteger;
 import java.util.List;
 
 /** Shared BaseLlamaCache contract from the pinned Python source. */
-public abstract class PythonLlamaCache {
-  private BigInteger capacityBytes;
+public abstract class PythonLlamaCache implements PyItemAccess {
+  private Object capacityBytes;
 
   protected PythonLlamaCache() {
-    this(BigInteger.ONE.shiftLeft(31));
+    this(java.math.BigInteger.ONE.shiftLeft(31));
   }
 
-  protected PythonLlamaCache(BigInteger capacityBytes) {
+  protected PythonLlamaCache(Object capacityBytes) {
     this.capacityBytes = capacityBytes;
   }
 
-  public BigInteger capacityBytes() {
+  /** Returns capacity_bytes verbatim; the original attribute accepts any object. */
+  public Object capacityBytes() {
     return capacityBytes;
   }
 
   /** Assignment defers trimming until a subsequent write. */
-  public void setCapacityBytes(BigInteger value) {
+  public void setCapacityBytes(Object value) {
     capacityBytes = value;
   }
 
-  public abstract BigInteger cacheSize();
+  public abstract Object cacheSize();
 
   /** The original base method has a pass body and returns None. */
-  public List<BigInteger> findLongestPrefixKey(List<BigInteger> key) {
+  public List<Object> findLongestPrefixKey(List<Object> key) {
     return null;
   }
 
-  public abstract PythonLlamaState get(List<BigInteger> key);
+  public abstract Object get(List<Object> key);
 
-  public abstract boolean contains(List<BigInteger> key);
+  public abstract boolean contains(List<Object> key);
 
-  public abstract void put(List<BigInteger> key, PythonLlamaState value);
+  public abstract void put(List<Object> key, Object value);
+
+  @Override
+  public Object pyGet(Object key) {
+    return get(Py.tuple(key));
+  }
+
+  @Override
+  public void pySet(Object key, Object value) {
+    put(Py.tuple(key), value);
+  }
+
+  @Override
+  public boolean pyContains(Object key) {
+    return contains(Py.tuple(key));
+  }
 }

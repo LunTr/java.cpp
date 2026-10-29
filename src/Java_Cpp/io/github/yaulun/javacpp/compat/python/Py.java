@@ -105,6 +105,7 @@ public final class Py {
         default -> throw new AssertionError();
       };
     }
+    if (value instanceof AdaptedIterator adapted) return adapted.pythonName;
     if (value instanceof PyAttributed attributed) return attributed.pyType();
     return value.getClass().getSimpleName();
   }
@@ -145,11 +146,15 @@ public final class Py {
   /** iter(): tp_iter then sequence protocol; other values raise TypeError. */
   public static PyIterator iter(Object value) {
     if (value instanceof PyIterator iterator) return iterator;
-    if (value instanceof Iterator<?> iterator) return adapt(iterator);
-    if (value instanceof Iterable<?> iterable) return adapt(iterable.iterator());
-    if (value instanceof Map<?, ?> map) return adapt(map.keySet().iterator());
+    if (value instanceof Iterator<?> iterator) return adapt(iterator, "list_iterator");
+    if (value instanceof PyTuple tuple) return adapt(tuple.iterator(), "tuple_iterator");
+    if (value instanceof List<?> list) return adapt(list.iterator(), "list_iterator");
+    if (value instanceof Set<?> set) return adapt(set.iterator(), "set_iterator");
+    if (value instanceof Iterable<?> iterable) return adapt(iterable.iterator(), "list_iterator");
+    if (value instanceof Map<?, ?> map) return adapt(map.keySet().iterator(), "dict_keyiterator");
     if (value instanceof String text) {
       Iterator<Integer> codePoints = text.codePoints().iterator();
+      boolean ascii = text.codePoints().allMatch(cp -> cp < 128);
       return adapt(
           new Iterator<Object>() {
             public boolean hasNext() {
@@ -159,7 +164,8 @@ public final class Py {
             public Object next() {
               return new String(Character.toChars(codePoints.next()));
             }
-          });
+          },
+          ascii ? "str_ascii_iterator" : "str_iterator");
     }
     if (value instanceof byte[] bytes) {
       return adapt(
@@ -173,7 +179,8 @@ public final class Py {
             public Object next() {
               return Byte.toUnsignedInt(bytes[position++]);
             }
-          });
+          },
+          "bytes_iterator");
     }
     throw error(
         PythonErrorType.TYPE_ERROR, "'" + typeName(value) + "' object is not iterable");
@@ -186,17 +193,27 @@ public final class Py {
     return iterator.next();
   }
 
-  private static PyIterator adapt(Iterator<?> iterator) {
-    return new PyIterator() {
-      public boolean hasNext() {
-        return iterator.hasNext();
-      }
+  private static PyIterator adapt(Iterator<?> iterator, String pythonName) {
+    return new AdaptedIterator(iterator, pythonName);
+  }
 
-      public Object next() {
-        if (!iterator.hasNext()) throw error(PythonErrorType.STOP_ITERATION, "");
-        return iterator.next();
-      }
-    };
+  private static final class AdaptedIterator implements PyIterator {
+    private final Iterator<?> iterator;
+    final String pythonName;
+
+    AdaptedIterator(Iterator<?> iterator, String pythonName) {
+      this.iterator = iterator;
+      this.pythonName = pythonName;
+    }
+
+    public boolean hasNext() {
+      return iterator.hasNext();
+    }
+
+    public Object next() {
+      if (!iterator.hasNext()) throw error(PythonErrorType.STOP_ITERATION, "");
+      return iterator.next();
+    }
   }
 
   /** Iterates the value, collecting into a new mutable list like list(value). */
@@ -243,10 +260,11 @@ public final class Py {
     if (container instanceof String text) {
       int size = text.codePointCount(0, text.length());
       int index = stringIndex(key, size);
-      return new String(Character.toChars(text.codePointAt(index)));
+      int position = text.offsetByCodePoints(0, index);
+      return new String(Character.toChars(text.codePointAt(position)));
     }
     if (container instanceof byte[] bytes) {
-      int index = stringIndex(key, bytes.length, "bytes");
+      int index = byteIndex(key, bytes.length);
       return Byte.toUnsignedInt(bytes[index]);
     }
     throw error(
@@ -318,7 +336,7 @@ public final class Py {
       if (!(item instanceof String piece))
         throw error(
             PythonErrorType.TYPE_ERROR,
-            "'in <string>' requires string left operand, not " + typeName(item));
+            "'in <string>' requires string as left operand, not " + typeName(item));
       return text.contains(piece);
     }
     if (container instanceof byte[] bytes) {
@@ -385,22 +403,27 @@ public final class Py {
   }
 
   private static int stringIndex(Object key, int size) {
-    return stringIndex(key, size, "string");
-  }
-
-  private static int stringIndex(Object key, int size, String kind) {
     BigInteger index;
     try {
       index = index(key);
     } catch (PythonException failure) {
       throw error(
           PythonErrorType.TYPE_ERROR,
-          (kind.equals("bytes") ? "bytes" : "string")
-              + " indices must be integers, not '"
-              + typeName(key)
-              + "'");
+          "string indices must be integers, not '" + typeName(key) + "'");
     }
-    return checkedIndex(index, size, kind + " index out of range");
+    return checkedIndex(index, size, "string index out of range");
+  }
+
+  private static int byteIndex(Object key, int size) {
+    BigInteger index;
+    try {
+      index = index(key);
+    } catch (PythonException failure) {
+      throw error(
+          PythonErrorType.TYPE_ERROR,
+          "byte indices must be integers or slices, not " + typeName(key));
+    }
+    return checkedIndex(index, size, "index out of range");
   }
 
   private static int checkedIndex(BigInteger index, int size, String message) {
@@ -544,8 +567,6 @@ public final class Py {
     if (operation == Op.NE) return !equal(left, right);
     if (isNumber(left) && isNumber(right)) {
       int result = numericCompare(left, right);
-      if (left instanceof Double l && Double.isNaN(l) || right instanceof Double r && Double.isNaN(r))
-        return false;
       if (result == Integer.MIN_VALUE) return false;
       return switch (operation) {
         case LT -> result < 0;
@@ -650,7 +671,9 @@ public final class Py {
     if (Double.isNaN(l) || Double.isNaN(r)) return Integer.MIN_VALUE;
     if (!isFloat(left) && !isFloat(right))
       return integer(left).compareTo(integer(right));
-    if (isFloat(left) && isFloat(right)) return Double.compare(l, r);
+    if (left instanceof BigDecimal || right instanceof BigDecimal)
+      return new BigDecimal(left.toString()).compareTo(new BigDecimal(right.toString()));
+    if (isFloat(left) && isFloat(right)) return l < r ? -1 : l > r ? 1 : 0;
     if (isFloat(left)) {
       if (Double.isInfinite(l)) return l < 0 ? -1 : 1;
       return new BigDecimal(l).compareTo(new BigDecimal(integer(right)));

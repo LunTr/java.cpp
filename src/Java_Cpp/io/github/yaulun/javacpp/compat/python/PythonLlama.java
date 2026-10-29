@@ -25,7 +25,7 @@ public final class PythonLlama implements AutoCloseable {
   private int nTokens;
   private boolean requiresEval;
   private Object seed = BigInteger.ZERO;
-  private PythonLlamaCache cache;
+  private Object cache;
   private PythonTokenizerModel tokenizerModel;
   private PythonTokenizer activeTokenizer;
   private io.github.yaulun.javacpp.LlamaModel nativeModel;
@@ -795,13 +795,13 @@ public final class PythonLlama implements AutoCloseable {
     return result;
   }
 
-  /** Assigns the cache reference, including null, without clearing state. */
-  public void setCache(PythonLlamaCache value) {
+  /** Assigns the cache reference verbatim, including null, without clearing state. */
+  public void setCache(Object value) {
     cache = value;
   }
 
   /** Returns the currently attached cache reference. */
-  public PythonLlamaCache cache() {
+  public Object cache() {
     return cache;
   }
 

@@ -12,13 +12,13 @@ final class PythonSlices {
     List<?> sequence =
         value instanceof String text ? text.codePoints().boxed().toList() : list(value);
     int size = sequence.size();
-    BigInteger stride = step == null ? BigInteger.ONE : PythonNumbers.index(step);
+    BigInteger stride = step == null ? BigInteger.ONE : Py.index(step);
     if (stride.signum() == 0) throw error(PythonErrorType.VALUE_ERROR, "slice step cannot be zero");
     boolean reverse = stride.signum() < 0;
     int first =
-        start == null ? (reverse ? size - 1 : 0) : bound(PythonNumbers.index(start), size, reverse);
+        start == null ? (reverse ? size - 1 : 0) : Py.bound(Py.index(start), size, reverse);
     int last =
-        stop == null ? (reverse ? -1 : size) : bound(PythonNumbers.index(stop), size, reverse);
+        stop == null ? (reverse ? -1 : size) : Py.bound(Py.index(stop), size, reverse);
     long distance = stride.abs().min(BigInteger.valueOf((long) size + 1)).longValue();
     if (reverse) distance = -distance;
     List<Object> result = new ArrayList<>();
@@ -30,13 +30,5 @@ final class PythonSlices {
       return text.toString();
     }
     return result;
-  }
-
-  private static int bound(BigInteger value, int size, boolean reverse) {
-    if (value.signum() < 0) value = value.add(BigInteger.valueOf(size));
-    return value
-        .max(BigInteger.valueOf(reverse ? -1 : 0))
-        .min(BigInteger.valueOf(reverse ? size - 1 : size))
-        .intValue();
   }
 }

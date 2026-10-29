@@ -194,7 +194,7 @@ final class PythonCompletion implements Iterator<Map<String, Object>> {
     int cls = model.cls(), sep = model.sep();
     boolean addSpace = model.metadata("tokenizer.ggml.add_space_prefix", "true").equals("true");
     prompt = options.get("prompt");
-    promptLength = length(prompt);
+    promptLength = Py.len(prompt);
     List<Integer> beginnings = new ArrayList<>(List.of(cls != -1 ? cls : bos));
     List<Integer> endings = new ArrayList<>(List.of(sep != -1 ? sep : model.eos()));
     if ((prompt instanceof List<?> && suffix == null)
@@ -278,9 +278,9 @@ final class PythonCompletion implements Iterator<Map<String, Object>> {
       throw error(
           PythonErrorType.VALUE_ERROR,
           "logprobs is not supported for models created with logits_all=False");
-    if (llama.cache() != null) {
+    if (Py.truth(llama.cache())) {
       try {
-        var cached = llama.cache().get(key(promptTokens));
+        var cached = (PythonLlamaState) Py.getItem(llama.cache(), promptTokens);
         int cachePrefix = common(cached.inputIds(), promptTokens),
             livePrefix =
                 common(
@@ -350,7 +350,7 @@ final class PythonCompletion implements Iterator<Map<String, Object>> {
         }
         String tokenText = decode(detok(List.of(token), previous));
         int offset =
-            promptLength + length(decode(detok(completionTokens.subList(0, returned), previous)));
+            promptLength + Py.len(decode(detok(completionTokens.subList(0, returned), previous)));
         float[] probabilities =
             PythonLlama.logitsToLogprobs(llama.scoreRow(promptTokens.size() + returned - 1));
         Map<String, Object> top = top(probabilities, null);
@@ -475,7 +475,7 @@ final class PythonCompletion implements Iterator<Map<String, Object>> {
         String tokenText = tokenStrings.get(i);
         float[] probabilities = PythonLlama.logitsToLogprobs(llama.scoreRow(i + tokenOffset));
         if (token == bos) continue;
-        offsets.add(offset + length(decode(detok(all.subList(0, i), null))));
+        offsets.add(offset + Py.len(decode(detok(all.subList(0, i), null))));
         tokens.add(tokenText);
         tokenProbabilities.add((double) probabilities[token]);
         Map<String, Object> top = top(probabilities, all.subList(0, i));
@@ -541,9 +541,9 @@ final class PythonCompletion implements Iterator<Map<String, Object>> {
   }
 
   private void cacheSave(boolean stream) {
-    if (llama.cache() == null) return;
+    if (!Py.truth(llama.cache())) return;
     if (verbose) llama.diagnostic("Llama._create_completion: cache save");
-    llama.cache().put(key(concat(promptTokens, completionTokens)), llama.saveState());
+    Py.setItem(llama.cache(), concat(promptTokens, completionTokens), llama.saveState());
     if (stream && verbose) llama.diagnostic("Llama._create_completion: cache saved");
   }
 
@@ -565,26 +565,10 @@ final class PythonCompletion implements Iterator<Map<String, Object>> {
     return llama.detokenize(array(tokens), previous == null ? null : array(previous), false);
   }
 
-  private static List<BigInteger> key(List<Integer> tokens) {
-    return tokens.stream().map(t -> BigInteger.valueOf(t)).toList();
-  }
-
   private static int common(int[] a, List<Integer> b) {
     int i = 0;
     while (i < Math.min(a.length, b.size()) && a[i] == b.get(i)) i++;
     return i;
-  }
-
-  private static BigInteger integer(Object value) {
-    if (value instanceof BigInteger number) return number;
-    if (value instanceof Number number) return BigInteger.valueOf(number.longValue());
-    if (value instanceof Boolean flag) return flag ? BigInteger.ONE : BigInteger.ZERO;
-    try {
-      return new BigInteger(value.toString().strip());
-    } catch (NumberFormatException failure) {
-      throw error(
-          PythonErrorType.VALUE_ERROR, "invalid literal for int() with base 10: " + repr(value));
-    }
   }
 
   private static int[] array(List<Integer> values) {
@@ -600,13 +584,6 @@ final class PythonCompletion implements Iterator<Map<String, Object>> {
     List<Integer> result = new ArrayList<>();
     for (var list : lists) result.addAll(list);
     return result;
-  }
-
-  private static int length(Object value) {
-    if (value instanceof String text) return text.codePointCount(0, text.length());
-    if (value instanceof List<?> list) return list.size();
-    throw error(
-        PythonErrorType.TYPE_ERROR, "object of type '" + typeName(value) + "' has no len()");
   }
 
   private static byte[] prefix(byte[] values, int end) {

@@ -4,9 +4,10 @@ import java.math.BigInteger;
 
 /**
  * Mutable LlamaState fields from Python 0.3.36. Arrays and byte storage retain their supplied
- * references. Callers own synchronization, as with the original state object.
+ * references. Callers own synchronization, as with the original state object. Implements the
+ * attribute protocol so duck-typed consumers such as caches can read llama_state_size.
  */
-public final class PythonLlamaState {
+public final class PythonLlamaState implements PyAttributed {
   private int[] inputIds;
   private float[][] scores;
   private int nTokens;
@@ -126,5 +127,24 @@ public final class PythonLlamaState {
 
   public void setSeedValue(BigInteger value) {
     seed = value;
+  }
+
+  /** Duck-typed attribute lookup matching the six original LlamaState attributes. */
+  @Override
+  public Object attr(String name) {
+    return switch (name) {
+      case "input_ids" -> inputIds;
+      case "scores" -> scores;
+      case "n_tokens" -> nTokens;
+      case "llama_state" -> llamaState;
+      case "llama_state_size" -> llamaStateSize;
+      case "seed" -> seed;
+      default -> Py.ABSENT;
+    };
+  }
+
+  @Override
+  public String pyType() {
+    return "LlamaState";
   }
 }
