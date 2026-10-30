@@ -243,16 +243,16 @@
     "libraryCount": 712,
     "serverCount": 39,
     "boundCount": 84,
-    "coveredCount": 98,
-    "checkedCount": 182,
-    "partialCount": 59,
-    "missingCount": 510,
+    "coveredCount": 103,
+    "checkedCount": 187,
+    "partialCount": 58,
+    "missingCount": 506,
     "exactParityCertifiedCount": 0,
     "sameNamedNativeBindings": 86,
     "javaNativeBindingCount": 95,
     "publicLlamaMembers": 31,
     "publicLlamaCovered": 27,
-    "uncheckedCount": 569
+    "uncheckedCount": 564
   },
   "functions": [
     {
@@ -267,12 +267,13 @@
       "method": false,
       "async": false,
       "signature": "lib_base_name: str, base_path: pathlib.Path",
-      "status": "partial",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": "internal.NativeLoader.load",
-      "reason": "Java 仅支持 Windows x64，目录选择、ABI 校验和异常契约不同",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L26"
+      "java": "compat.python.PythonCtypesExtensions.loadSharedLibrary",
+      "reason": "已逐句移植固定原版完整函数体；os/sys/ctypes/pathlib 及加载结果由显式端口提供，全分支、环境变更、kwargs、wraps 属性复制和参数绑定报错已有原版对照；真实操作系统加载效果继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L26",
+      "contractEvidence": "docs/python-ctypes-contracts.json"
     },
     {
       "id": "llama_cpp._ctypes_extensions.ctypes_function_for_shared_library",
@@ -286,12 +287,13 @@
       "method": false,
       "async": false,
       "signature": "lib: ctypes.CDLL",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L140"
+      "java": "compat.python.PythonCtypesExtensions.ctypesFunctionForSharedLibrary",
+      "reason": "已逐句移植固定原版完整函数体；os/sys/ctypes/pathlib 及加载结果由显式端口提供，全分支、环境变更、kwargs、wraps 属性复制和参数绑定报错已有原版对照；真实操作系统加载效果继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L140",
+      "contractEvidence": "docs/python-ctypes-contracts.json"
     },
     {
       "id": "llama_cpp._ctypes_extensions.ctypes_function_for_shared_library.ctypes_function",
@@ -305,12 +307,13 @@
       "method": false,
       "async": false,
       "signature": "name: str, argtypes: List[Any], restype: Any, enabled: bool=True",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L143"
+      "java": "compat.python.PythonCtypesExtensions.ctypesFunctionForSharedLibrary",
+      "reason": "已逐句移植固定原版完整函数体；os/sys/ctypes/pathlib 及加载结果由显式端口提供，全分支、环境变更、kwargs、wraps 属性复制和参数绑定报错已有原版对照；真实操作系统加载效果继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L143",
+      "contractEvidence": "docs/python-ctypes-contracts.json"
     },
     {
       "id": "llama_cpp._ctypes_extensions.ctypes_function_for_shared_library.ctypes_function.decorator",
@@ -324,12 +327,13 @@
       "method": false,
       "async": false,
       "signature": "f: F",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L146"
+      "java": "compat.python.PythonCtypesExtensions.ctypesFunctionForSharedLibrary",
+      "reason": "已逐句移植固定原版完整函数体；os/sys/ctypes/pathlib 及加载结果由显式端口提供，全分支、环境变更、kwargs、wraps 属性复制和参数绑定报错已有原版对照；真实操作系统加载效果继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L146",
+      "contractEvidence": "docs/python-ctypes-contracts.json"
     },
     {
       "id": "llama_cpp._ctypes_extensions._byref",
@@ -343,12 +347,13 @@
       "method": false,
       "async": false,
       "signature": "obj: CtypesCData, offset: Optional[int]=None",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L161"
+      "java": "compat.python.PythonCtypesExtensions.byrefStub / PythonCtypesExtensions.byref",
+      "reason": "已逐句移植固定原版完整函数体；os/sys/ctypes/pathlib 及加载结果由显式端口提供，全分支、环境变更、kwargs、wraps 属性复制和参数绑定报错已有原版对照；真实操作系统加载效果继续验收",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L161",
+      "contractEvidence": "docs/python-ctypes-contracts.json"
     },
     {
       "id": "llama_cpp._internals.LlamaModel.__init__",

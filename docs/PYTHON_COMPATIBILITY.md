@@ -2,7 +2,7 @@
 
 核对日期：2026-10-23。原版基线为 llama-cpp-python 0.3.36，源码 commit `1652066e0af45f2313b339670ef9555e8a54e545`，vendor/llama.cpp 为 `0c1e57098bba43ac29e6e3b677cdceebdd22334f`。原版源码来自官方仓库，下载的 25 个 Python 文件逐个核对 Git blob SHA-1，并记录 SHA-256，清单保存在 [审计 JSON](python-api-audit.json)。
 
-已加入 37 项静态聊天函数，以及本批 12 项 RAM 缓存、状态和处理器函数。最新完整构建共 11,452 项通过，详见 [聊天函数移植记录](PYTHON_CHAT_COMPATIBILITY.md) 和 [状态/缓存记录](PYTHON_STATE_COMPATIBILITY.md)。下文错误桥接的 300 条契约及其验证边界继续保留。测试数据统一在被忽略的 `src/test/resources/` 本地生成，步骤见 [生成说明](../tools/python_compat/README.md)。
+已加入 37 项静态聊天函数、12 项 RAM 缓存/状态/处理器函数，以及 `_ctypes_extensions.py` 全部 5 项加载与装饰函数（见 [ctypes 迁移记录](PYTHON_CTYPES_COMPATIBILITY.md)）。此前完整构建共 11,452 项通过，详见 [聊天函数移植记录](PYTHON_CHAT_COMPATIBILITY.md) 和 [状态/缓存记录](PYTHON_STATE_COMPATIBILITY.md)。下文错误桥接的 300 条契约及其验证边界继续保留。测试数据统一在被忽略的 `src/test/resources/` 本地生成，步骤见 [生成说明](../tools/python_compat/README.md)。
 
 ## 数量与进度
 

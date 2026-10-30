@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.RandomAccess;
 
 /**
- * Immutable Python tuple view over an existing element list. Equality and hashing follow Java
- * list semantics so a tuple can key ordered maps; {@link Py#typeName} and {@link Py#equal}
- * distinguish it from a Python list.
+ * Immutable Python tuple view over an existing element list. Equality and hashing follow Java list
+ * semantics so a tuple can key ordered maps; {@link Py#typeName} and {@link Py#equal} distinguish
+ * it from a Python list.
  */
 public final class PyTuple<E> extends AbstractList<E> implements RandomAccess {
   private final List<E> elements;

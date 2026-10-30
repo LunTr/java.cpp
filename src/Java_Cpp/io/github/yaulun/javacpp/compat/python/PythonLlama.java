@@ -1,5 +1,9 @@
 package io.github.yaulun.javacpp.compat.python;
 
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonException;
+import io.github.yaulun.javacpp.python.PythonNumbers;
+import io.github.yaulun.javacpp.python.PythonValues;
 import java.math.BigInteger;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -7,10 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
-import io.github.yaulun.javacpp.python.PythonErrorType;
-import io.github.yaulun.javacpp.python.PythonException;
-import io.github.yaulun.javacpp.python.PythonNumbers;
-import io.github.yaulun.javacpp.python.PythonValues;
 
 /**
  * State, token generation and numerical helpers from Llama in Python 0.3.36. The supplied

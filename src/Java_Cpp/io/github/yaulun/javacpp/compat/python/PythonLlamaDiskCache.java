@@ -1,10 +1,10 @@
 package io.github.yaulun.javacpp.compat.python;
 
+import io.github.yaulun.javacpp.python.Py;
+import io.github.yaulun.javacpp.python.PythonErrorType;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.function.Consumer;
-import io.github.yaulun.javacpp.python.Py;
-import io.github.yaulun.javacpp.python.PythonErrorType;
 
 /**
  * Pinned LlamaDiskCache control flow over an explicit diskcache storage port. The port owns key

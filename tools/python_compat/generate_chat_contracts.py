@@ -232,7 +232,7 @@ for name in constants:
     java += "  static final String " + name + " = " + json.dumps(namespace[name], ensure_ascii=True) + ";\n"
 java += "}\n"
 (root / "src/Java_Cpp/io/github/yaulun/javacpp/compat/python/PythonChatTemplateConstants.java").write_text(java, encoding="utf-8")
-java = "package io.github.yaulun.javacpp.compat.python;\n\n"
+java = "package io.github.yaulun.javacpp.python;\n\n"
 java += "/** CPython 3.13 Unicode " + unicodedata.unidata_version + " printable ranges for repr. */\n"
 java += "final class PythonUnicode {\n  private PythonUnicode() {}\n"
 java += "  private static final int[] printableRanges = {\n"
@@ -244,6 +244,6 @@ java += "    while (low < high) {\n      int mid = (low + high) >>> 1;\n"
 java += "      if (cp < printableRanges[2 * mid]) high = mid;\n"
 java += "      else if (cp > printableRanges[2 * mid + 1]) low = mid + 1;\n"
 java += "      else return true;\n    }\n    return false;\n  }\n}\n"
-(root / "src/Java_Cpp/io/github/yaulun/javacpp/compat/python/PythonUnicode.java").write_text(java, encoding="utf-8")
+(root / "src/Java_Cpp/io/github/yaulun/javacpp/python/PythonUnicode.java").write_text(java, encoding="utf-8")
 print(json.dumps({"verifiedSourceFiles": 25, "uniqueInventoryFunctions": 751,
                   "portedFunctions": len(set(names)), "caseCount": len(rows)}, indent=2))

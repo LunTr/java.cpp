@@ -5,14 +5,14 @@ import static io.github.yaulun.javacpp.compat.python.PythonErrorBridge.error;
 import com.sun.jna.*;
 import io.github.yaulun.javacpp.compat.python.*;
 import io.github.yaulun.javacpp.internal.*;
+import io.github.yaulun.javacpp.python.Py;
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonNumbers;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.nio.file.*;
 import java.util.*;
 import java.util.function.Function;
-import io.github.yaulun.javacpp.python.Py;
-import io.github.yaulun.javacpp.python.PythonErrorType;
-import io.github.yaulun.javacpp.python.PythonNumbers;
 
 /** Native construction using Python defaults and direct C parameter conversion. */
 public final class PythonNativeLlama {
@@ -154,10 +154,8 @@ public final class PythonNativeLlama {
       contextOptions.put("n_ubatch", micro);
       int cpu = Runtime.getRuntime().availableProcessors();
       contextOptions.put(
-          "n_threads",
-          Py.orElse(options.get("n_threads"), () -> Math.max(cpu / 2, 1)));
-      contextOptions.put(
-          "n_threads_batch", Py.orElse(options.get("n_threads_batch"), () -> cpu));
+          "n_threads", Py.orElse(options.get("n_threads"), () -> Math.max(cpu / 2, 1)));
+      contextOptions.put("n_threads_batch", Py.orElse(options.get("n_threads_batch"), () -> cpu));
       contextOptions.put(
           "rope_scaling_type",
           options.get("rope_scaling_type") == null ? -1 : options.get("rope_scaling_type"));
@@ -191,8 +189,7 @@ public final class PythonNativeLlama {
           throw error(
               PythonErrorType.RUNTIME_ERROR, "Failed to set LoRA adapter from lora path: " + lora);
       }
-      boolean all =
-          options.get("draft_model") != null || Py.truth(options.get("logits_all"));
+      boolean all = options.get("draft_model") != null || Py.truth(options.get("logits_all"));
       int[] ids = new int[ctx];
       float[][] scores =
           new float
@@ -234,8 +231,7 @@ public final class PythonNativeLlama {
       state.attachNative(model, context);
       state.setExecution(PythonLlamaExecution.fromContext(context, batch));
       state.setLastNTokensSize(Py.cInt(options.get("last_n_tokens_size")));
-      state.setSeed(
-          Py.orElse(options.get("seed"), () -> BigInteger.valueOf(4294967295L)));
+      state.setSeed(Py.orElse(options.get("seed"), () -> BigInteger.valueOf(4294967295L)));
       if (options.get("tokenizer") != null)
         state.setTokenizer((PythonTokenizer) options.get("tokenizer"));
       state.setDraftModel((java.util.function.UnaryOperator<int[]>) options.get("draft_model"));
@@ -272,8 +268,7 @@ public final class PythonNativeLlama {
                             "response_format",
                             "top_logprobs")) call.remove(key);
                     Object logprobs = forwarded.get("logprobs");
-                    call.put(
-                        "logprobs", Py.truth(logprobs) ? forwarded.get("top_logprobs") : null);
+                    call.put("logprobs", Py.truth(logprobs) ? forwarded.get("top_logprobs") : null);
                     call.put(
                         "prompt",
                         Arrays.stream(
@@ -390,8 +385,7 @@ public final class PythonNativeLlama {
 
   private static float cFloat(Object value) {
     if (!(value instanceof Number) && !(value instanceof Boolean))
-      throw error(
-          PythonErrorType.ARGUMENT_ERROR, "argument 1: TypeError: wrong type");
+      throw error(PythonErrorType.ARGUMENT_ERROR, "argument 1: TypeError: wrong type");
     return ((Number) value).floatValue();
   }
 

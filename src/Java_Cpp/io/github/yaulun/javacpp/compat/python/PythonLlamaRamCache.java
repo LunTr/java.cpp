@@ -1,18 +1,18 @@
 package io.github.yaulun.javacpp.compat.python;
 
+import io.github.yaulun.javacpp.python.Py;
+import io.github.yaulun.javacpp.python.PythonErrorType;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import io.github.yaulun.javacpp.python.Py;
-import io.github.yaulun.javacpp.python.PythonErrorType;
 
 /**
  * LlamaRAMCache from Python 0.3.36: longest nonempty prefix lookup and ordered eviction. Keys and
  * values keep the original duck-typed semantics: keys are converted with tuple() and values are
- * read through the llama_state_size attribute. This mutable object requires caller
- * synchronization when shared between threads.
+ * read through the llama_state_size attribute. This mutable object requires caller synchronization
+ * when shared between threads.
  */
 public final class PythonLlamaRamCache extends PythonLlamaCache {
   private final LinkedHashMap<List<Object>, Object> cacheState = new LinkedHashMap<>();

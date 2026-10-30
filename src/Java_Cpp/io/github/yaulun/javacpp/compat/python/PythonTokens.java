@@ -1,7 +1,7 @@
 package io.github.yaulun.javacpp.compat.python;
 
-import java.util.List;
 import io.github.yaulun.javacpp.python.Py;
+import java.util.List;
 
 /** Token sequence operations from the pinned Python API. */
 public final class PythonTokens {

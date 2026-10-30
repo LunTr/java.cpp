@@ -3,6 +3,7 @@ package io.github.yaulun.javacpp.compat.python;
 import static io.github.yaulun.javacpp.python.PythonValues.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.github.yaulun.javacpp.python.PythonException;
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -10,8 +11,6 @@ import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 import org.junit.jupiter.api.*;
-import io.github.yaulun.javacpp.python.PythonException;
-import io.github.yaulun.javacpp.python.PythonValues;
 
 class PythonCompletionContractTest {
   @TestFactory

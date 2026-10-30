@@ -13,12 +13,44 @@ public final class PythonStrings {
   /** Python str method names the dialect rewrites into py_* filter calls. */
   public static final Set<String> NAMES =
       Set.of(
-          "startswith", "endswith", "strip", "lstrip", "rstrip", "split", "rsplit",
-          "splitlines", "join", "replace", "find", "rfind", "index", "rindex", "count",
-          "lower", "upper", "title", "capitalize", "swapcase", "removeprefix",
-          "removesuffix", "zfill", "center", "ljust", "rjust", "isdigit", "isdecimal",
-          "isnumeric", "isalpha", "isalnum", "isspace", "islower", "isupper", "istitle",
-          "partition", "rpartition", "expandtabs");
+          "startswith",
+          "endswith",
+          "strip",
+          "lstrip",
+          "rstrip",
+          "split",
+          "rsplit",
+          "splitlines",
+          "join",
+          "replace",
+          "find",
+          "rfind",
+          "index",
+          "rindex",
+          "count",
+          "lower",
+          "upper",
+          "title",
+          "capitalize",
+          "swapcase",
+          "removeprefix",
+          "removesuffix",
+          "zfill",
+          "center",
+          "ljust",
+          "rjust",
+          "isdigit",
+          "isdecimal",
+          "isnumeric",
+          "isalpha",
+          "isalnum",
+          "isspace",
+          "islower",
+          "isupper",
+          "istitle",
+          "partition",
+          "rpartition",
+          "expandtabs");
 
   public static Object apply(String name, Object self, Object[] args) {
     if (!(self instanceof String text))
@@ -92,11 +124,25 @@ public final class PythonStrings {
     if (n < min)
       throw Py.error(
           PythonErrorType.TYPE_ERROR,
-          name + "() takes at least " + min + " argument" + (min == 1 ? "" : "s") + " (" + n + " given)");
+          name
+              + "() takes at least "
+              + min
+              + " argument"
+              + (min == 1 ? "" : "s")
+              + " ("
+              + n
+              + " given)");
     if (n > max)
       throw Py.error(
           PythonErrorType.TYPE_ERROR,
-          name + "() takes at most " + max + " argument" + (max == 1 ? "" : "s") + " (" + n + " given)");
+          name
+              + "() takes at most "
+              + max
+              + " argument"
+              + (max == 1 ? "" : "s")
+              + " ("
+              + n
+              + " given)");
   }
 
   private static void manual(String name, Object[] args, int min, int max) {
@@ -146,11 +192,10 @@ public final class PythonStrings {
 
   /** No-category characters whose Unicode numeric type is Digit, as (start, end) ranges. */
   private static final int[] DIGIT_LETTERS = {
-    0xB2, 0xB3, 0xB9, 0xB9, 0x1369, 0x1371, 0x19DA, 0x19DA, 0x2070, 0x2070,
-    0x2074, 0x2079, 0x2080, 0x2089, 0x2460, 0x2468, 0x2474, 0x247C, 0x2488, 0x2490,
-    0x24EA, 0x24EA, 0x24F5, 0x24FD, 0x24FF, 0x24FF, 0x2776, 0x277E, 0x2780, 0x2788,
-    0x278A, 0x2792, 0x10A40, 0x10A43, 0x10E60, 0x10E68, 0x11052, 0x1105A,
-    0x1F100, 0x1F10A
+    0xB2, 0xB3, 0xB9, 0xB9, 0x1369, 0x1371, 0x19DA, 0x19DA, 0x2070, 0x2070, 0x2074, 0x2079, 0x2080,
+    0x2089, 0x2460, 0x2468, 0x2474, 0x247C, 0x2488, 0x2490, 0x24EA, 0x24EA, 0x24F5, 0x24FD, 0x24FF,
+    0x24FF, 0x2776, 0x277E, 0x2780, 0x2788, 0x278A, 0x2792, 0x10A40, 0x10A43, 0x10E60, 0x10E68,
+    0x11052, 0x1105A, 0x1F100, 0x1F10A
   };
 
   /** CPython str.isnumeric: N* categories plus letters carrying a numeric value (e.g. 四). */
@@ -164,22 +209,19 @@ public final class PythonStrings {
 
   /** Lo-category characters carrying a Unicode numeric value, as (start, end) ranges. */
   private static final int[] NUMERIC_LETTERS = {
-    0x3405, 0x3405, 0x3483, 0x3483, 0x382A, 0x382A, 0x3B4D, 0x3B4D, 0x4E00, 0x4E00,
-    0x4E03, 0x4E03, 0x4E07, 0x4E07, 0x4E09, 0x4E09, 0x4E5D, 0x4E5D, 0x4E8C, 0x4E8C,
-    0x4E94, 0x4E94, 0x4E96, 0x4E96, 0x4EBF, 0x4EC0, 0x4EDF, 0x4EDF, 0x4EE8, 0x4EE8,
-    0x4F0D, 0x4F0D, 0x4F70, 0x4F70, 0x5104, 0x5104, 0x5146, 0x5146, 0x5169, 0x5169,
-    0x516B, 0x516B, 0x516D, 0x516D, 0x5341, 0x5341, 0x5343, 0x5345, 0x534C, 0x534C,
-    0x53C1, 0x53C4, 0x56DB, 0x56DB, 0x58F1, 0x58F1, 0x58F9, 0x58F9, 0x5E7A, 0x5E7A,
-    0x5EFE, 0x5EFF, 0x5F0C, 0x5F0E, 0x5F10, 0x5F10, 0x62FE, 0x62FE, 0x634C, 0x634C,
-    0x67D2, 0x67D2, 0x6F06, 0x6F06, 0x7396, 0x7396, 0x767E, 0x767E, 0x8086, 0x8086,
-    0x842C, 0x842C, 0x8CAE, 0x8CAE, 0x8CB3, 0x8CB3, 0x8D30, 0x8D30, 0x9621, 0x9621,
-    0x9646, 0x9646, 0x964C, 0x964C, 0x9678, 0x9678, 0x96F6, 0x96F6, 0xF96B, 0xF96B,
-    0xF973, 0xF973, 0xF978, 0xF978, 0xF9B2, 0xF9B2, 0xF9D1, 0xF9D1, 0xF9D3, 0xF9D3,
-    0xF9FD, 0xF9FD, 0x20001, 0x20001, 0x20064, 0x20064, 0x200E2, 0x200E2,
-    0x20121, 0x20121, 0x2092A, 0x2092A, 0x20983, 0x20983, 0x2098C, 0x2098C,
-    0x2099C, 0x2099C, 0x20AEA, 0x20AEA, 0x20AFD, 0x20AFD, 0x20B19, 0x20B19,
-    0x22390, 0x22390, 0x22998, 0x22998, 0x23B1B, 0x23B1B, 0x2626D, 0x2626D,
-    0x2F890, 0x2F890
+    0x3405, 0x3405, 0x3483, 0x3483, 0x382A, 0x382A, 0x3B4D, 0x3B4D, 0x4E00, 0x4E00, 0x4E03, 0x4E03,
+    0x4E07, 0x4E07, 0x4E09, 0x4E09, 0x4E5D, 0x4E5D, 0x4E8C, 0x4E8C, 0x4E94, 0x4E94, 0x4E96, 0x4E96,
+    0x4EBF, 0x4EC0, 0x4EDF, 0x4EDF, 0x4EE8, 0x4EE8, 0x4F0D, 0x4F0D, 0x4F70, 0x4F70, 0x5104, 0x5104,
+    0x5146, 0x5146, 0x5169, 0x5169, 0x516B, 0x516B, 0x516D, 0x516D, 0x5341, 0x5341, 0x5343, 0x5345,
+    0x534C, 0x534C, 0x53C1, 0x53C4, 0x56DB, 0x56DB, 0x58F1, 0x58F1, 0x58F9, 0x58F9, 0x5E7A, 0x5E7A,
+    0x5EFE, 0x5EFF, 0x5F0C, 0x5F0E, 0x5F10, 0x5F10, 0x62FE, 0x62FE, 0x634C, 0x634C, 0x67D2, 0x67D2,
+    0x6F06, 0x6F06, 0x7396, 0x7396, 0x767E, 0x767E, 0x8086, 0x8086, 0x842C, 0x842C, 0x8CAE, 0x8CAE,
+    0x8CB3, 0x8CB3, 0x8D30, 0x8D30, 0x9621, 0x9621, 0x9646, 0x9646, 0x964C, 0x964C, 0x9678, 0x9678,
+    0x96F6, 0x96F6, 0xF96B, 0xF96B, 0xF973, 0xF973, 0xF978, 0xF978, 0xF9B2, 0xF9B2, 0xF9D1, 0xF9D1,
+    0xF9D3, 0xF9D3, 0xF9FD, 0xF9FD, 0x20001, 0x20001, 0x20064, 0x20064, 0x200E2, 0x200E2, 0x20121,
+    0x20121, 0x2092A, 0x2092A, 0x20983, 0x20983, 0x2098C, 0x2098C, 0x2099C, 0x2099C, 0x20AEA,
+    0x20AEA, 0x20AFD, 0x20AFD, 0x20B19, 0x20B19, 0x22390, 0x22390, 0x22998, 0x22998, 0x23B1B,
+    0x23B1B, 0x2626D, 0x2626D, 0x2F890, 0x2F890
   };
 
   /** Membership test for a sorted (start, end) inclusive range table. */
@@ -210,8 +252,7 @@ public final class PythonStrings {
   /** "must be str, not X" used by find/index/count/partition style first arguments. */
   private static String mustBeStr(Object value) {
     if (!(value instanceof String text))
-      throw Py.error(
-          PythonErrorType.TYPE_ERROR, "must be str, not " + Py.typeName(value));
+      throw Py.error(PythonErrorType.TYPE_ERROR, "must be str, not " + Py.typeName(value));
     return text;
   }
 
@@ -275,9 +316,11 @@ public final class PythonStrings {
     int length = text.length();
     int a = 0, b = length;
     if (chars == null) {
-      if (left) while (a < b && space(text.codePointAt(a))) a += Character.charCount(text.codePointAt(a));
+      if (left)
+        while (a < b && space(text.codePointAt(a))) a += Character.charCount(text.codePointAt(a));
       if (right)
-        while (b > a && space(text.codePointBefore(b))) b -= Character.charCount(text.codePointBefore(b));
+        while (b > a && space(text.codePointBefore(b)))
+          b -= Character.charCount(text.codePointBefore(b));
     } else {
       if (left)
         while (a < b && member(chars, text.codePointAt(a)))
@@ -294,8 +337,7 @@ public final class PythonStrings {
     int maxsplit = args.length > 1 ? Py.index(args[1]).intValue() : -1;
     if (marker == null) return new ArrayList<Object>(whitespaceSplit(text, maxsplit, reverse));
     if (!(marker instanceof String sep))
-      throw Py.error(
-          PythonErrorType.TYPE_ERROR, "must be str or None, not " + Py.typeName(marker));
+      throw Py.error(PythonErrorType.TYPE_ERROR, "must be str or None, not " + Py.typeName(marker));
     if (sep.isEmpty()) throw Py.error(PythonErrorType.VALUE_ERROR, "empty separator");
     List<String> parts = new ArrayList<>();
     if (!reverse) {
@@ -342,7 +384,8 @@ public final class PythonStrings {
         if (i == 0) break;
         int end = i;
         while (i > 0 && !space(points[i - 1])) i--;
-        parts.add(0, text.substring(text.offsetByCodePoints(0, i), text.offsetByCodePoints(0, end)));
+        parts.add(
+            0, text.substring(text.offsetByCodePoints(0, i), text.offsetByCodePoints(0, end)));
       }
       while (i > 0 && space(points[i - 1])) i--;
       if (i > 0) parts.add(0, text.substring(0, text.offsetByCodePoints(0, i)));
@@ -357,8 +400,14 @@ public final class PythonStrings {
     for (int i = 0; i < text.length(); i++) {
       int cp = text.codePointAt(i);
       boolean boundary =
-          cp == '\n' || cp == '\r' || cp == 0x0B || cp == 0x0C
-              || (cp >= 0x1C && cp <= 0x1E) || cp == 0x85 || cp == 0x2028 || cp == 0x2029;
+          cp == '\n'
+              || cp == '\r'
+              || cp == 0x0B
+              || cp == 0x0C
+              || (cp >= 0x1C && cp <= 0x1E)
+              || cp == 0x85
+              || cp == 0x2028
+              || cp == 0x2029;
       if (!boundary) continue;
       int end = i + Character.charCount(cp);
       if (cp == '\r' && end < text.length() && text.charAt(end) == '\n') end++;
@@ -470,7 +519,8 @@ public final class PythonStrings {
     int[] points = text.codePoints().toArray();
     if (points.length == 0) return text;
     StringBuilder result = new StringBuilder().appendCodePoint(Character.toTitleCase(points[0]));
-    for (int i = 1; i < points.length; i++) result.appendCodePoint(Character.toLowerCase(points[i]));
+    for (int i = 1; i < points.length; i++)
+      result.appendCodePoint(Character.toLowerCase(points[i]));
     return result.toString();
   }
 
@@ -492,7 +542,9 @@ public final class PythonStrings {
           PythonErrorType.TYPE_ERROR,
           name + "() argument must be str, not " + (value == null ? "None" : Py.typeName(value)));
     if (prefix ? text.startsWith(piece) : text.endsWith(piece))
-      return prefix ? text.substring(piece.length()) : text.substring(0, text.length() - piece.length());
+      return prefix
+          ? text.substring(piece.length())
+          : text.substring(0, text.length() - piece.length());
     return text;
   }
 
@@ -562,8 +614,7 @@ public final class PythonStrings {
 
   private static Object partition(String text, Object[] args, boolean forward) {
     String piece = mustBeStr(args[0]);
-    if (piece.isEmpty())
-      throw Py.error(PythonErrorType.VALUE_ERROR, "empty separator");
+    if (piece.isEmpty()) throw Py.error(PythonErrorType.VALUE_ERROR, "empty separator");
     int at = forward ? text.indexOf(piece) : text.lastIndexOf(piece);
     List<Object> result = new ArrayList<>(3);
     if (at < 0) {

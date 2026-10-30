@@ -3,9 +3,9 @@ package io.github.yaulun.javacpp.python;
 import java.util.Iterator;
 
 /**
- * Python iterator protocol: {@link #next()} raises a {@link PythonException} of type
- * {@link PythonErrorType#STOP_ITERATION} when exhausted instead of returning a sentinel, and
- * {@link #send} carries generator input for implementations that support it.
+ * Python iterator protocol: {@link #next()} raises a {@link PythonException} of type {@link
+ * PythonErrorType#STOP_ITERATION} when exhausted instead of returning a sentinel, and {@link #send}
+ * carries generator input for implementations that support it.
  */
 public interface PyIterator extends Iterator<Object> {
   /**

@@ -8,7 +8,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.*;
 import org.junit.jupiter.api.*;
-import io.github.yaulun.javacpp.python.PythonValues;
 
 class PythonTokenizerContractTest {
   @TestFactory

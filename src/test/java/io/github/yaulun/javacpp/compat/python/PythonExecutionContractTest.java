@@ -3,6 +3,9 @@ package io.github.yaulun.javacpp.compat.python;
 import static io.github.yaulun.javacpp.python.PythonValues.dict;
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonException;
+import io.github.yaulun.javacpp.python.PythonValues;
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -10,9 +13,6 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.*;
 import org.junit.jupiter.api.*;
-import io.github.yaulun.javacpp.python.PythonErrorType;
-import io.github.yaulun.javacpp.python.PythonException;
-import io.github.yaulun.javacpp.python.PythonValues;
 
 class PythonExecutionContractTest {
   @TestFactory

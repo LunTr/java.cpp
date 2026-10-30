@@ -18,12 +18,12 @@ import java.util.function.Supplier;
 /**
  * CPython abstract object protocol over ordinary Java values. The representation is deliberately
  * Java-native: {@code null} is None, {@link Boolean} is bool, integral {@link Number} types and
- * {@link BigInteger} are int, {@link Float}/{@link Double} are float, {@link String} is str,
- * {@code byte[]} is bytes, {@link List} is list, {@link PyTuple} is tuple, {@link Map} is dict,
- * {@link Set} is set, and {@link Iterable} values are iterable. Custom objects join the protocols
- * through {@link PyCallable}, {@link PyAttributed}, {@link PyItemAccess}, {@link PySized},
- * {@link PyIndexed} and {@link PyComparable}. Every operation reproduces the pinned CPython error
- * category and message.
+ * {@link BigInteger} are int, {@link Float}/{@link Double} are float, {@link String} is str, {@code
+ * byte[]} is bytes, {@link List} is list, {@link PyTuple} is tuple, {@link Map} is dict, {@link
+ * Set} is set, and {@link Iterable} values are iterable. Custom objects join the protocols through
+ * {@link PyCallable}, {@link PyAttributed}, {@link PyItemAccess}, {@link PySized}, {@link
+ * PyIndexed} and {@link PyComparable}. Every operation reproduces the pinned CPython error category
+ * and message.
  */
 public final class Py {
   private Py() {}
@@ -182,14 +182,12 @@ public final class Py {
           },
           "bytes_iterator");
     }
-    throw error(
-        PythonErrorType.TYPE_ERROR, "'" + typeName(value) + "' object is not iterable");
+    throw error(PythonErrorType.TYPE_ERROR, "'" + typeName(value) + "' object is not iterable");
   }
 
   /** next(): returns the yielded value or raises StopIteration. */
   public static Object next(PyIterator iterator) {
-    if (!iterator.hasNext())
-      throw error(PythonErrorType.STOP_ITERATION, "");
+    if (!iterator.hasNext()) throw error(PythonErrorType.STOP_ITERATION, "");
     return iterator.next();
   }
 
@@ -240,8 +238,7 @@ public final class Py {
   public static Object getItem(Object container, Object key) {
     if (container instanceof PyItemAccess access) return access.pyGet(key);
     if (container instanceof Map<?, ?> map) {
-      if (!map.containsKey(key))
-        throw error(PythonErrorType.KEY_ERROR, repr(key));
+      if (!map.containsKey(key)) throw error(PythonErrorType.KEY_ERROR, repr(key));
       return map.get(key);
     }
     if (key instanceof Slice slice) {
@@ -283,8 +280,7 @@ public final class Py {
       return;
     }
     if (container instanceof PyTuple) {
-      throw error(
-          PythonErrorType.TYPE_ERROR, "'tuple' object does not support item assignment");
+      throw error(PythonErrorType.TYPE_ERROR, "'tuple' object does not support item assignment");
     }
     if (container instanceof List list) {
       if (key instanceof Slice slice) {
@@ -309,7 +305,9 @@ public final class Py {
       map.remove(key);
       return;
     }
-    if (container instanceof PyTuple || container instanceof String || container instanceof byte[]) {
+    if (container instanceof PyTuple
+        || container instanceof String
+        || container instanceof byte[]) {
       throw error(
           PythonErrorType.TYPE_ERROR,
           "'" + typeName(container) + "' object doesn't support item deletion");
@@ -437,17 +435,14 @@ public final class Py {
     List<Object> items = list(value);
     int size = list.size();
     BigInteger stride = slice.step() == null ? BigInteger.ONE : index(slice.step());
-    if (stride.signum() == 0)
-      throw error(PythonErrorType.VALUE_ERROR, "slice step cannot be zero");
+    if (stride.signum() == 0) throw error(PythonErrorType.VALUE_ERROR, "slice step cannot be zero");
     boolean reverse = stride.signum() < 0;
     int first =
         slice.start() == null
             ? (reverse ? size - 1 : 0)
             : bound(index(slice.start()), size, reverse);
     int last =
-        slice.stop() == null
-            ? (reverse ? -1 : size)
-            : bound(index(slice.stop()), size, reverse);
+        slice.stop() == null ? (reverse ? -1 : size) : bound(index(slice.stop()), size, reverse);
     long distance = stride.abs().min(BigInteger.valueOf((long) size + 1)).longValue();
     if (reverse) distance = -distance;
     int count = 0;
@@ -494,8 +489,7 @@ public final class Py {
   /** callable(*args, **kwargs): PyCallable and common Java functional types. */
   @SuppressWarnings("unchecked")
   public static Object call(Object callable, List<?> arguments, Map<String, ?> keywords) {
-    if (callable instanceof PyCallable pyCallable)
-      return pyCallable.call(arguments, keywords);
+    if (callable instanceof PyCallable pyCallable) return pyCallable.call(arguments, keywords);
     if (keywords != null && !keywords.isEmpty())
       throw error(
           PythonErrorType.TYPE_ERROR,
@@ -507,8 +501,7 @@ public final class Py {
         && arguments.size() == 2)
       return ((java.util.function.BiFunction<Object, Object, Object>) function)
           .apply(arguments.get(0), arguments.get(1));
-    throw error(
-        PythonErrorType.TYPE_ERROR, "'" + typeName(callable) + "' object is not callable");
+    throw error(PythonErrorType.TYPE_ERROR, "'" + typeName(callable) + "' object is not callable");
   }
 
   public static Object call(Object callable, Object... arguments) {
@@ -654,8 +647,7 @@ public final class Py {
   private static int numericCompare(Object left, Object right) {
     double l = floatingOrNull(left), r = floatingOrNull(right);
     if (Double.isNaN(l) || Double.isNaN(r)) return Integer.MIN_VALUE;
-    if (!isFloat(left) && !isFloat(right))
-      return integer(left).compareTo(integer(right));
+    if (!isFloat(left) && !isFloat(right)) return integer(left).compareTo(integer(right));
     if (left instanceof BigDecimal || right instanceof BigDecimal)
       return new BigDecimal(left.toString()).compareTo(new BigDecimal(right.toString()));
     if (isFloat(left) && isFloat(right)) return l < r ? -1 : l > r ? 1 : 0;
@@ -710,8 +702,7 @@ public final class Py {
   /** a + b: numeric addition or same-kind sequence concatenation. */
   public static Object add(Object left, Object right) {
     if (isNumber(left) && isNumber(right)) {
-      if (isFloat(left) || isFloat(right))
-        return floatingOrNull(left) + floatingOrNull(right);
+      if (isFloat(left) || isFloat(right)) return floatingOrNull(left) + floatingOrNull(right);
       return integer(left).add(integer(right));
     }
     if (left instanceof String) {
@@ -737,9 +728,7 @@ public final class Py {
     }
     if (left instanceof byte[] bytes) {
       if (!(right instanceof byte[] tail))
-        throw error(
-            PythonErrorType.TYPE_ERROR,
-            "can't concat " + typeName(right) + " to bytes");
+        throw error(PythonErrorType.TYPE_ERROR, "can't concat " + typeName(right) + " to bytes");
       byte[] result = java.util.Arrays.copyOf(bytes, bytes.length + tail.length);
       System.arraycopy(tail, 0, result, bytes.length, tail.length);
       return result;
@@ -756,8 +745,7 @@ public final class Py {
   /** a - b: numeric subtraction with the canonical TypeError. */
   public static Object subtract(Object left, Object right) {
     if (isNumber(left) && isNumber(right)) {
-      if (isFloat(left) || isFloat(right))
-        return floatingOrNull(left) - floatingOrNull(right);
+      if (isFloat(left) || isFloat(right)) return floatingOrNull(left) - floatingOrNull(right);
       return integer(left).subtract(integer(right));
     }
     throw error(
@@ -772,8 +760,7 @@ public final class Py {
   /** a * b: numeric multiplication or sequence repetition. */
   public static Object multiply(Object left, Object right) {
     if (isNumber(left) && isNumber(right)) {
-      if (isFloat(left) || isFloat(right))
-        return floatingOrNull(left) * floatingOrNull(right);
+      if (isFloat(left) || isFloat(right)) return floatingOrNull(left) * floatingOrNull(right);
       return integer(left).multiply(integer(right));
     }
     if (left instanceof List || left instanceof String || left instanceof byte[])
@@ -798,9 +785,10 @@ public final class Py {
           PythonErrorType.TYPE_ERROR,
           "can't multiply sequence by non-int of type '" + typeName(count) + "'");
     }
-    int n = times.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0
-        ? Integer.MAX_VALUE
-        : Math.max(0, times.intValue());
+    int n =
+        times.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0
+            ? Integer.MAX_VALUE
+            : Math.max(0, times.intValue());
     if (sequence instanceof String text) {
       StringBuilder result = new StringBuilder();
       for (int i = 0; i < n; i++) result.append(text);
@@ -808,7 +796,8 @@ public final class Py {
     }
     if (sequence instanceof byte[] bytes) {
       byte[] result = new byte[bytes.length * n];
-      for (int i = 0; i < n; i++) System.arraycopy(bytes, 0, result, i * bytes.length, bytes.length);
+      for (int i = 0; i < n; i++)
+        System.arraycopy(bytes, 0, result, i * bytes.length, bytes.length);
       return result;
     }
     List<?> source = (List<?>) sequence;
@@ -823,8 +812,7 @@ public final class Py {
     if (isFloat(value)) return -floatingOrNull(value);
     if (typeOf(value) == Type.INT) return integer(value).negate();
     throw error(
-        PythonErrorType.TYPE_ERROR,
-        "bad operand type for unary -: '" + typeName(value) + "'");
+        PythonErrorType.TYPE_ERROR, "bad operand type for unary -: '" + typeName(value) + "'");
   }
 
   // ---- Numeric conversion --------------------------------------------------------------------
@@ -846,8 +834,7 @@ public final class Py {
     if (value instanceof Number number) return BigInteger.valueOf(number.longValue());
     if (value instanceof String || value instanceof byte[]) {
       String text = decimalText(value);
-      if (text.matches("[+-]?[0-9]+(?:_[0-9]+)*"))
-        return new BigInteger(text.replace("_", ""));
+      if (text.matches("[+-]?[0-9]+(?:_[0-9]+)*")) return new BigInteger(text.replace("_", ""));
       throw error(
           PythonErrorType.VALUE_ERROR,
           "invalid literal for int() with base 10: " + representation(value));
@@ -914,8 +901,7 @@ public final class Py {
     try {
       return number.intValueExact();
     } catch (ArithmeticException overflow) {
-      throw error(
-          PythonErrorType.OVERFLOW_ERROR, "Python int too large to convert to C long");
+      throw error(PythonErrorType.OVERFLOW_ERROR, "Python int too large to convert to C long");
     }
   }
 

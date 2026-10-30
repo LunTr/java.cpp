@@ -3,6 +3,9 @@ package io.github.yaulun.javacpp.compat.python;
 import static io.github.yaulun.javacpp.python.PythonValues.dict;
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonException;
+import io.github.yaulun.javacpp.python.PythonValues;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.math.BigInteger;
@@ -20,9 +23,6 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
-import io.github.yaulun.javacpp.python.PythonErrorType;
-import io.github.yaulun.javacpp.python.PythonException;
-import io.github.yaulun.javacpp.python.PythonValues;
 
 class PythonLlamaContractTest {
   @TestFactory

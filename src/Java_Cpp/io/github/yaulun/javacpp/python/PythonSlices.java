@@ -15,10 +15,8 @@ public final class PythonSlices {
     BigInteger stride = step == null ? BigInteger.ONE : Py.index(step);
     if (stride.signum() == 0) throw error(PythonErrorType.VALUE_ERROR, "slice step cannot be zero");
     boolean reverse = stride.signum() < 0;
-    int first =
-        start == null ? (reverse ? size - 1 : 0) : Py.bound(Py.index(start), size, reverse);
-    int last =
-        stop == null ? (reverse ? -1 : size) : Py.bound(Py.index(stop), size, reverse);
+    int first = start == null ? (reverse ? size - 1 : 0) : Py.bound(Py.index(start), size, reverse);
+    int last = stop == null ? (reverse ? -1 : size) : Py.bound(Py.index(stop), size, reverse);
     long distance = stride.abs().min(BigInteger.valueOf((long) size + 1)).longValue();
     if (reverse) distance = -distance;
     List<Object> result = new ArrayList<>();

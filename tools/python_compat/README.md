@@ -1,5 +1,7 @@
 # Python 原版对照数据生成
 
+2026-10-30 ctypes 补充：`generate_ctypes_contracts.py` 执行固定原版 `_ctypes_extensions.py` 全部 5 个定义项，在显式 os/sys/ctypes/pathlib 端口替身上生成 66 组对照，覆盖全部平台分支、环境变量写入、依赖加载、functools.wraps 属性复制与参数绑定报错原文；`byref` 对照使用真实 `ctypes.byref` 并核对实际指针偏移。Java 入口为 `PythonCtypesExtensions`，真实 OS 加载效果由 Host 端口承担。详见 [ctypes 迁移记录](../../docs/PYTHON_CTYPES_COMPATIBILITY.md)。
+
 2026-10-29 缓存补充：`generate_cache_contracts.py` 执行固定原版 BaseLlamaCache/LlamaDiskCache 完整函数体，生成 114 组数据，其中 110 组使用显式磁盘存储替身核对控制流程、异常时序和 stderr 分片，4 组核对基础类容量与空前缀。实际 SQLite/pickle 行为继续验收。`generate_all_contracts.py` 已接入；数据位于被忽略的 `src/test/resources/python-0.3.36-cache-contracts.tsv`，元数据见 `docs/python-cache-contracts.json`。状态数据新增属性收集/求和异常优先顺序反例，总数为 739 组。详见 [缓存记录](../../docs/PYTHON_CACHE_COMPATIBILITY.md)。
 
 2026-10-29 新增：generate_llama_defaults.py 从固定源码生成 Java 默认参数表；generate_services_contracts.py、generate_completion_contracts.py、generate_configuration_contracts.py 分别生成 235、140、74 组本地数据。generate_all_contracts.py 已接入四个脚本。数据仍放在被忽略的 src/test/resources，元数据为 docs/python-services-contracts.json、python-completion-contracts.json、python-configuration-contracts.json。

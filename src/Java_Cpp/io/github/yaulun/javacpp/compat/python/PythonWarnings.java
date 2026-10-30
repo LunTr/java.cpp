@@ -1,11 +1,11 @@
 package io.github.yaulun.javacpp.compat.python;
 
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonException;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
-import io.github.yaulun.javacpp.python.PythonErrorType;
-import io.github.yaulun.javacpp.python.PythonException;
 
 /** Per-instance warning registry with Python default filters or one explicit standard action. */
 public final class PythonWarnings {

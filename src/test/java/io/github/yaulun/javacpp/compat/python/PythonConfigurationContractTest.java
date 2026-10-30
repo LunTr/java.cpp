@@ -2,14 +2,13 @@ package io.github.yaulun.javacpp.compat.python;
 
 import static io.github.yaulun.javacpp.python.PythonValues.*;
 
+import io.github.yaulun.javacpp.python.PythonException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.*;
 import org.junit.jupiter.api.*;
-import io.github.yaulun.javacpp.python.PythonException;
-import io.github.yaulun.javacpp.python.PythonValues;
 
 class PythonConfigurationContractTest {
   @TestFactory

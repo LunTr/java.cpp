@@ -17,14 +17,14 @@ import io.github.yaulun.javacpp.TokenListener;
 import io.github.yaulun.javacpp.exception.ContextOverflowException;
 import io.github.yaulun.javacpp.exception.ErrorCode;
 import io.github.yaulun.javacpp.exception.ModelLoadException;
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
-import io.github.yaulun.javacpp.python.PythonErrorType;
-import io.github.yaulun.javacpp.python.PythonException;
 
 @Tag("native")
 @Timeout(60)

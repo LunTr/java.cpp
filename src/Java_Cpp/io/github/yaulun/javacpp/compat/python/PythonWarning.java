@@ -1,7 +1,7 @@
 package io.github.yaulun.javacpp.compat.python;
 
-import java.util.Objects;
 import io.github.yaulun.javacpp.python.PythonErrorType;
+import java.util.Objects;
 
 /** Immutable Python warning category, exact message and explicit origin. */
 public record PythonWarning(

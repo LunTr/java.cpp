@@ -163,6 +163,24 @@ for row in audit["functions"]:
         row.update(status="bound", checked=True, java="internal.LlamaLibrary." + row["qualname"],
                    reason="按固定 b11669 头文件核对 Windows x64 签名，新增求值/状态原生测试已调用；跨 Python vendor revision 的行为继续核对",
                    pythonExactParity="not-certified", contractEvidence="docs/python-execution-contracts.json")
+ctypesContracts = json.loads((root / "docs/python-ctypes-contracts.json").read_text(encoding="utf-8"))
+ctypesMappings = {
+    "load_shared_library": "PythonCtypesExtensions.loadSharedLibrary",
+    "ctypes_function_for_shared_library": "PythonCtypesExtensions.ctypesFunctionForSharedLibrary",
+    "ctypes_function_for_shared_library.ctypes_function": "PythonCtypesExtensions.ctypesFunctionForSharedLibrary",
+    "ctypes_function_for_shared_library.ctypes_function.decorator": "PythonCtypesExtensions.ctypesFunctionForSharedLibrary",
+    "_byref": "PythonCtypesExtensions.byrefStub / PythonCtypesExtensions.byref",
+}
+assert set(ctypesMappings) == set(ctypesContracts["functions"]) == {row["qualname"] for row in audit["functions"] if row["file"] == "llama_cpp/_ctypes_extensions.py"}
+foundCtypes = set()
+for row in audit["functions"]:
+    if row["file"] == "llama_cpp/_ctypes_extensions.py":
+        foundCtypes.add(row["qualname"])
+        row.update(status="covered", checked=True, pythonExactParity="not-certified",
+                   java="compat.python." + ctypesMappings[row["qualname"]],
+                   reason="已逐句移植固定原版完整函数体；os/sys/ctypes/pathlib 及加载结果由显式端口提供，全分支、环境变更、kwargs、wraps 属性复制和参数绑定报错已有原版对照；真实操作系统加载效果继续验收",
+                   contractEvidence="docs/python-ctypes-contracts.json")
+assert foundCtypes == set(ctypesMappings)
 supplementCounts = {name: json.loads((root / f"docs/python-{name}-contracts.json").read_text(encoding="utf-8"))["caseCount"]
                     for name in ("services", "completion", "configuration")}
 supplements = {

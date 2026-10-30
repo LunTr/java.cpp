@@ -3,12 +3,11 @@ package io.github.yaulun.javacpp.compat.python;
 import static io.github.yaulun.javacpp.python.PythonValues.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.github.yaulun.javacpp.python.PythonException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.*;
 import org.junit.jupiter.api.*;
-import io.github.yaulun.javacpp.python.PythonException;
-import io.github.yaulun.javacpp.python.PythonValues;
 
 class PythonJinjaContractTest {
   @TestFactory

@@ -3,9 +3,9 @@ package io.github.yaulun.javacpp;
 import com.sun.jna.Pointer;
 import io.github.yaulun.javacpp.compat.python.*;
 import io.github.yaulun.javacpp.internal.LlamaLibrary;
+import io.github.yaulun.javacpp.python.PythonNumbers;
 import java.lang.ref.Cleaner;
 import java.util.function.Consumer;
-import io.github.yaulun.javacpp.python.PythonNumbers;
 
 /** Native execution of the original Python sampling policy without Builder range restrictions. */
 public final class PythonNativeSampling {

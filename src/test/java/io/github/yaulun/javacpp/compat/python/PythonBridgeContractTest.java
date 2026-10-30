@@ -13,6 +13,9 @@ import io.github.yaulun.javacpp.exception.JavaCppException;
 import io.github.yaulun.javacpp.exception.ModelLoadException;
 import io.github.yaulun.javacpp.exception.NativeFailure;
 import io.github.yaulun.javacpp.exception.TokenizationException;
+import io.github.yaulun.javacpp.python.PythonBytes;
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -28,9 +31,6 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.io.TempDir;
-import io.github.yaulun.javacpp.python.PythonBytes;
-import io.github.yaulun.javacpp.python.PythonErrorType;
-import io.github.yaulun.javacpp.python.PythonException;
 
 class PythonBridgeContractTest {
   @TempDir Path directory;

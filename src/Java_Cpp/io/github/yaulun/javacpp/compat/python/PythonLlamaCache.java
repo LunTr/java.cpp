@@ -1,8 +1,8 @@
 package io.github.yaulun.javacpp.compat.python;
 
-import java.util.List;
 import io.github.yaulun.javacpp.python.Py;
 import io.github.yaulun.javacpp.python.PyItemAccess;
+import java.util.List;
 
 /** Shared BaseLlamaCache contract from the pinned Python source. */
 public abstract class PythonLlamaCache implements PyItemAccess {

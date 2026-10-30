@@ -1,8 +1,8 @@
 package io.github.yaulun.javacpp.compat.python;
 
-import java.util.ArrayList;
 import io.github.yaulun.javacpp.python.PythonErrorType;
 import io.github.yaulun.javacpp.python.PythonValues;
+import java.util.ArrayList;
 
 /** Mutable Python LogitsProcessorList; callbacks and mutation require caller synchronization. */
 public final class PythonLogitsProcessorList extends ArrayList<PythonLogitsProcessor> {

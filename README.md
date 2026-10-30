@@ -12,6 +12,8 @@ src/Java_Cpp/io/github/yaulun/javacpp/
   *.java                        公开 API、参数、消息、资源对象
   exception/                    分层异常与错误码
   internal/                     JNA 接口、原生结构体、加载器、日志桥
+  python/                       CPython 动态类型层（Py 门面与内建协议，独立可复用）
+  compat/python/                llama_cpp 适配层（Llama/completion/chat/Jinja/warnings）
 src/main/java/org/example/Main.java              原 IDE 入口
 src/main/java/io/github/yaulun/demo/              检查与对话演示
 src/test/java/io/github/yaulun/                   单元测试、原生集成测试
@@ -109,10 +111,10 @@ Java.cpp 与 bytedeco/JavaCPP 为独立项目。
 |---|---:|
 | Python 去重函数/方法总数 | 751 |
 | 已有完整同名 JNA 绑定 | 84 |
-| 已覆盖独立能力（含聊天、缓存、处理器及 Llama 辅助方法） | 98 |
-| 本清单打勾项合计 | 182 / 751（24.23%） |
-| 部分覆盖，保持未勾选 | 59 |
-| 当前缺少明确对应迁移项 | 510 |
+| 已覆盖独立能力（含聊天、缓存、处理器及 Llama 辅助方法） | 103 |
+| 本清单打勾项合计 | 187 / 751（24.90%） |
+| 部分覆盖，保持未勾选 | 58 |
+| 当前缺少明确对应迁移项 | 506 |
 | 已通过 Python 全行为、报错、警告一致性验收 | **0** |
 
 原版 `llama_cpp.py` 共 256 项，其中 255 个公开 C API 函数和 1 个警告辅助函数。Java 已声明其中 86 个同名入口；上下文结构相关 2 项列为部分覆盖，其余 84 项标记绑定完成。Java 另有 9 个 ggml 补充入口，单独提供设备枚举等能力，不增加 Python 迁移计数。
@@ -123,7 +125,7 @@ Java.cpp 与 bytedeco/JavaCPP 为独立项目。
 
 ### Java 错误到 Python 错误的桥接
 
-桥接位于 `src/Java_Cpp/io/github/yaulun/javacpp/compat/python`，按调用操作及结构化 NativeFailure 映射异常类别和原版消息，并保留原 Java 异常作为 cause。模型加载、上下文创建已接入推理 demo。Java 调用方捕获 PythonException，通过 type() 区分类别，getMessage() 获取消息，toString() 获取 `ValueError: ...` 格式。
+桥接适配层位于 `src/Java_Cpp/io/github/yaulun/javacpp/compat/python`；其底层 CPython 动态类型在 `javacpp/python` 包（`Py` 门面、Py* 协议接口、内建 str/数值/切片操作与 PythonException），仅依赖 java.*，可独立复用。桥接按调用操作及结构化 NativeFailure 映射异常类别和原版消息，并保留原 Java 异常作为 cause。模型加载、上下文创建已接入推理 demo。Java 调用方捕获 PythonException，通过 type() 区分类别，getMessage() 获取消息，toString() 获取 `ValueError: ...` 格式。
 
 ```java
 try (LlamaModel model = PythonErrorBridge.loadModel(modelPath, ModelParams.defaults())) {
@@ -157,7 +159,7 @@ completionConfig 对 null、0、负数按剩余上下文处理，并截断过大
 
 固定原版完整函数体及 CPython repr 产生 10,376 条对照样例，比较 UTF-16 内容（包括未配对代理字符）、空值、角色过滤、异常类别/原文、字典顺序、debug 日志、数值和 Unicode 边界及出错前已产出的流式块。来源的 25 个文件均重新验证 Git blob SHA-1 / SHA-256，并用 AST 复核 786 个定义、751 个去重项。生成脚本已纳入版本控制，见 [本批验证记录](docs/PYTHON_CHAT_COMPATIBILITY.md)。
 
-清单尚未打勾 569 项，其中部分覆盖 59 项、尚无对应实现 510 项。所有 751 项继续保留全输入一致性待验收状态。
+清单尚未打勾 564 项，其中部分覆盖 58 项、尚无对应实现 506 项。所有 751 项继续保留全输入一致性待验收状态。
 
 ### RAM 缓存、状态与处理器逐项移植
 
@@ -181,7 +183,7 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 
 本轮补齐 eval、save_state、load_state、token_nl、pooling_type 和 close 的窄范围实现，并接入 sample/generate 的执行状态机。207 组固定原版对照核对批处理、数组广播、错误后的状态、诊断顺序、临时采样器引用、前缀复用、send、停止条件和草稿路径；原生测试验证实际模型求值、保存恢复及继续生成。新增 7 项 b11669 C 入口，接口保持 JNA 类型封装。
 
-采样、embedding、completion/chat 转发、配置重建及仓库匹配已有实现；2026-10-29 已同步机器映射。services 235、completion 140、configuration/repository 89 组原版对照，共 464 组。Jinja 字符串方法与空白控制已按 CPython 3.12 逐项对照（63 组模板契约通过）；保留初始化失败状态、其余动态类型路径、缓存时序及同版本原生推理对照。验证结果见 [缓存记录](docs/PYTHON_CACHE_COMPATIBILITY.md)，用法和既有记录见 [执行链路记录](docs/PYTHON_EXECUTION_COMPATIBILITY.md)。
+采样、embedding、completion/chat 转发、配置重建及仓库匹配已有实现；2026-10-29 已同步机器映射。services 235、completion 140、configuration/repository 89 组原版对照，共 464 组。保留完整 Jinja2、初始化失败状态、动态类型、缓存时序及同版本原生推理对照。验证结果见 [缓存记录](docs/PYTHON_CACHE_COMPATIBILITY.md)，用法和既有记录见 [执行链路记录](docs/PYTHON_EXECUTION_COMPATIBILITY.md)。
 
 ### llama_cache.py 缓存补充（2026-10-29）
 
@@ -199,13 +201,13 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 
 本文件没有显式函数/方法定义，导入、类型声明和库对象加载不增加函数数。
 
-#### `llama_cpp/_ctypes_extensions.py` — 5 项，勾选 0，部分 1
+#### `llama_cpp/_ctypes_extensions.py` — 5 项，勾选 5，部分 0
 
-- [ ] [`llama_cpp._ctypes_extensions.load_shared_library`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L26) — 部分覆盖 → `internal.NativeLoader.load`；Java 仅支持 Windows x64，目录选择、ABI 校验和异常契约不同。
-- [ ] [`llama_cpp._ctypes_extensions.ctypes_function_for_shared_library`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L140) — 未迁移。
-- [ ] [`llama_cpp._ctypes_extensions.ctypes_function_for_shared_library.ctypes_function`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L143) — 未迁移；嵌套函数。
-- [ ] [`llama_cpp._ctypes_extensions.ctypes_function_for_shared_library.ctypes_function.decorator`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L146) — 未迁移；嵌套函数。
-- [ ] [`llama_cpp._ctypes_extensions._byref`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L161) — 未迁移。
+- [x] [`llama_cpp._ctypes_extensions.load_shared_library`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L26) — 能力已覆盖 → `compat.python.PythonCtypesExtensions.loadSharedLibrary`；已逐句移植固定原版完整函数体；os/sys/ctypes/pathlib 及加载结果由显式端口提供，全分支、环境变更、kwargs、wraps 属性复制和参数绑定报错已有原版对照；真实操作系统加载效果继续验收。
+- [x] [`llama_cpp._ctypes_extensions.ctypes_function_for_shared_library`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L140) — 能力已覆盖 → `compat.python.PythonCtypesExtensions.ctypesFunctionForSharedLibrary`；已逐句移植固定原版完整函数体；os/sys/ctypes/pathlib 及加载结果由显式端口提供，全分支、环境变更、kwargs、wraps 属性复制和参数绑定报错已有原版对照；真实操作系统加载效果继续验收。
+- [x] [`llama_cpp._ctypes_extensions.ctypes_function_for_shared_library.ctypes_function`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L143) — 能力已覆盖；嵌套函数 → `compat.python.PythonCtypesExtensions.ctypesFunctionForSharedLibrary`；已逐句移植固定原版完整函数体；os/sys/ctypes/pathlib 及加载结果由显式端口提供，全分支、环境变更、kwargs、wraps 属性复制和参数绑定报错已有原版对照；真实操作系统加载效果继续验收。
+- [x] [`llama_cpp._ctypes_extensions.ctypes_function_for_shared_library.ctypes_function.decorator`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L146) — 能力已覆盖；嵌套函数 → `compat.python.PythonCtypesExtensions.ctypesFunctionForSharedLibrary`；已逐句移植固定原版完整函数体；os/sys/ctypes/pathlib 及加载结果由显式端口提供，全分支、环境变更、kwargs、wraps 属性复制和参数绑定报错已有原版对照；真实操作系统加载效果继续验收。
+- [x] [`llama_cpp._ctypes_extensions._byref`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_ctypes_extensions.py#L161) — 能力已覆盖 → `compat.python.PythonCtypesExtensions.byrefStub / PythonCtypesExtensions.byref`；已逐句移植固定原版完整函数体；os/sys/ctypes/pathlib 及加载结果由显式端口提供，全分支、环境变更、kwargs、wraps 属性复制和参数绑定报错已有原版对照；真实操作系统加载效果继续验收。
 
 #### `llama_cpp/_ggml.py` — 0 项，勾选 0，部分 0
 

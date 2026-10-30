@@ -2,10 +2,9 @@ package io.github.yaulun.javacpp.compat.python;
 
 import static io.github.yaulun.javacpp.python.PythonValues.*;
 
-import java.util.*;
 import io.github.yaulun.javacpp.python.PythonErrorType;
 import io.github.yaulun.javacpp.python.PythonNumbers;
-import io.github.yaulun.javacpp.python.PythonValues;
+import java.util.*;
 
 /** json.dumps formatting used by the pinned chat-template tojson filter. */
 final class PythonJson {

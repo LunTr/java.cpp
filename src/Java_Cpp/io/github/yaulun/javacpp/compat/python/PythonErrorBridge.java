@@ -14,14 +14,14 @@ import io.github.yaulun.javacpp.exception.JavaCppException;
 import io.github.yaulun.javacpp.exception.ModelLoadException;
 import io.github.yaulun.javacpp.exception.NativeFailure;
 import io.github.yaulun.javacpp.exception.TokenizationException;
-import java.nio.file.Path;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Supplier;
 import io.github.yaulun.javacpp.python.PythonBytes;
 import io.github.yaulun.javacpp.python.PythonErrorType;
 import io.github.yaulun.javacpp.python.PythonException;
 import io.github.yaulun.javacpp.python.PythonValues;
+import java.nio.file.Path;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 /** Operation-specific exception/message bridge pinned to llama-cpp-python 0.3.36. */
 public final class PythonErrorBridge {
