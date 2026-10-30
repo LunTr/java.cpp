@@ -26,7 +26,7 @@
 
 ## 桥接接口
 
-桥接源码位于 `src/Java_Cpp/io/github/yaulun/javacpp/compat/python`，沿用根 Maven 工程。核心 Java 异常保留诊断码、建议、日志和 cause；Python-facing 入口返回 `PythonException`，其 `type()` 为 Python 类别，`getMessage()` 为原版消息，`toString()` 为 Python 异常末行。空 AssertionError 格式为单独的类别名称。
+源码分两个包：`io.github.yaulun.javacpp.python` 为独立 CPython 动态类型层（`Py` 门面、Py* 协议接口、str/数值/切片/字节/Unicode 内建操作及 PythonException/ErrorType），仅依赖 java.*，可脱离 llama 适配层复用；`io.github.yaulun.javacpp.compat.python` 为 llama_cpp 适配层（Llama/completion/chat/Jinja/warnings/bridge），单向依赖前者。均位于 `src/Java_Cpp/io/github/yaulun/javacpp/`，沿用根 Maven 工程。核心 Java 异常保留诊断码、建议、日志和 cause；Python-facing 入口返回 `PythonException`，其 `type()` 为 Python 类别，`getMessage()` 为原版消息，`toString()` 为 Python 异常末行。空 AssertionError 格式为单独的类别名称。
 
 ```java
 try (LlamaModel model = PythonErrorBridge.loadModel(modelPath, ModelParams.defaults());
