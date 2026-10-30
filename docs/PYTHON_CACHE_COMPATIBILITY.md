@@ -12,22 +12,22 @@ README 旧清单为 751 项中勾选 147 项、部分覆盖 48 项、缺少对�
 |---|---|---|---|
 | BaseLlamaCache | __init__ | PythonLlamaCache 构造 | 已测 BigInteger 容量及默认值 |
 | BaseLlamaCache | _find_longest_prefix_key | findLongestPrefixKey | 原版 pass 返回 None，对应 null |
-| BaseLlamaCache | cache_size | cacheSize | 部分：Java abstract 声明 |
-| BaseLlamaCache | __getitem__ | get | 部分：Java abstract 声明 |
-| BaseLlamaCache | __contains__ | contains | 部分：Java abstract 声明 |
-| BaseLlamaCache | __setitem__ | put | 部分：Java abstract 声明 |
+| BaseLlamaCache | cache_size | cacheSize | 已覆盖：基类方法体抛 NotImplementedError |
+| BaseLlamaCache | __getitem__ | get | 已覆盖：基类方法体抛 NotImplementedError |
+| BaseLlamaCache | __contains__ | contains | 已覆盖：基类方法体抛 NotImplementedError |
+| BaseLlamaCache | __setitem__ | put | 已覆盖：基类方法体抛 NotImplementedError |
 | LlamaRAMCache | __init__ | PythonLlamaRamCache 构造 | 既有局部能力覆盖 |
 | LlamaRAMCache | cache_size | cacheSize | 修正属性收集与求和的异常优先顺序 |
 | LlamaRAMCache | _find_longest_prefix_key | findLongestPrefixKey | 既有局部能力覆盖 |
 | LlamaRAMCache | __getitem__ | get | 既有局部能力覆盖 |
 | LlamaRAMCache | __contains__ | contains | 既有局部能力覆盖 |
 | LlamaRAMCache | __setitem__ | put | 既有局部能力覆盖 |
-| LlamaDiskCache | __init__ | PythonLlamaDiskCache 构造 | 部分：Factory.open 存储端口 |
-| LlamaDiskCache | cache_size | cacheSize | 部分：Store.volume 存储端口 |
-| LlamaDiskCache | _find_longest_prefix_key | findLongestPrefixKey | 部分：Store.iterKeys 顺序 |
-| LlamaDiskCache | __getitem__ | get | 部分：命中后 Store.pop 删除 |
-| LlamaDiskCache | __contains__ | contains | 部分：前缀查询 |
-| LlamaDiskCache | __setitem__ | put | 部分：写入、日志、体积和淘汰控制流程 |
+| LlamaDiskCache | __init__ | PythonLlamaDiskCache 构造 | 已覆盖：Factory.open 存储端口 |
+| LlamaDiskCache | cache_size | cacheSize | 已覆盖：Store.volume 存储端口 |
+| LlamaDiskCache | _find_longest_prefix_key | findLongestPrefixKey | 已覆盖：Store.iterKeys 顺序 |
+| LlamaDiskCache | __getitem__ | get | 已覆盖：命中后 Store.pop 删除 |
+| LlamaDiskCache | __contains__ | contains | 已覆盖：前缀查询 |
+| LlamaDiskCache | __setitem__ | put | 已覆盖：写入、日志、体积和淘汰控制流程 |
 
 ## 行为与验证范围
 
@@ -41,7 +41,11 @@ Java Store 接口保留上述操作的独立调用，Factory 接收原版默认�
 
 114 组新对照包含 110 组磁盘操作序列和 4 组基础类数据。生成器校验全部 25 个固定源码文件摘要，以 AST 执行原版完整函数体。磁盘对照使用显式可追踪存储替身：体积为 `10 + 各存储值大小之和`，保留插入顺序，并对 iterKeys/pop/contains/delete/put/volume/size/firstKey 注入异常。100 组固定随机序列各有 40 次操作。Java 验证按编码精确比较全部结果，无浮点容差。
 
-后续验收包括实际 diskcache SQLite 文件体积、键排序、pickle 序列化/反序列化、跨进程行为、Python 动态类型和 ABC 显式基类调用。Store 实现由调用方提供；本轮尚未提供与 Python 磁盘文件格式互通的生产存储实现。基础类 4 个 abstractmethod 的原版 NotImplementedError 方法体及 Python ABC 实例化检查也继续保留部分状态。
+后续验收包括实际 diskcache SQLite 文件体积、键排序、pickle 序列化/反序列化、跨进程行为和 Python 动态类型。Store 实现由调用方提供；尚未提供与 Python 磁盘文件格式互通的生产存储实现。
+
+## 2026-10-30 补齐：ABC 实例化规则与基类方法体
+
+`PythonLlamaCache` 改为具体类：4 个原版 abstractmethod 的方法体（`raise NotImplementedError`）保持可显式调用；构造器按 ABCMeta 规则检查子类是否仍继承基类声明，缺实现时按原版排序名单抛 TypeError，消息为 `Can't instantiate abstract class <名称> without an implementation for abstract method(s) '...'`（单数/复数形式随缺失数量）。直接实例化、单子集覆盖、全部覆盖和 4 个 super 调用共 8 组场景经固定原版对照；LlamaDiskCache 6 项同步由部分升为已覆盖（函数体移植与端口对照原有 114 组不变）。
 
 ## 重新生成
 

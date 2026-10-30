@@ -215,12 +215,14 @@ public final class PythonLlama implements AutoCloseable {
         });
   }
 
+  /** Ports the ctx property: returns the stored context handle, including after close. */
   public io.github.yaulun.javacpp.LlamaContext ctx() {
-    return nativeContext == null || nativeContext.isClosed() ? null : nativeContext;
+    return nativeContext;
   }
 
+  /** Ports the model property: returns the stored model handle, including after close. */
   public io.github.yaulun.javacpp.LlamaModel model() {
-    return nativeModel == null || nativeModel.isClosed() ? null : nativeModel;
+    return nativeModel;
   }
 
   public int nCtx() {
@@ -486,7 +488,8 @@ public final class PythonLlama implements AutoCloseable {
               diagnostics.accept(
                   "Llama.generate: "
                       + reuse
-                      + " prefix-match found but partial kv removal not supported, re-evaluating full prompt");
+                      + " prefix-match found but partial kv removal not supported, re-evaluating"
+                      + " full prompt");
           }
         }
         if (reset) PythonLlama.this.reset();

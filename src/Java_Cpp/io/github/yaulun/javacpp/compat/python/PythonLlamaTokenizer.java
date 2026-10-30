@@ -1,6 +1,7 @@
 package io.github.yaulun.javacpp.compat.python;
 
 import io.github.yaulun.javacpp.Vocab;
+import io.github.yaulun.javacpp.python.Py;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -15,6 +16,20 @@ public final class PythonLlamaTokenizer implements PythonTokenizer {
   /** Retains the model codec reference, as the original constructor retains llama._model. */
   public PythonLlamaTokenizer(PythonTokenizerModel model) {
     this.model = Objects.requireNonNull(model, "model");
+  }
+
+  /**
+   * Ports from_ggml_file: cls(llama_cpp.Llama(model_path=path, vocab_only=True)). The factory owns
+   * construction and must return an object exposing the _model tokenizer codec.
+   */
+  public static PythonLlamaTokenizer fromGgmlFile(
+      String path,
+      java.util.function.Function<java.util.Map<String, Object>, Object> llamaFactory) {
+    java.util.Map<String, Object> keywords = new java.util.LinkedHashMap<>();
+    keywords.put("model_path", path);
+    keywords.put("vocab_only", true);
+    Object llama = llamaFactory.apply(keywords);
+    return new PythonLlamaTokenizer((PythonTokenizerModel) Py.getAttr(llama, "_model"));
   }
 
   /** Attaches an existing model-owned vocabulary. Closing its model invalidates this adapter. */

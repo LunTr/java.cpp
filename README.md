@@ -110,16 +110,16 @@ Java.cpp 与 bytedeco/JavaCPP 为独立项目。
 | 统计项 | 数量 |
 |---|---:|
 | Python 去重函数/方法总数 | 751 |
-| 已有完整同名 JNA 绑定 | 90 |
-| 已覆盖独立能力（含聊天、缓存、处理器及 Llama 辅助方法） | 132 |
-| 本清单打勾项合计 | 222 / 751（29.56%） |
-| 部分覆盖，保持未勾选 | 26 |
+| 已有完整同名 JNA 绑定 | 92 |
+| 已覆盖独立能力（含聊天、缓存、处理器及 Llama 辅助方法） | 150 |
+| 本清单打勾项合计 | 242 / 751（32.22%） |
+| 部分覆盖，保持未勾选 | 6 |
 | 当前缺少明确对应迁移项 | 503 |
 | 已通过 Python 全行为、报错、警告一致性验收 | **0** |
 
-原版 `llama_cpp.py` 共 256 项，其中 255 个公开 C API 函数和 1 个警告辅助函数。Java 已声明其中 92 个同名入口；上下文结构相关 2 项列为部分覆盖，其余 90 项标记绑定完成。Java 另有 9 个 ggml 补充入口，单独提供设备枚举等能力，不增加 Python 迁移计数。
+原版 `llama_cpp.py` 共 256 项，其中 255 个公开 C API 函数和 1 个警告辅助函数。Java 已声明其中 94 个同名入口；上下文结构相关 2 项列为部分覆盖，其余 92 项标记绑定完成。Java 另有 9 个 ggml 补充入口，单独提供设备枚举等能力，不增加 Python 迁移计数。
 
-高层 `Llama` 有 31 个普通公开命名成员（含 4 个属性 getter），其中 27 项已有查询或窄范围辅助能力；构造、生成、聊天、分词等继续逐项对照。构造器、`__call__`、析构、私有辅助成员在下表另行完整列出。
+高层 `Llama` 有 31 个普通公开命名成员（含 4 个属性 getter），其中 29 项已有查询或窄范围辅助能力；构造、生成、聊天、分词等继续逐项对照。构造器、`__call__`、析构、私有辅助成员在下表另行完整列出。
 
 勾选含义：`[x]` 表示该 C 入口绑定或窄范围能力已实现；**勾选不代表 Python 完全一致**。`[ ]` 表示部分覆盖或尚无明确迁移项，具体差异写在函数后。未单独对应的内部辅助动作可能由 Java/JNA 间接承担，未计入完成项。清单覆盖多个分层，同一能力可能出现在 C 入口、内部包装和高层 API；各项分别计数，不将它们解释为独立产品能力。差异证据和桥接用法见 [Python 兼容核对](docs/PYTHON_COMPATIBILITY.md)，机器可读清单见 [python-api-audit.json](docs/python-api-audit.json)。
 
@@ -159,7 +159,7 @@ completionConfig 对 null、0、负数按剩余上下文处理，并截断过大
 
 固定原版完整函数体及 CPython repr 产生 10,376 条对照样例，比较 UTF-16 内容（包括未配对代理字符）、空值、角色过滤、异常类别/原文、字典顺序、debug 日志、数值和 Unicode 边界及出错前已产出的流式块。来源的 25 个文件均重新验证 Git blob SHA-1 / SHA-256，并用 AST 复核 786 个定义、751 个去重项。生成脚本已纳入版本控制，见 [本批验证记录](docs/PYTHON_CHAT_COMPATIBILITY.md)。
 
-清单尚未打勾 529 项，其中部分覆盖 26 项、尚无对应实现 503 项。所有 751 项继续保留全输入一致性待验收状态。
+清单尚未打勾 509 项，其中部分覆盖 6 项、尚无对应实现 503 项。所有 751 项继续保留全输入一致性待验收状态。
 
 ### RAM 缓存、状态与处理器逐项移植
 
@@ -185,9 +185,13 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 
 采样、embedding、completion/chat 转发、配置重建及仓库匹配已有实现；2026-10-29 已同步机器映射。services 235、completion 140、configuration/repository 89 组原版对照，共 464 组。保留完整 Jinja2、初始化失败状态、动态类型、缓存时序及同版本原生推理对照。验证结果见 [缓存记录](docs/PYTHON_CACHE_COMPATIBILITY.md)，用法和既有记录见 [执行链路记录](docs/PYTHON_EXECUTION_COMPATIBILITY.md)。
 
-### llama_cache.py 缓存补充（2026-10-29）
+### llama_cache.py 缓存补充（2026-10-29，2026-10-30 补齐）
 
-18 项定义中，RAM 6 项与基础类构造/空前缀 2 项已有窄范围覆盖，基础类抽象方法 4 项、磁盘缓存 6 项保留部分覆盖。磁盘控制流程经固定原版存储端口对照；SQLite 体积、pickle 和实际键排序继续核实。RAM cache_size 已按原版先收集属性再求和，保留异常优先顺序。详见 [缓存迁移记录](docs/PYTHON_CACHE_COMPATIBILITY.md)。
+18 项定义已全部覆盖：RAM 6 项、基础类 6 项与磁盘缓存 6 项。基础类迁移 ABC 实例化规则——缺实现的类构造时按原版排序名单抛 TypeError，4 个 abstractmethod 基类方法体显式调用抛 NotImplementedError。磁盘控制流程经固定原版存储端口对照，diskcache 物理存储由端口提供；SQLite 体积、pickle 和实际键排序继续核实。详见 [缓存迁移记录](docs/PYTHON_CACHE_COMPATIBILITY.md)。
+
+### _logger、_warn_deprecated 与小成员（2026-10-30，第二轮）
+
+本轮迁移 20 项部分覆盖函数：llama_cache 基础类抽象方法 4 项、LlamaDiskCache 6 项、_logger 的 llama_log_callback/set_verbose 2 项、llama_cpp 的 _warn_deprecated 及两个上下文入口 3 项、llama_tokenizer 的 from_ggml_file 1 项、llama.py 的 ctx/model/__del__/free_lora_adapter 4 项。新增 `PythonLlamaLogger`（GGML 级别映射、CONT 沿用、logger.level 门控、stderr 分写）与 `PythonLlamaTokenizer.fromGgmlFile`；`PythonLlamaCache` 迁移 ABC 规则，`ctx`/`model` 属性按原版直读句柄。`llama_context_default_params`/`llama_init_from_model` 随 b11669 的 168 字节上下文结构对齐后列为绑定完成。固定原版对照新增 25 组低层用例及缓存 ABC 场景，核对过滤器动作、调用方模块、释放失败保留引用与工厂 kwargs。见 [本轮记录](docs/PYTHON_LOWLEVEL_COMPATIBILITY.md)。
 
 ### _internals.py 模型、上下文、批次与采样器（2026-10-30）
 
@@ -195,7 +199,7 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 
 ### 测试数据管理
 
-本轮补齐 `from_pretrained` 的 Windows 字符串仓库匹配路径：保留无效范围、字面括号、仓库外路径异常原文及各次下载请求的独立性。配置/仓库原版对照现为 89 组。llama.py 已测窄范围能力 **39/49（79.59%）**，部分实现 10 项；全函数行为一致验收继续进行。
+本轮补齐 `from_pretrained` 的 Windows 字符串仓库匹配路径：保留无效范围、字面括号、仓库外路径异常原文及各次下载请求的独立性。配置/仓库原版对照现为 89 组。llama.py 已测窄范围能力 **43/49（87.76%）**，部分实现 6 项；全函数行为一致验收继续进行。
 
 `src/test/resources/` 全部由 `.gitignore` 忽略，测试数据及 Base64 样例保留本地。生成脚本、固定来源和小型摘要元数据纳入版本控制。清洁检出后先使用 [生成说明](tools/python_compat/README.md) 恢复六组数据，再执行 Maven 验证；`AGENTS.md` 已记录后续维护规则。
 
@@ -340,10 +344,10 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 - [ ] [`llama_cpp._internals.LlamaSampler.clone`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_internals.py#L868) — 未迁移。
 - [ ] [`llama_cpp._internals.LlamaSampler.clone.free_sampler`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_internals.py#L882) — 未迁移；嵌套函数。
 
-#### `llama_cpp/_logger.py` — 2 项，勾选 0，部分 2
+#### `llama_cpp/_logger.py` — 2 项，勾选 2，部分 0
 
-- [ ] [`llama_cpp._logger.llama_log_callback`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_logger.py#L31) — 部分覆盖 → `internal.NativeLogBridge.invoke`；级别映射、逐行拼接、stderr/监听器、回调异常处理与输出前缀不同。
-- [ ] [`llama_cpp._logger.set_verbose`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_logger.py#L49) — 部分覆盖 → `NativeConfig.Builder.logLevel / logListener`；Python 可动态切换全局 logger；Java 在初始化时配置。
+- [x] [`llama_cpp._logger.llama_log_callback`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_logger.py#L31) — 能力已覆盖 → `compat.python.PythonLlamaLogger.logCallback`；已逐句移植固定原版函数体：GGML 级别映射、CONT 级别沿用、logger.level 阈值门控、stderr 分两次写入及 _last_log_level 更新均经原版对照。
+- [x] [`llama_cpp._logger.set_verbose`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_logger.py#L49) — 能力已覆盖 → `compat.python.PythonLlamaLogger.setVerbose`；已移植 logger.setLevel(DEBUG/ERROR) 分支语义，原版对照核对切换后各 ggml 级别的打印门控。
 
 #### `llama_cpp/_utils.py` — 5 项，勾选 0，部分 0
 
@@ -353,12 +357,12 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 - [ ] [`llama_cpp._utils.MetaSingleton.__call__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_utils.py#L87) — 未迁移。
 - [ ] [`llama_cpp._utils.Singleton.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_utils.py#L98) — 未迁移。
 
-#### `llama_cpp/llama.py` — 49 项，勾选 39，部分 10
+#### `llama_cpp/llama.py` — 49 项，勾选 43，部分 6
 
 - [ ] [`llama_cpp.llama.Llama.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L60) — 部分覆盖 → `PythonNativeLlama.load / compat.python.PythonLlama.load`；原生构造、Python 默认参数、LoRA 和配置重建已实现并有模型测试；完整 Jinja2、动态参数转换及初始化失败状态继续核实。
-- [ ] [`llama_cpp.llama.Llama.__init__.free_lora_adapter`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L446) — 部分覆盖；嵌套函数 → `compat.python.PythonLlamaResource.free`；已有资源清理实现；完整原版释放失败路径及自动析构时序待逐项对照。
-- [ ] [`llama_cpp.llama.Llama.ctx`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L576) — 部分覆盖 → `LlamaContext`；Java 隐藏原生指针，Python 公开底层句柄属性。
-- [ ] [`llama_cpp.llama.Llama.model`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L580) — 部分覆盖 → `LlamaModel`；Java 隐藏原生指针，Python 公开底层句柄属性。
+- [x] [`llama_cpp.llama.Llama.__init__.free_lora_adapter`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L446) — 能力已覆盖；嵌套函数 → `compat.python.PythonLlamaResource.free`；已移植嵌套释放闭包：空指针早退、成功后清空引用、释放失败保留引用均经原版对照。
+- [x] [`llama_cpp.llama.Llama.ctx`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L576) — 能力已覆盖 → `compat.python.PythonLlama.ctx`；已移植属性直读：返回存储的上下文句柄，关闭后仍返回原值，与原版 _ctx.ctx 一致。
+- [x] [`llama_cpp.llama.Llama.model`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L580) — 能力已覆盖 → `compat.python.PythonLlama.model`；已移植属性直读：返回存储的模型句柄，关闭后仍返回原值，与原版 _model.model 一致。
 - [x] [`llama_cpp.llama.Llama._input_ids`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L584) — 能力已覆盖 → `compat.python.PythonLlama.inputIds`；intc token 前缀以 IntBuffer 提供可写共享视图，保留负切片及截断规则；固定原版完整函数体已有场景对照，全输入一致性继续验收。
 - [x] [`llama_cpp.llama.Llama._scores`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L588) — 能力已覆盖 → `compat.python.PythonLlama.scores`；single scores 前缀以 FloatBuffer 行视图提供可写共享数据；固定原版完整函数体已有场景对照，全输入一致性继续验收。
 - [x] [`llama_cpp.llama.Llama.eval_tokens`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L592) — 能力已覆盖 → `compat.python.PythonLlama.evalTokens`；按原版 deque 的 maxlen 保留末尾 token，Java 返回独立 List 快照；固定原版完整函数体已有场景对照，全输入一致性继续验收。
@@ -395,7 +399,7 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 - [x] [`llama_cpp.llama.Llama.token_nl`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2287) — 能力已覆盖 → `compat.python.PythonLlama.tokenNl`；原版求值/状态/清理完整函数体已有调用顺序及错误后状态对照；查询使用原生整数返回；Java 使用 intc/single 矩形数组及显式执行端口，全输入一致性继续验收。
 - [x] [`llama_cpp.llama.Llama.pooling_type`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2291) — 能力已覆盖 → `compat.python.PythonLlama.poolingType`；原版求值/状态/清理完整函数体已有调用顺序及错误后状态对照；查询使用原生整数返回；Java 使用 intc/single 矩形数组及显式执行端口，全输入一致性继续验收。
 - [x] [`llama_cpp.llama.Llama.close`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2295) — 能力已覆盖 → `compat.python.PythonLlama.close`；原版求值/状态/清理完整函数体已有调用顺序及错误后状态对照；查询使用原生整数返回；Java 使用 intc/single 矩形数组及显式执行端口，全输入一致性继续验收。
-- [ ] [`llama_cpp.llama.Llama.__del__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2299) — 部分覆盖 → `compat.python.PythonLlama.close / Cleaner`；已有资源清理实现；完整原版释放失败路径及自动析构时序待逐项对照。
+- [x] [`llama_cpp.llama.Llama.__del__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2299) — 能力已覆盖 → `compat.python.PythonLlama.close / Cleaner`；已移植 __del__ 即 self.close()；Java 由幂等 close 与 Cleaner 注册承担析构时序，原版对照核对 close 调用。
 - [x] [`llama_cpp.llama.Llama.logits_to_logprobs`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2303) — 能力已覆盖 → `compat.python.PythonLlama.logitsToLogprobs`；single 向量及二维矩阵 axis 0/1/-1/-2 已对照，数值采用绝对及相对 4e-6 容差；NumPy 警告和更高维数组待迁移；固定原版完整函数体已有场景对照，全输入一致性继续验收。
 - [x] [`llama_cpp.llama.Llama.longest_token_prefix`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2321) — 能力已覆盖 → `compat.python.PythonTokens.longestTokenPrefix`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
 - [x] [`llama_cpp.llama.Llama.from_pretrained`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2331) — 能力已覆盖 → `compat.python.PythonPretrained.fromPretrained`；已实现并执行固定原版完整函数体对照；covered 仅指已测端口/类型范围的能力，partial 保留缓存时序、动态类型、完整 provider 或初始化失败状态的后续核实；全行为一致性未认证。
@@ -405,26 +409,26 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 - [x] [`llama_cpp.llama.MinTokensLogitsProcessor.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2508) — 能力已覆盖 → `compat.python.PythonMinTokensLogitsProcessor`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
 - [x] [`llama_cpp.llama.MinTokensLogitsProcessor.__call__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2513) — 能力已覆盖 → `compat.python.PythonMinTokensLogitsProcessor.apply`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
 
-#### `llama_cpp/llama_cache.py` — 18 项，勾选 8，部分 10
+#### `llama_cpp/llama_cache.py` — 18 项，勾选 18，部分 0
 
-- [x] [`llama_cpp.llama_cache.BaseLlamaCache.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L20) — 能力已覆盖 → `compat.python.PythonLlamaCache.<init>`；构造及空前缀方法已有固定原版对照；4 个 Python abstractmethod 以 Java abstract 声明，显式调用原版基类抛错方法体及动态 ABC 实例化规则待迁移。
-- [ ] [`llama_cpp.llama_cache.BaseLlamaCache.cache_size`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L25) — 部分覆盖 → `compat.python.PythonLlamaCache.cacheSize`；构造及空前缀方法已有固定原版对照；4 个 Python abstractmethod 以 Java abstract 声明，显式调用原版基类抛错方法体及动态 ABC 实例化规则待迁移。
-- [x] [`llama_cpp.llama_cache.BaseLlamaCache._find_longest_prefix_key`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L28) — 能力已覆盖 → `compat.python.PythonLlamaCache.findLongestPrefixKey`；构造及空前缀方法已有固定原版对照；4 个 Python abstractmethod 以 Java abstract 声明，显式调用原版基类抛错方法体及动态 ABC 实例化规则待迁移。
-- [ ] [`llama_cpp.llama_cache.BaseLlamaCache.__getitem__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L35) — 部分覆盖 → `compat.python.PythonLlamaCache.get`；构造及空前缀方法已有固定原版对照；4 个 Python abstractmethod 以 Java abstract 声明，显式调用原版基类抛错方法体及动态 ABC 实例化规则待迁移。
-- [ ] [`llama_cpp.llama_cache.BaseLlamaCache.__contains__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L39) — 部分覆盖 → `compat.python.PythonLlamaCache.contains`；构造及空前缀方法已有固定原版对照；4 个 Python abstractmethod 以 Java abstract 声明，显式调用原版基类抛错方法体及动态 ABC 实例化规则待迁移。
-- [ ] [`llama_cpp.llama_cache.BaseLlamaCache.__setitem__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L43) — 部分覆盖 → `compat.python.PythonLlamaCache.put`；构造及空前缀方法已有固定原版对照；4 个 Python abstractmethod 以 Java abstract 声明，显式调用原版基类抛错方法体及动态 ABC 实例化规则待迁移。
+- [x] [`llama_cpp.llama_cache.BaseLlamaCache.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L20) — 能力已覆盖 → `compat.python.PythonLlamaCache.<init>`；已移植 ABC 实例化规则：缺实现的类构造时按原版排序名单抛 TypeError，基类 abstractmethod 方法体显式调用抛 NotImplementedError；固定原版对照核对 8 组场景。
+- [x] [`llama_cpp.llama_cache.BaseLlamaCache.cache_size`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L25) — 能力已覆盖 → `compat.python.PythonLlamaCache.cacheSize`；已移植 ABC 实例化规则：缺实现的类构造时按原版排序名单抛 TypeError，基类 abstractmethod 方法体显式调用抛 NotImplementedError；固定原版对照核对 8 组场景。
+- [x] [`llama_cpp.llama_cache.BaseLlamaCache._find_longest_prefix_key`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L28) — 能力已覆盖 → `compat.python.PythonLlamaCache.findLongestPrefixKey`；已移植 ABC 实例化规则：缺实现的类构造时按原版排序名单抛 TypeError，基类 abstractmethod 方法体显式调用抛 NotImplementedError；固定原版对照核对 8 组场景。
+- [x] [`llama_cpp.llama_cache.BaseLlamaCache.__getitem__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L35) — 能力已覆盖 → `compat.python.PythonLlamaCache.get`；已移植 ABC 实例化规则：缺实现的类构造时按原版排序名单抛 TypeError，基类 abstractmethod 方法体显式调用抛 NotImplementedError；固定原版对照核对 8 组场景。
+- [x] [`llama_cpp.llama_cache.BaseLlamaCache.__contains__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L39) — 能力已覆盖 → `compat.python.PythonLlamaCache.contains`；已移植 ABC 实例化规则：缺实现的类构造时按原版排序名单抛 TypeError，基类 abstractmethod 方法体显式调用抛 NotImplementedError；固定原版对照核对 8 组场景。
+- [x] [`llama_cpp.llama_cache.BaseLlamaCache.__setitem__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L43) — 能力已覆盖 → `compat.python.PythonLlamaCache.put`；已移植 ABC 实例化规则：缺实现的类构造时按原版排序名单抛 TypeError，基类 abstractmethod 方法体显式调用抛 NotImplementedError；固定原版对照核对 8 组场景。
 - [x] [`llama_cpp.llama_cache.LlamaRAMCache.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L52) — 能力已覆盖 → `compat.python.PythonLlamaRamCache`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
 - [x] [`llama_cpp.llama_cache.LlamaRAMCache.cache_size`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L60) — 能力已覆盖 → `compat.python.PythonLlamaRamCache.cacheSize`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
 - [x] [`llama_cpp.llama_cache.LlamaRAMCache._find_longest_prefix_key`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L63) — 能力已覆盖 → `compat.python.PythonLlamaRamCache.findLongestPrefixKey`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
 - [x] [`llama_cpp.llama_cache.LlamaRAMCache.__getitem__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L79) — 能力已覆盖 → `compat.python.PythonLlamaRamCache.get`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
 - [x] [`llama_cpp.llama_cache.LlamaRAMCache.__contains__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L88) — 能力已覆盖 → `compat.python.PythonLlamaRamCache.contains`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
 - [x] [`llama_cpp.llama_cache.LlamaRAMCache.__setitem__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L91) — 能力已覆盖 → `compat.python.PythonLlamaRamCache.put`；固定原版完整函数体对照覆盖前缀、RAM 缓存顺序/淘汰、状态引用和处理器时序；使用 BigInteger 或 intc/single 对应类型；全输入一致性继续验收。
-- [ ] [`llama_cpp.llama_cache.LlamaDiskCache.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L107) — 部分覆盖 → `compat.python.PythonLlamaDiskCache.<init>`；6 项完整控制流程已有固定原版存储端口对照，包含 pop 删除、日志分片、失败后状态及淘汰时序；实际 diskcache SQLite 体积、键排序、pickle 存储及动态类型继续核实。
-- [ ] [`llama_cpp.llama_cache.LlamaDiskCache.cache_size`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L114) — 部分覆盖 → `compat.python.PythonLlamaDiskCache.cacheSize`；6 项完整控制流程已有固定原版存储端口对照，包含 pop 删除、日志分片、失败后状态及淘汰时序；实际 diskcache SQLite 体积、键排序、pickle 存储及动态类型继续核实。
-- [ ] [`llama_cpp.llama_cache.LlamaDiskCache._find_longest_prefix_key`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L117) — 部分覆盖 → `compat.python.PythonLlamaDiskCache.findLongestPrefixKey`；6 项完整控制流程已有固定原版存储端口对照，包含 pop 删除、日志分片、失败后状态及淘汰时序；实际 diskcache SQLite 体积、键排序、pickle 存储及动态类型继续核实。
-- [ ] [`llama_cpp.llama_cache.LlamaDiskCache.__getitem__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L130) — 部分覆盖 → `compat.python.PythonLlamaDiskCache.get`；6 项完整控制流程已有固定原版存储端口对照，包含 pop 删除、日志分片、失败后状态及淘汰时序；实际 diskcache SQLite 体积、键排序、pickle 存储及动态类型继续核实。
-- [ ] [`llama_cpp.llama_cache.LlamaDiskCache.__contains__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L141) — 部分覆盖 → `compat.python.PythonLlamaDiskCache.contains`；6 项完整控制流程已有固定原版存储端口对照，包含 pop 删除、日志分片、失败后状态及淘汰时序；实际 diskcache SQLite 体积、键排序、pickle 存储及动态类型继续核实。
-- [ ] [`llama_cpp.llama_cache.LlamaDiskCache.__setitem__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L144) — 部分覆盖 → `compat.python.PythonLlamaDiskCache.put`；6 项完整控制流程已有固定原版存储端口对照，包含 pop 删除、日志分片、失败后状态及淘汰时序；实际 diskcache SQLite 体积、键排序、pickle 存储及动态类型继续核实。
+- [x] [`llama_cpp.llama_cache.LlamaDiskCache.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L107) — 能力已覆盖 → `compat.python.PythonLlamaDiskCache.<init>`；完整控制流程经固定原版存储端口对照，包含 pop 删除、日志分片、失败后状态及淘汰时序；diskcache 物理存储由端口提供，SQLite 体积/键序/pickle 继续核实。
+- [x] [`llama_cpp.llama_cache.LlamaDiskCache.cache_size`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L114) — 能力已覆盖 → `compat.python.PythonLlamaDiskCache.cacheSize`；完整控制流程经固定原版存储端口对照，包含 pop 删除、日志分片、失败后状态及淘汰时序；diskcache 物理存储由端口提供，SQLite 体积/键序/pickle 继续核实。
+- [x] [`llama_cpp.llama_cache.LlamaDiskCache._find_longest_prefix_key`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L117) — 能力已覆盖 → `compat.python.PythonLlamaDiskCache.findLongestPrefixKey`；完整控制流程经固定原版存储端口对照，包含 pop 删除、日志分片、失败后状态及淘汰时序；diskcache 物理存储由端口提供，SQLite 体积/键序/pickle 继续核实。
+- [x] [`llama_cpp.llama_cache.LlamaDiskCache.__getitem__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L130) — 能力已覆盖 → `compat.python.PythonLlamaDiskCache.get`；完整控制流程经固定原版存储端口对照，包含 pop 删除、日志分片、失败后状态及淘汰时序；diskcache 物理存储由端口提供，SQLite 体积/键序/pickle 继续核实。
+- [x] [`llama_cpp.llama_cache.LlamaDiskCache.__contains__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L141) — 能力已覆盖 → `compat.python.PythonLlamaDiskCache.contains`；完整控制流程经固定原版存储端口对照，包含 pop 删除、日志分片、失败后状态及淘汰时序；diskcache 物理存储由端口提供，SQLite 体积/键序/pickle 继续核实。
+- [x] [`llama_cpp.llama_cache.LlamaDiskCache.__setitem__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cache.py#L144) — 能力已覆盖 → `compat.python.PythonLlamaDiskCache.put`；完整控制流程经固定原版存储端口对照，包含 pop 删除、日志分片、失败后状态及淘汰时序；diskcache 物理存储由端口提供，SQLite 体积/键序/pickle 继续核实。
 
 #### `llama_cpp/llama_chat_format.py` — 111 项，勾选 37，部分 0
 
@@ -540,12 +544,12 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 - [ ] [`llama_cpp.llama_chat_format.Qwen25VLChatHandler.__call__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_chat_format.py#L4103) — 未迁移。
 - [ ] [`llama_cpp.llama_chat_format.chatml_function_calling`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_chat_format.py#L4132) — 未迁移。
 
-#### `llama_cpp/llama_cpp.py` — 256 项，勾选 90，部分 3
+#### `llama_cpp/llama_cpp.py` — 256 项，勾选 93，部分 0
 
-- [ ] [`llama_cpp.llama_cpp._warn_deprecated`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L48) — 部分覆盖 → `compat.python.PythonWarnings.deprecated`；类别与消息有原版契约对照；过滤器和 Python 调用栈/来源仍需限定配置。
+- [x] [`llama_cpp.llama_cpp._warn_deprecated`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L48) — 能力已覆盖 → `compat.python.PythonWarnings.deprecated`；类别与消息有原版契约对照；过滤器动作（always/ignore/error/once/module/default）及调用方模块规则经固定原版 warnings 对照。
 - [x] [`llama_cpp.llama_cpp.llama_version`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1275) — 绑定完成 → `internal.LlamaLibrary.llama_version`；同名 C 入口的 JNA 绑定已实现；Python 类型适配、原生版本和全输入行为尚未对照验收。
 - [x] [`llama_cpp.llama_cpp.llama_model_default_params`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1287) — 绑定完成 → `internal.LlamaLibrary.llama_model_default_params`；同名 C 入口的 JNA 绑定已实现；Python 类型适配、原生版本和全输入行为尚未对照验收。
-- [ ] [`llama_cpp.llama_cpp.llama_context_default_params`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1298) — 部分覆盖 → `internal.LlamaLibrary.llama_context_default_params`；上下文结构 160/168 字节，含 moe_cache_size 的字段布局有差异。
+- [x] [`llama_cpp.llama_cpp.llama_context_default_params`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1298) — 绑定完成 → `internal.LlamaLibrary.llama_context_default_params`；已声明 b11669 Windows x64 JNA 入口，完整 native verify 已验证加载；Python vendor 同版本行为对照继续核实。
 - [x] [`llama_cpp.llama_cpp.llama_sampler_chain_default_params`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1309) — 绑定完成 → `internal.LlamaLibrary.llama_sampler_chain_default_params`；同名 C 入口的 JNA 绑定已实现；Python 类型适配、原生版本和全输入行为尚未对照验收。
 - [ ] [`llama_cpp.llama_cpp.llama_model_quantize_default_params`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1320) — 未迁移。
 - [ ] [`llama_cpp.llama_cpp.llama_flash_attn_type_name`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1327) — 未迁移。
@@ -563,7 +567,7 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 - [ ] [`llama_cpp.llama_cpp.llama_free_model`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1531) — 未迁移；同名定义行 1531/1537。
 - [x] [`llama_cpp.llama_cpp.llama_model_free`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1548) — 绑定完成 → `internal.LlamaLibrary.llama_model_free`；同名 C 入口的 JNA 绑定已实现；Python 类型适配、原生版本和全输入行为尚未对照验收。
 - [ ] [`llama_cpp.llama_cpp.llama_model_init_from_user`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1570) — 未迁移。
-- [ ] [`llama_cpp.llama_cpp.llama_init_from_model`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1589) — 部分覆盖 → `internal.LlamaLibrary.llama_init_from_model`；传入的上下文参数结构 ABI 不同。
+- [x] [`llama_cpp.llama_cpp.llama_init_from_model`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1589) — 绑定完成 → `internal.LlamaLibrary.llama_init_from_model`；已声明 b11669 Windows x64 JNA 入口，完整 native verify 已验证加载；Python vendor 同版本行为对照继续核实。
 - [ ] [`llama_cpp.llama_cpp.llama_new_context_with_model`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1603) — 未迁移；同名定义行 1603/1611。
 - [x] [`llama_cpp.llama_cpp.llama_free`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1628) — 绑定完成 → `internal.LlamaLibrary.llama_free`；同名 C 入口的 JNA 绑定已实现；Python 类型适配、原生版本和全输入行为尚未对照验收。
 - [ ] [`llama_cpp.llama_cpp.llama_time_us`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_cpp.py#L1639) — 未迁移。
@@ -848,7 +852,7 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 - [ ] [`llama_cpp.llama_speculative.LlamaPromptLookupDecoding.find_candidate_pred_tokens`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_speculative.py#L25) — 未迁移。
 - [ ] [`llama_cpp.llama_speculative.LlamaPromptLookupDecoding.__call__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_speculative.py#L57) — 未迁移。
 
-#### `llama_cpp/llama_tokenizer.py` — 12 项，勾选 5，部分 1
+#### `llama_cpp/llama_tokenizer.py` — 12 项，勾选 6，部分 0
 
 - [ ] [`llama_cpp.llama_tokenizer.BaseLlamaTokenizer.tokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L16) — 未迁移。
 - [ ] [`llama_cpp.llama_tokenizer.BaseLlamaTokenizer.detokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L29) — 未迁移。
@@ -857,7 +861,7 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 - [x] [`llama_cpp.llama_tokenizer.LlamaTokenizer.detokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L54) — 能力已覆盖 → `compat.python.PythonLlamaTokenizer.detokenize`；固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照。
 - [x] [`llama_cpp.llama_tokenizer.LlamaTokenizer.encode`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L62) — 能力已覆盖 → `compat.python.PythonLlamaTokenizer.encode`；固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照。
 - [x] [`llama_cpp.llama_tokenizer.LlamaTokenizer.decode`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L69) — 能力已覆盖 → `compat.python.PythonLlamaTokenizer.decode`；固定原版完整函数体对照覆盖默认参数、bytes、UTF-8 ignore、prev_tokens、引用及自定义分词器转发；Vocab 适配使用 b11669，跨原生版本的分词结果继续对照。
-- [ ] [`llama_cpp.llama_tokenizer.LlamaTokenizer.from_ggml_file`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L73) — 部分覆盖 → `LlamaModel.load(ModelParams.vocabOnly=true)`；仅词表加载能力存在，工厂返回类型与所有权不同。
+- [x] [`llama_cpp.llama_tokenizer.LlamaTokenizer.from_ggml_file`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L73) — 能力已覆盖 → `compat.python.PythonLlamaTokenizer.fromGgmlFile`；已移植 cls(llama_cpp.Llama(model_path=path, vocab_only=True)) 工厂语义；kwargs 构造及 _model 取址经原版对照。
 - [ ] [`llama_cpp.llama_tokenizer.LlamaHFTokenizer.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L78) — 未迁移。
 - [ ] [`llama_cpp.llama_tokenizer.LlamaHFTokenizer.tokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L81) — 未迁移。
 - [ ] [`llama_cpp.llama_tokenizer.LlamaHFTokenizer.detokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama_tokenizer.py#L88) — 未迁移。

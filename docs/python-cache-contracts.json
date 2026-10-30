@@ -1,8 +1,8 @@
 {
   "pythonPackage": "0.3.36",
   "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
-  "fixtureRuntime": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]",
-  "caseCount": 114,
-  "fixtureSha256": "6c2c17b9e43cf21f77b1a2f195d2b654d267d7a18a1297a7c66cea08bf947688",
+  "fixtureRuntime": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "caseCount": 122,
+  "fixtureSha256": "234a0ef160fca837ee8709fd7fe3dc7c9f93d24403ceb71e0ebd0cbe12b630e0",
   "method": "Complete hash-verified LlamaDiskCache bodies with a traced deterministic storage port; volume=10+stored integer sizes. No SQLite/pickle parity certification."
 }

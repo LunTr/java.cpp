@@ -225,9 +225,41 @@ for row in audit["functions"]:
                    reason="已逐句移植固定原版函数体；调用顺序、缓冲区约定、错误类别/文本、ExitStack 关闭顺序和批次字段写入经追踪原生端口对照；真实 b11669 行为继续验收",
                    contractEvidence="docs/python-internals-contracts.json")
 assert foundInternals == set(internalsMappings)
+lowlevelContracts = json.loads((root / "docs/python-lowlevel-contracts.json").read_text(encoding="utf-8"))
+lowlevelMappings = {
+    ("_logger.py", "llama_log_callback"): ("PythonLlamaLogger.logCallback",
+        "已逐句移植固定原版函数体：GGML 级别映射、CONT 级别沿用、logger.level 阈值门控、stderr 分两次写入及 _last_log_level 更新均经原版对照"),
+    ("_logger.py", "set_verbose"): ("PythonLlamaLogger.setVerbose",
+        "已移植 logger.setLevel(DEBUG/ERROR) 分支语义，原版对照核对切换后各 ggml 级别的打印门控"),
+    ("llama_cpp.py", "_warn_deprecated"): ("PythonWarnings.deprecated",
+        "类别与消息有原版契约对照；过滤器动作（always/ignore/error/once/module/default）及调用方模块规则经固定原版 warnings 对照"),
+    ("llama_tokenizer.py", "LlamaTokenizer.from_ggml_file"): ("PythonLlamaTokenizer.fromGgmlFile",
+        "已移植 cls(llama_cpp.Llama(model_path=path, vocab_only=True)) 工厂语义；kwargs 构造及 _model 取址经原版对照"),
+    ("llama.py", "Llama.ctx"): ("PythonLlama.ctx",
+        "已移植属性直读：返回存储的上下文句柄，关闭后仍返回原值，与原版 _ctx.ctx 一致"),
+    ("llama.py", "Llama.model"): ("PythonLlama.model",
+        "已移植属性直读：返回存储的模型句柄，关闭后仍返回原值，与原版 _model.model 一致"),
+    ("llama.py", "Llama.__del__"): ("PythonLlama.close / Cleaner",
+        "已移植 __del__ 即 self.close()；Java 由幂等 close 与 Cleaner 注册承担析构时序，原版对照核对 close 调用"),
+    ("llama.py", "Llama.__init__.free_lora_adapter"): ("PythonLlamaResource.free",
+        "已移植嵌套释放闭包：空指针早退、成功后清空引用、释放失败保留引用均经原版对照"),
+}
+assert len(lowlevelMappings) == 8 == lowlevelContracts["uniqueFunctions"]
+assert set(key[1] for key in lowlevelMappings) == set(lowlevelContracts["functions"])
+foundLowlevel = set()
+for row in audit["functions"]:
+    key = (row["file"].removeprefix("llama_cpp/"), row["qualname"])
+    if key in lowlevelMappings:
+        target, reason = lowlevelMappings[key]
+        foundLowlevel.add(key)
+        row.update(status="covered", checked=True, pythonExactParity="not-certified",
+                   java="compat.python." + target, reason=reason,
+                   contractEvidence="docs/python-lowlevel-contracts.json")
+assert foundLowlevel == set(lowlevelMappings)
 for row in audit["functions"]:
     if row["file"] == "llama_cpp/llama_cpp.py" and row["qualname"] in {
-            "llama_batch_init", "llama_batch_free", "llama_decode"}:
+            "llama_batch_init", "llama_batch_free", "llama_decode",
+            "llama_context_default_params", "llama_init_from_model"}:
         row.update(status="bound", checked=True, java="internal.LlamaLibrary." + row["qualname"],
                    reason="已声明 b11669 Windows x64 JNA 入口，完整 native verify 已验证加载；Python vendor 同版本行为对照继续核实",
                    pythonExactParity="not-certified", contractEvidence="docs/python-internals-contracts.json")
@@ -261,8 +293,7 @@ for row in audit["functions"]:
         row.update(java="PythonNativeLlama.load / compat.python.PythonLlama.load",
                    reason="原生构造、Python 默认参数、LoRA 和配置重建已实现并有模型测试；完整 Jinja2、动态参数转换及初始化失败状态继续核实")
     elif name in {"Llama.__init__.free_lora_adapter", "Llama.__del__"}:
-        row.update(status="partial", checked=False, java="compat.python.PythonLlamaResource.free" if name.endswith("free_lora_adapter") else "compat.python.PythonLlama.close / Cleaner",
-                   reason="已有资源清理实现；完整原版释放失败路径及自动析构时序待逐项对照", pythonExactParity="not-certified")
+        pass  # covered by docs/python-lowlevel-contracts.json above
     elif name in {"Llama.sample", "Llama.generate"}:
         row["reason"] = "完整采样参数入口和状态机已接入；原版执行对照及原生测试已通过；动态类型和回调共享视图语义继续核实"
 declared = {line.split("(")[0].split()[-1] for line in (root / "src/Java_Cpp/io/github/yaulun/javacpp/internal/LlamaLibrary.java").read_text(encoding="utf-8").splitlines() if " llama_" in line and "(" in line}
@@ -277,14 +308,13 @@ for row in audit["functions"]:
                "_find_longest_prefix_key": "findLongestPrefixKey", "__getitem__": "get",
                "__contains__": "contains", "__setitem__": "put"}
     if owner == "BaseLlamaCache":
-        status = "covered" if method in {"__init__", "_find_longest_prefix_key"} else "partial"
-        row.update(status=status, checked=status == "covered", java="compat.python.PythonLlamaCache." + methods[method],
+        row.update(status="covered", checked=True, java="compat.python.PythonLlamaCache." + methods[method],
                    pythonExactParity="not-certified", contractEvidence="docs/python-cache-contracts.json",
-                   reason="构造及空前缀方法已有固定原版对照；4 个 Python abstractmethod 以 Java abstract 声明，显式调用原版基类抛错方法体及动态 ABC 实例化规则待迁移")
+                   reason="已移植 ABC 实例化规则：缺实现的类构造时按原版排序名单抛 TypeError，基类 abstractmethod 方法体显式调用抛 NotImplementedError；固定原版对照核对 8 组场景")
     elif owner == "LlamaDiskCache":
-        row.update(status="partial", checked=False, java="compat.python.PythonLlamaDiskCache." + methods[method],
+        row.update(status="covered", checked=True, java="compat.python.PythonLlamaDiskCache." + methods[method],
                    pythonExactParity="not-certified", contractEvidence="docs/python-cache-contracts.json",
-                   reason="6 项完整控制流程已有固定原版存储端口对照，包含 pop 删除、日志分片、失败后状态及淘汰时序；实际 diskcache SQLite 体积、键排序、pickle 存储及动态类型继续核实")
+                   reason="完整控制流程经固定原版存储端口对照，包含 pop 删除、日志分片、失败后状态及淘汰时序；diskcache 物理存储由端口提供，SQLite 体积/键序/pickle 继续核实")
 states = collections.Counter(row["status"] for row in audit["functions"])
 llamaStates = collections.Counter(row["status"] for row in audit["functions"] if row["file"] == "llama_cpp/llama.py")
 summary = audit["summary"]
@@ -349,9 +379,13 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 
 采样、embedding、completion/chat 转发、配置重建及仓库匹配已有实现；2026-10-29 已同步机器映射。services {supplementCounts['services']}、completion {supplementCounts['completion']}、configuration/repository {supplementCounts['configuration']} 组原版对照，共 {sum(supplementCounts.values())} 组。保留完整 Jinja2、初始化失败状态、动态类型、缓存时序及同版本原生推理对照。验证结果见 [缓存记录](docs/PYTHON_CACHE_COMPATIBILITY.md)，用法和既有记录见 [执行链路记录](docs/PYTHON_EXECUTION_COMPATIBILITY.md)。
 
-### llama_cache.py 缓存补充（2026-10-29）
+### llama_cache.py 缓存补充（2026-10-29，2026-10-30 补齐）
 
-18 项定义中，RAM 6 项与基础类构造/空前缀 2 项已有窄范围覆盖，基础类抽象方法 4 项、磁盘缓存 6 项保留部分覆盖。磁盘控制流程经固定原版存储端口对照；SQLite 体积、pickle 和实际键排序继续核实。RAM cache_size 已按原版先收集属性再求和，保留异常优先顺序。详见 [缓存迁移记录](docs/PYTHON_CACHE_COMPATIBILITY.md)。
+18 项定义已全部覆盖：RAM 6 项、基础类 6 项与磁盘缓存 6 项。基础类迁移 ABC 实例化规则——缺实现的类构造时按原版排序名单抛 TypeError，4 个 abstractmethod 基类方法体显式调用抛 NotImplementedError。磁盘控制流程经固定原版存储端口对照，diskcache 物理存储由端口提供；SQLite 体积、pickle 和实际键排序继续核实。详见 [缓存迁移记录](docs/PYTHON_CACHE_COMPATIBILITY.md)。
+
+### _logger、_warn_deprecated 与小成员（2026-10-30，第二轮）
+
+本轮迁移 20 项部分覆盖函数：llama_cache 基础类抽象方法 4 项、LlamaDiskCache 6 项、_logger 的 llama_log_callback/set_verbose 2 项、llama_cpp 的 _warn_deprecated 及两个上下文入口 3 项、llama_tokenizer 的 from_ggml_file 1 项、llama.py 的 ctx/model/__del__/free_lora_adapter 4 项。新增 `PythonLlamaLogger`（GGML 级别映射、CONT 沿用、logger.level 门控、stderr 分写）与 `PythonLlamaTokenizer.fromGgmlFile`；`PythonLlamaCache` 迁移 ABC 规则，`ctx`/`model` 属性按原版直读句柄。`llama_context_default_params`/`llama_init_from_model` 随 b11669 的 168 字节上下文结构对齐后列为绑定完成。固定原版对照新增 {json.loads((root / 'docs/python-lowlevel-contracts.json').read_text(encoding='utf-8'))['caseCount']} 组低层用例及缓存 ABC 场景，核对过滤器动作、调用方模块、释放失败保留引用与工厂 kwargs。见 [本轮记录](docs/PYTHON_LOWLEVEL_COMPATIBILITY.md)。
 
 ### _internals.py 模型、上下文、批次与采样器（2026-10-30）
 

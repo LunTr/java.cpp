@@ -17,6 +17,8 @@ public enum PythonErrorType {
   IMPORT_ERROR("ImportError", false),
   FILE_NOT_FOUND_ERROR("FileNotFoundError", false),
   STOP_ITERATION("StopIteration", false),
+  NOT_IMPLEMENTED_ERROR("NotImplementedError", false),
+  UNICODE_DECODE_ERROR("UnicodeDecodeError", false),
   UNICODE_ENCODE_ERROR("UnicodeEncodeError", false),
   RUNTIME_WARNING("RuntimeWarning", true),
   DEPRECATION_WARNING("DeprecationWarning", true);

@@ -45,7 +45,12 @@ class PythonCacheContractTest {
                           PythonContractData.read(
                               new DataInputStream(
                                   new ByteArrayInputStream(Base64.getDecoder().decode(parts[1]))));
-                      Object actual = parts[0].equals("base") ? baseCase(argument) : run(argument);
+                      Object actual =
+                          switch (parts[0]) {
+                            case "base" -> baseCase(argument);
+                            case "abc" -> abcCase(argument);
+                            default -> run(argument);
+                          };
                       var bytes = new ByteArrayOutputStream();
                       PythonContractData.write(new DataOutputStream(bytes), actual);
                       assertEquals(
@@ -116,6 +121,105 @@ class PythonCacheContractTest {
         };
     return dict(
         "capacity", cache.capacityBytes().toString(), "prefix", cache.findLongestPrefixKey(null));
+  }
+
+  // ABC probes: each override set mirrors the generated subclass in the fixture.
+  private static final class GetOnly extends PythonLlamaCache {
+    @Override
+    public Object get(List<Object> key) {
+      return null;
+    }
+
+    @Override
+    protected String pythonTypeName() {
+      return "Sub";
+    }
+  }
+
+  private static final class GetContains extends PythonLlamaCache {
+    @Override
+    public Object get(List<Object> key) {
+      return null;
+    }
+
+    @Override
+    public boolean contains(List<Object> key) {
+      return false;
+    }
+
+    @Override
+    protected String pythonTypeName() {
+      return "Sub";
+    }
+  }
+
+  private static final class FullNull extends PythonLlamaCache {
+    @Override
+    public Object cacheSize() {
+      return BigInteger.ZERO;
+    }
+
+    @Override
+    public Object get(List<Object> key) {
+      return null;
+    }
+
+    @Override
+    public boolean contains(List<Object> key) {
+      return false;
+    }
+
+    @Override
+    public void put(List<Object> key, Object value) {}
+  }
+
+  private static class AllSuper extends PythonLlamaCache {
+    @Override
+    public Object cacheSize() {
+      return super.cacheSize();
+    }
+
+    @Override
+    public Object get(List<Object> key) {
+      return super.get(key);
+    }
+
+    @Override
+    public boolean contains(List<Object> key) {
+      return super.contains(key);
+    }
+
+    @Override
+    public void put(List<Object> key, Object value) {
+      super.put(key, value);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Object abcCase(Object input) {
+    var argument = (java.util.Map<String, Object>) input;
+    List<?> overrides = (List<?>) argument.get("overrides");
+    String call = (String) argument.get("call");
+    return capture(
+        () -> {
+          PythonLlamaCache cache =
+              switch (overrides.size()) {
+                case 0 -> new PythonLlamaCache();
+                case 1 -> new GetOnly();
+                case 2 -> new GetContains();
+                default -> call == null ? new FullNull() : new AllSuper();
+              };
+          if (call == null) return "created";
+          return switch (call) {
+            case "cache_size" -> cache.cacheSize();
+            case "__getitem__" -> cache.get(List.of(BigInteger.ONE));
+            case "__contains__" -> cache.contains(List.of(BigInteger.ONE));
+            default -> {
+              cache.put(List.of(BigInteger.ONE), "state");
+              yield null;
+            }
+          };
+        });
   }
 
   private static Object capture(Supplier<?> operation) {

@@ -142,6 +142,38 @@ for capacity in [None, "0", "-1", str(2**100)]:
     result = dict(capacity=str(probe.capacity_bytes), prefix=base._find_longest_prefix_key(probe, None))
     rows.append("\t".join(["base", base64.b64encode(wire(capacity)).decode(),
                            base64.b64encode(wire(result)).decode()]))
+
+# ABCMeta instantiation rule plus explicit calls into the NotImplementedError bodies.
+base = namespace["BaseLlamaCache"]
+def subclass(overrides):
+    impls = {}
+    for name in overrides:
+        if name == "cache_size":
+            impls[name] = property(lambda self: base.cache_size.fget(self))
+        elif name == "__getitem__":
+            impls[name] = lambda self, key: base.__getitem__(self, key)
+        elif name == "__contains__":
+            impls[name] = lambda self, key: base.__contains__(self, key)
+        else:
+            impls[name] = lambda self, key, value: base.__setitem__(self, key, value)
+    return type("Sub", (base,), impls)
+all4 = ["__contains__", "__getitem__", "__setitem__", "cache_size"]
+scenarios = [dict(overrides=[], call=None), dict(overrides=["__getitem__"], call=None),
+             dict(overrides=["__contains__", "__getitem__"], call=None),
+             dict(overrides=list(all4), call=None)]
+for method in all4:
+    scenarios.append(dict(overrides=list(all4), call=method))
+for spec in scenarios:
+    cls = base if not spec["overrides"] else subclass(spec["overrides"])
+    def action():
+        instance = cls()
+        if spec["call"] is None: return "created"
+        if spec["call"] == "cache_size": return instance.cache_size
+        if spec["call"] == "__getitem__": return instance[(1,)]
+        if spec["call"] == "__contains__": return (1,) in instance
+        instance[(1,)] = "state"
+    rows.append("\t".join(["abc", base64.b64encode(wire(spec)).decode(),
+                           base64.b64encode(wire(capture(action))).decode()]))
 fixture = root / "src/test/resources/python-0.3.36-cache-contracts.tsv"
 fixture.write_text("\n".join(rows) + "\n", encoding="ascii")
 metadata = dict(pythonPackage="0.3.36", sourceCommit=audit["baseline"]["commit"],

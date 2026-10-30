@@ -1,0 +1,19 @@
+{
+  "pythonPackage": "0.3.36",
+  "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
+  "fixtureRuntime": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "caseCount": 25,
+  "uniqueFunctions": 8,
+  "functions": [
+    "llama_log_callback",
+    "set_verbose",
+    "_warn_deprecated",
+    "LlamaTokenizer.from_ggml_file",
+    "Llama.ctx",
+    "Llama.model",
+    "Llama.__del__",
+    "Llama.__init__.free_lora_adapter"
+  ],
+  "fixtureSha256": "71fd879cc33dd098d64c05d4481a7831baec0a0f2c6b1269a9c8391599e8cf45",
+  "method": "Hash-verified pinned bodies over stub ports: logger level map, warning filters and caller modules, LoRA release ordering, dunder pass-throughs and tokenizer factory keywords."
+}

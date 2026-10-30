@@ -192,8 +192,9 @@ class PythonBridgeIntegrationTest {
       }
       assertTrue(count >= 1);
     }
-    org.junit.jupiter.api.Assertions.assertNull(state.ctx());
-    org.junit.jupiter.api.Assertions.assertNull(state.model());
+    // Python keeps returning the released handles from ctx/model after close.
+    org.junit.jupiter.api.Assertions.assertTrue(state.ctx().isClosed());
+    org.junit.jupiter.api.Assertions.assertTrue(state.model().isClosed());
   }
 
   @Test
