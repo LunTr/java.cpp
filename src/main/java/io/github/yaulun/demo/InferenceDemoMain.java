@@ -25,7 +25,7 @@ import io.github.yaulun.javacpp.ThinkingMode;
 import io.github.yaulun.javacpp.TokenListener;
 import io.github.yaulun.javacpp.compat.python.PythonCall;
 import io.github.yaulun.javacpp.compat.python.PythonErrorBridge;
-import io.github.yaulun.javacpp.compat.python.PythonException;
+import io.github.yaulun.javacpp.python.PythonException;
 import io.github.yaulun.javacpp.exception.ContextOverflowException;
 import io.github.yaulun.javacpp.exception.JavaCppException;
 import io.github.yaulun.javacpp.exception.TemplateException;

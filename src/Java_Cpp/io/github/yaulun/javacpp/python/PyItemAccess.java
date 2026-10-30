@@ -1,4 +1,4 @@
-package io.github.yaulun.javacpp.compat.python;
+package io.github.yaulun.javacpp.python;
 
 /**
  * Subscription and membership protocol (the __getitem__/__setitem__/__contains__ slots). Key and

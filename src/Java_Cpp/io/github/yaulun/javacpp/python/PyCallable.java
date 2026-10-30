@@ -1,4 +1,4 @@
-package io.github.yaulun.javacpp.compat.python;
+package io.github.yaulun.javacpp.python;
 
 import java.util.List;
 import java.util.Map;

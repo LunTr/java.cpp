@@ -2,6 +2,8 @@ package io.github.yaulun.javacpp.compat.python;
 
 import java.util.ArrayList;
 import java.util.List;
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonValues;
 
 /** Mutable Python StoppingCriteriaList; callbacks require caller synchronization. */
 public final class PythonStoppingCriteriaList extends ArrayList<PythonStoppingCriteria> {

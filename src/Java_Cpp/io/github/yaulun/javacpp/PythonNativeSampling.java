@@ -5,6 +5,7 @@ import io.github.yaulun.javacpp.compat.python.*;
 import io.github.yaulun.javacpp.internal.LlamaLibrary;
 import java.lang.ref.Cleaner;
 import java.util.function.Consumer;
+import io.github.yaulun.javacpp.python.PythonNumbers;
 
 /** Native execution of the original Python sampling policy without Builder range restrictions. */
 public final class PythonNativeSampling {

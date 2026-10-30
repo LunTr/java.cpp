@@ -1,5 +1,7 @@
 package io.github.yaulun.javacpp.compat.python;
 
+import io.github.yaulun.javacpp.python.PythonNumbers;
+
 /** Sampler callback receiving the Python relative output index. */
 @FunctionalInterface
 public interface PythonLlamaSampler {

@@ -1,4 +1,4 @@
-package io.github.yaulun.javacpp.compat.python;
+package io.github.yaulun.javacpp.python;
 
 /**
  * Rich comparison protocol. {@link #pyCompare} returns a Boolean outcome or

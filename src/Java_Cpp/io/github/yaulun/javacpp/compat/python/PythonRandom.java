@@ -1,6 +1,8 @@
 package io.github.yaulun.javacpp.compat.python;
 
 import java.math.BigInteger;
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonNumbers;
 
 /** CPython integer-seeded MT19937 draw used by completion seed selection. */
 final class PythonRandom {

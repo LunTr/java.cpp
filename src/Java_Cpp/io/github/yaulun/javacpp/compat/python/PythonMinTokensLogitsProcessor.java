@@ -1,6 +1,8 @@
 package io.github.yaulun.javacpp.compat.python;
 
 import java.math.BigInteger;
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonValues;
 
 /** Stateful MinTokensLogitsProcessor for the original intc/single array types; use per sequence. */
 public final class PythonMinTokensLogitsProcessor implements PythonLogitsProcessor {

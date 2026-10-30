@@ -1,5 +1,7 @@
 package io.github.yaulun.javacpp.compat.python;
 
+import io.github.yaulun.javacpp.python.PythonStrings;
+
 /** Token-preserving normalization of Python expression precedence for the Java template engine. */
 final class PythonJinjaDialect {
   private PythonJinjaDialect() {}

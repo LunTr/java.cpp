@@ -1,6 +1,6 @@
 package io.github.yaulun.javacpp.compat.python;
 
-import static io.github.yaulun.javacpp.compat.python.PythonValues.*;
+import static io.github.yaulun.javacpp.python.PythonValues.*;
 
 import com.hubspot.jinjava.*;
 import com.hubspot.jinjava.interpret.*;
@@ -11,6 +11,11 @@ import com.hubspot.jinjava.tree.TagNode;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonException;
+import io.github.yaulun.javacpp.python.PythonSlices;
+import io.github.yaulun.javacpp.python.PythonStrings;
+import io.github.yaulun.javacpp.python.PythonValues;
 
 /** Java template adapter for the original Jinja2ChatFormatter environment. */
 public final class PythonJinjaTemplate {

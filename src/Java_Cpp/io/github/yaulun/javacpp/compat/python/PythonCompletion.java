@@ -1,12 +1,17 @@
 package io.github.yaulun.javacpp.compat.python;
 
-import static io.github.yaulun.javacpp.compat.python.PythonValues.*;
+import static io.github.yaulun.javacpp.python.PythonValues.*;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.*;
 import java.util.*;
 import java.util.function.*;
+import io.github.yaulun.javacpp.python.Py;
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonException;
+import io.github.yaulun.javacpp.python.PythonNumbers;
+import io.github.yaulun.javacpp.python.PythonValues;
 
 /** Resumable port of the original _create_completion body; each next resumes one yield. */
 final class PythonCompletion implements Iterator<Map<String, Object>> {

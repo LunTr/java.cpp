@@ -1,6 +1,9 @@
 package io.github.yaulun.javacpp.compat.python;
 
 import java.math.BigInteger;
+import io.github.yaulun.javacpp.python.Py;
+import io.github.yaulun.javacpp.python.PyAttributed;
+import io.github.yaulun.javacpp.python.PythonNumbers;
 
 /**
  * Mutable LlamaState fields from Python 0.3.36. Arrays and byte storage retain their supplied

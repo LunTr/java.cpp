@@ -1,4 +1,4 @@
-package io.github.yaulun.javacpp.compat.python;
+package io.github.yaulun.javacpp.python;
 
 /** Python exception and warning categories supported by the 0.3.36 compatibility bridge. */
 public enum PythonErrorType {

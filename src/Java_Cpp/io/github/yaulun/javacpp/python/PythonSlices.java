@@ -1,14 +1,14 @@
-package io.github.yaulun.javacpp.compat.python;
+package io.github.yaulun.javacpp.python;
 
-import static io.github.yaulun.javacpp.compat.python.PythonValues.*;
+import static io.github.yaulun.javacpp.python.PythonValues.*;
 
 import java.math.BigInteger;
 import java.util.*;
 
-final class PythonSlices {
+public final class PythonSlices {
   private PythonSlices() {}
 
-  static Object slice(Object value, Object start, Object stop, Object step) {
+  public static Object slice(Object value, Object start, Object stop, Object step) {
     List<?> sequence =
         value instanceof String text ? text.codePoints().boxed().toList() : list(value);
     int size = sequence.size();

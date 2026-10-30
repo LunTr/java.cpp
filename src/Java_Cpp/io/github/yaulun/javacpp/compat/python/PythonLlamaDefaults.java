@@ -1,5 +1,8 @@
 package io.github.yaulun.javacpp.compat.python;
 
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonValues;
+
 /** Generated from hash-verified Python 0.3.36 signatures. */
 final class PythonLlamaDefaults {
   private PythonLlamaDefaults() {}

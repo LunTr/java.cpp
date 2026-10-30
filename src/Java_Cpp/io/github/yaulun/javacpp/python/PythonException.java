@@ -1,4 +1,4 @@
-package io.github.yaulun.javacpp.compat.python;
+package io.github.yaulun.javacpp.python;
 
 import java.util.Objects;
 
@@ -6,7 +6,7 @@ import java.util.Objects;
 public final class PythonException extends RuntimeException {
   private final PythonErrorType type;
 
-  PythonException(PythonErrorType type, String message, Throwable cause) {
+  public PythonException(PythonErrorType type, String message, Throwable cause) {
     super(Objects.requireNonNull(message, "message"), cause);
     this.type = Objects.requireNonNull(type, "type");
   }

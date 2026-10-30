@@ -1,9 +1,12 @@
 package io.github.yaulun.javacpp.compat.python;
 
-import static io.github.yaulun.javacpp.compat.python.PythonValues.*;
+import static io.github.yaulun.javacpp.python.PythonValues.*;
 
 import java.util.*;
 import java.util.function.*;
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonException;
+import io.github.yaulun.javacpp.python.PythonValues;
 
 /** Completion/chat delegation and embedding orchestration from the pinned Llama class. */
 public final class PythonLlamaServices {

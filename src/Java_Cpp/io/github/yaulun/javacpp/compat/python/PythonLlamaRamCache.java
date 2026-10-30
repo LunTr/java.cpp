@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import io.github.yaulun.javacpp.python.Py;
+import io.github.yaulun.javacpp.python.PythonErrorType;
 
 /**
  * LlamaRAMCache from Python 0.3.36: longest nonempty prefix lookup and ordered eviction. Keys and

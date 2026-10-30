@@ -1,6 +1,6 @@
 package io.github.yaulun.javacpp.compat.python;
 
-import static io.github.yaulun.javacpp.compat.python.PythonValues.dict;
+import static io.github.yaulun.javacpp.python.PythonValues.dict;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.*;
@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.*;
 import org.junit.jupiter.api.*;
+import io.github.yaulun.javacpp.python.PythonValues;
 
 class PythonTokenizerContractTest {
   @TestFactory

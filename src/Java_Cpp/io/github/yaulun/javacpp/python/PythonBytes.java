@@ -1,11 +1,11 @@
-package io.github.yaulun.javacpp.compat.python;
+package io.github.yaulun.javacpp.python;
 
-final class PythonBytes {
+public final class PythonBytes {
   private static final String HEX = "0123456789abcdef";
 
   private PythonBytes() {}
 
-  static String repr(byte[] bytes) {
+  public static String repr(byte[] bytes) {
     boolean single = false;
     boolean doubleQuote = false;
     for (byte value : bytes) {

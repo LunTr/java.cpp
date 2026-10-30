@@ -1,4 +1,4 @@
-package io.github.yaulun.javacpp.compat.python;
+package io.github.yaulun.javacpp.python;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -7,11 +7,11 @@ import java.util.Locale;
 import java.util.Set;
 
 /** CPython str methods exposed to the Jinja adapter through the py_* filters. */
-final class PythonStrings {
+public final class PythonStrings {
   private PythonStrings() {}
 
   /** Python str method names the dialect rewrites into py_* filter calls. */
-  static final Set<String> NAMES =
+  public static final Set<String> NAMES =
       Set.of(
           "startswith", "endswith", "strip", "lstrip", "rstrip", "split", "rsplit",
           "splitlines", "join", "replace", "find", "rfind", "index", "rindex", "count",
@@ -20,7 +20,7 @@ final class PythonStrings {
           "isnumeric", "isalpha", "isalnum", "isspace", "islower", "isupper", "istitle",
           "partition", "rpartition", "expandtabs");
 
-  static Object apply(String name, Object self, Object[] args) {
+  public static Object apply(String name, Object self, Object[] args) {
     if (!(self instanceof String text))
       throw Py.error(
           PythonErrorType.ATTRIBUTE_ERROR,

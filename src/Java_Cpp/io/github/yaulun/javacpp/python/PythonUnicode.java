@@ -1,7 +1,7 @@
-package io.github.yaulun.javacpp.compat.python;
+package io.github.yaulun.javacpp.python;
 
 /** CPython 3.13 Unicode 15.1.0 printable ranges for repr. */
-final class PythonUnicode {
+public final class PythonUnicode {
   private PythonUnicode() {}
 
   private static final int[] printableRanges = {
@@ -187,7 +187,7 @@ final class PythonUnicode {
     0x2f800, 0x2fa1d, 0x30000, 0x3134a, 0x31350, 0x323af, 0xe0100, 0xe01ef,
   };
 
-  static boolean printable(int cp) {
+  public static boolean printable(int cp) {
     int low = 0, high = printableRanges.length / 2;
     while (low < high) {
       int mid = (low + high) >>> 1;

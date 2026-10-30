@@ -1,6 +1,6 @@
-package io.github.yaulun.javacpp.compat.python;
+package io.github.yaulun.javacpp.python;
 
-import static io.github.yaulun.javacpp.compat.python.PythonValues.*;
+import static io.github.yaulun.javacpp.python.PythonValues.*;
 
 import java.math.*;
 
@@ -62,7 +62,7 @@ public final class PythonNumbers {
     }
   }
 
-  static double compareNumber(Object value, String operator, String rightType) {
+  public static double compareNumber(Object value, String operator, String rightType) {
     if (value instanceof Number || value instanceof Boolean) return floating(value);
     throw error(
         PythonErrorType.TYPE_ERROR,
@@ -75,11 +75,11 @@ public final class PythonNumbers {
             + "'");
   }
 
-  static boolean equal(Object value, int number) {
+  public static boolean equal(Object value, int number) {
     return Py.equal(value, number);
   }
 
-  static Object subtract(Object value, int amount) {
+  public static Object subtract(Object value, int amount) {
     return Py.subtract(value, BigInteger.valueOf(amount));
   }
 }

@@ -1,4 +1,4 @@
-package io.github.yaulun.javacpp.compat.python;
+package io.github.yaulun.javacpp.python;
 
 /**
  * Attribute protocol for duck-typed objects. {@link Py#getAttr} delegates to {@link #attr};

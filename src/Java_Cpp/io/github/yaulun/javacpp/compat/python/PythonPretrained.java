@@ -1,11 +1,13 @@
 package io.github.yaulun.javacpp.compat.python;
 
-import static io.github.yaulun.javacpp.compat.python.PythonValues.*;
+import static io.github.yaulun.javacpp.python.PythonValues.*;
 
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonValues;
 
 /**
  * Original repository matching/download/construction order with an explicit Java repository port.

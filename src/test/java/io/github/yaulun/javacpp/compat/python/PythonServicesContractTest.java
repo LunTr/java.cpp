@@ -1,6 +1,6 @@
 package io.github.yaulun.javacpp.compat.python;
 
-import static io.github.yaulun.javacpp.compat.python.PythonValues.*;
+import static io.github.yaulun.javacpp.python.PythonValues.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.*;
@@ -10,6 +10,9 @@ import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 import org.junit.jupiter.api.*;
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonException;
+import io.github.yaulun.javacpp.python.PythonValues;
 
 class PythonServicesContractTest {
   @TestFactory
