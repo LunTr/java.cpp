@@ -165,9 +165,19 @@ public interface LlamaLibrary extends Library {
 
   int llama_process(Pointer context, int type, Pointer batch);
 
+  LlamaBatch llama_batch_init(int nTokens, int embd, int nSeqMax);
+
+  void llama_batch_free(LlamaBatch.ByValue batch);
+
+  int llama_decode(Pointer context, LlamaBatch.ByValue batch);
+
   Pointer llama_sampler_chain_init(LlamaSamplerChainParams.ByValue params);
 
   void llama_sampler_chain_add(Pointer chain, Pointer sampler);
+
+  int llama_sampler_chain_n(Pointer chain);
+
+  Pointer llama_sampler_chain_remove(Pointer chain, int index);
 
   Pointer llama_sampler_init_penalties(
       int vocabSize, int lastN, float repeat, float frequency, float presence);
@@ -197,6 +207,8 @@ public interface LlamaLibrary extends Library {
   Pointer llama_sampler_init_greedy();
 
   int llama_sampler_sample(Pointer sampler, Pointer context, int index);
+
+  int llama_sampler_get_seed(Pointer sampler);
 
   void llama_sampler_reset(Pointer sampler);
 
