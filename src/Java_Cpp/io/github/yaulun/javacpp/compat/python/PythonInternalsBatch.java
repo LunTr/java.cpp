@@ -1,8 +1,8 @@
 package io.github.yaulun.javacpp.compat.python;
 
 /**
- * Handle for a native llama_batch. Element indices resolve like ctypes arrays:
- * negative values address from the allocated capacity.
+ * Handle for a native llama_batch. Element indices resolve like ctypes arrays: negative values
+ * address from the allocated capacity.
  */
 public interface PythonInternalsBatch {
   int capacity();

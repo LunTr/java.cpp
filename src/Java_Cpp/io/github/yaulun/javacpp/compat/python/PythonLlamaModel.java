@@ -25,7 +25,9 @@ public final class PythonLlamaModel {
   private Object model;
   private Object vocab;
 
-  /** @param params the caller-owned llama_model_params value, passed through unchanged. */
+  /**
+   * @param params the caller-owned llama_model_params value, passed through unchanged.
+   */
   public PythonLlamaModel(
       PythonInternalsPort port, String pathModel, Object params, boolean verbose) {
     this.port = Objects.requireNonNull(port, "port");
@@ -36,6 +38,7 @@ public final class PythonLlamaModel {
     if (!port.exists(pathModel)) {
       throw error(PythonErrorType.VALUE_ERROR, "Model path does not exist: " + pathModel);
     }
+    port.suppressStdoutStderr(verbose);
     Object loaded = port.modelLoadFromFile(pathModel, params);
     if (loaded == null) {
       throw error(PythonErrorType.VALUE_ERROR, "Failed to load model from file: " + pathModel);
@@ -166,7 +169,9 @@ public final class PythonLlamaModel {
       output.write(buffer, 0, count);
     }
     byte[] bytes = output.toByteArray();
-    if (!tokens.isEmpty() && tokens.get(0) == port.vocabBos(vocab) && bytes.length > 0
+    if (!tokens.isEmpty()
+        && tokens.get(0) == port.vocabBos(vocab)
+        && bytes.length > 0
         && bytes[0] == ' ') {
       return Arrays.copyOfRange(bytes, 1, bytes.length);
     }

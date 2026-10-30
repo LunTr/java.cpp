@@ -37,6 +37,10 @@ public final class PythonNativeInternals implements PythonInternalsPort {
     }
   }
 
+  /** Native stdout/stderr suppression is not part of the Java binding scope. */
+  @Override
+  public void suppressStdoutStderr(boolean disable) {}
+
   @Override
   public Object modelDefaultParams() {
     return library.llama_model_default_params();
@@ -91,7 +95,13 @@ public final class PythonNativeInternals implements PythonInternalsPort {
   public int tokenize(
       Object vocab, byte[] text, int[] tokens, int capacity, boolean addBos, boolean special) {
     return library.llama_tokenize(
-        handle(vocab), text, text.length, tokens, capacity, (byte) (addBos ? 1 : 0), (byte) (special ? 1 : 0));
+        handle(vocab),
+        text,
+        text.length,
+        tokens,
+        capacity,
+        (byte) (addBos ? 1 : 0),
+        (byte) (special ? 1 : 0));
   }
 
   @Override
@@ -186,24 +196,25 @@ public final class PythonNativeInternals implements PythonInternalsPort {
   }
 
   @Override
-  public Object samplerInitTopP(float p, long minKeep) {
-    return library.llama_sampler_init_top_p(p, minKeep);
+  public Object samplerInitTopP(double p, long minKeep) {
+    return library.llama_sampler_init_top_p((float) p, minKeep);
   }
 
   @Override
-  public Object samplerInitMinP(float p, long minKeep) {
-    return library.llama_sampler_init_min_p(p, minKeep);
+  public Object samplerInitMinP(double p, long minKeep) {
+    return library.llama_sampler_init_min_p((float) p, minKeep);
   }
 
   @Override
-  public Object samplerInitTemp(float temperature) {
-    return library.llama_sampler_init_temp(temperature);
+  public Object samplerInitTemp(double temperature) {
+    return library.llama_sampler_init_temp((float) temperature);
   }
 
   @Override
   public Object samplerInitPenalties(
-      int nVocab, int penaltyLastN, float repeat, float freq, float present) {
-    return library.llama_sampler_init_penalties(nVocab, penaltyLastN, repeat, freq, present);
+      int nVocab, int penaltyLastN, double repeat, double freq, double present) {
+    return library.llama_sampler_init_penalties(
+        nVocab, penaltyLastN, (float) repeat, (float) freq, (float) present);
   }
 
   @Override

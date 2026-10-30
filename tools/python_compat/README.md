@@ -1,5 +1,7 @@
 # Python 原版对照数据生成
 
+2026-10-30 internals 补充：`generate_internals_contracts.py` 执行固定原版 `_internals.py` 的 LlamaModel/LlamaContext/LlamaBatch/LlamaSampler 四个类完整函数体，在追踪原生端口上生成 17 组对照，核对调用顺序、固定缓冲区、tokenize 重试、detokenize BOS 首空格、metadata 扩容、decode 返回码、ExitStack 关闭顺序、批次字段写入与采样器链时序。Java 入口为 `PythonLlamaModel`/`PythonLlamaContext`/`PythonLlamaBatch`/`PythonInternalsSampler` + `PythonInternalsPort`，原生实现 `PythonNativeInternals`。`generate_all_contracts.py` 已接入；数据位于 `src/test/resources/python-0.3.36-internals-contracts.tsv`，元数据见 `docs/python-internals-contracts.json`。详见 [internals 迁移记录](../../docs/PYTHON_INTERNALS_COMPATIBILITY.md)。
+
 2026-10-30 ctypes 补充：`generate_ctypes_contracts.py` 执行固定原版 `_ctypes_extensions.py` 全部 5 个定义项，在显式 os/sys/ctypes/pathlib 端口替身上生成 66 组对照，覆盖全部平台分支、环境变量写入、依赖加载、functools.wraps 属性复制与参数绑定报错原文；`byref` 对照使用真实 `ctypes.byref` 并核对实际指针偏移。Java 入口为 `PythonCtypesExtensions`，真实 OS 加载效果由 Host 端口承担。详见 [ctypes 迁移记录](../../docs/PYTHON_CTYPES_COMPATIBILITY.md)。
 
 2026-10-29 缓存补充：`generate_cache_contracts.py` 执行固定原版 BaseLlamaCache/LlamaDiskCache 完整函数体，生成 114 组数据，其中 110 组使用显式磁盘存储替身核对控制流程、异常时序和 stderr 分片，4 组核对基础类容量与空前缀。实际 SQLite/pickle 行为继续验收。`generate_all_contracts.py` 已接入；数据位于被忽略的 `src/test/resources/python-0.3.36-cache-contracts.tsv`，元数据见 `docs/python-cache-contracts.json`。状态数据新增属性收集/求和异常优先顺序反例，总数为 739 组。详见 [缓存记录](../../docs/PYTHON_CACHE_COMPATIBILITY.md)。

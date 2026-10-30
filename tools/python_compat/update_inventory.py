@@ -181,6 +181,56 @@ for row in audit["functions"]:
                    reason="已逐句移植固定原版完整函数体；os/sys/ctypes/pathlib 及加载结果由显式端口提供，全分支、环境变更、kwargs、wraps 属性复制和参数绑定报错已有原版对照；真实操作系统加载效果继续验收",
                    contractEvidence="docs/python-ctypes-contracts.json")
 assert foundCtypes == set(ctypesMappings)
+internalsContracts = json.loads((root / "docs/python-internals-contracts.json").read_text(encoding="utf-8"))
+internalsMappings = {
+    "LlamaModel.__init__": "PythonLlamaModel",
+    "LlamaModel.close": "PythonLlamaModel.close",
+    "LlamaModel.desc": "PythonLlamaModel.desc",
+    "LlamaModel.tokenize": "PythonLlamaModel.tokenize",
+    "LlamaModel.token_to_piece": "PythonLlamaModel.tokenToPiece",
+    "LlamaModel.detokenize": "PythonLlamaModel.detokenize",
+    "LlamaModel.metadata": "PythonLlamaModel.metadata",
+    "LlamaModel.default_params": "PythonLlamaModel.defaultParams",
+    "LlamaContext.__init__": "PythonLlamaContext",
+    "LlamaContext.close": "PythonLlamaContext.close",
+    "LlamaContext.kv_cache_clear": "PythonLlamaContext.kvCacheClear",
+    "LlamaContext.decode": "PythonLlamaContext.decode",
+    "LlamaContext.default_params": "PythonLlamaContext.defaultParams",
+    "LlamaBatch.__init__": "PythonLlamaBatch",
+    "LlamaBatch.close": "PythonLlamaBatch.close",
+    "LlamaBatch.reset": "PythonLlamaBatch.reset",
+    "LlamaBatch.set_batch": "PythonLlamaBatch.setBatch",
+    "LlamaSampler.__init__": "PythonInternalsSampler",
+    "LlamaSampler.close": "PythonInternalsSampler.close",
+    "LlamaSampler.add_greedy": "PythonInternalsSampler.addGreedy",
+    "LlamaSampler.add_dist": "PythonInternalsSampler.addDist",
+    "LlamaSampler.add_softmax": "PythonInternalsSampler.addSoftmax",
+    "LlamaSampler.add_top_k": "PythonInternalsSampler.addTopK",
+    "LlamaSampler.add_top_p": "PythonInternalsSampler.addTopP",
+    "LlamaSampler.add_min_p": "PythonInternalsSampler.addMinP",
+    "LlamaSampler.add_temp": "PythonInternalsSampler.addTemp",
+    "LlamaSampler.add_penalties": "PythonInternalsSampler.addPenalties",
+    "LlamaSampler.get_seed": "PythonInternalsSampler.getSeed",
+    "LlamaSampler.sample": "PythonInternalsSampler.sample",
+}
+assert len(internalsMappings) == 29 == internalsContracts["uniqueFunctions"]
+assert set(internalsMappings) == set(internalsContracts["functions"])
+foundInternals = set()
+for row in audit["functions"]:
+    if row["file"] == "llama_cpp/_internals.py" and row["qualname"] in internalsMappings:
+        name = row["qualname"]
+        foundInternals.add(name)
+        row.update(status="covered", checked=True, pythonExactParity="not-certified",
+                   java="compat.python." + internalsMappings[name],
+                   reason="已逐句移植固定原版函数体；调用顺序、缓冲区约定、错误类别/文本、ExitStack 关闭顺序和批次字段写入经追踪原生端口对照；真实 b11669 行为继续验收",
+                   contractEvidence="docs/python-internals-contracts.json")
+assert foundInternals == set(internalsMappings)
+for row in audit["functions"]:
+    if row["file"] == "llama_cpp/llama_cpp.py" and row["qualname"] in {
+            "llama_batch_init", "llama_batch_free", "llama_decode"}:
+        row.update(status="bound", checked=True, java="internal.LlamaLibrary." + row["qualname"],
+                   reason="已声明 b11669 Windows x64 JNA 入口，完整 native verify 已验证加载；Python vendor 同版本行为对照继续核实",
+                   pythonExactParity="not-certified", contractEvidence="docs/python-internals-contracts.json")
 supplementCounts = {name: json.loads((root / f"docs/python-{name}-contracts.json").read_text(encoding="utf-8"))["caseCount"]
                     for name in ("services", "completion", "configuration")}
 supplements = {
@@ -302,6 +352,10 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 ### llama_cache.py 缓存补充（2026-10-29）
 
 18 项定义中，RAM 6 项与基础类构造/空前缀 2 项已有窄范围覆盖，基础类抽象方法 4 项、磁盘缓存 6 项保留部分覆盖。磁盘控制流程经固定原版存储端口对照；SQLite 体积、pickle 和实际键排序继续核实。RAM cache_size 已按原版先收集属性再求和，保留异常优先顺序。详见 [缓存迁移记录](docs/PYTHON_CACHE_COMPATIBILITY.md)。
+
+### _internals.py 模型、上下文、批次与采样器（2026-10-30）
+
+本轮迁移 29 项部分覆盖函数：`_internals.LlamaModel` 8 项、`LlamaContext` 5 项、`LlamaBatch` 4 项、`LlamaSampler` 12 项。Java 入口为 `compat.python.PythonLlamaModel`、`PythonLlamaContext`、`PythonLlamaBatch`、`PythonInternalsSampler`，统一经 `PythonInternalsPort` 访问 C 入口，原生实现为 `PythonNativeInternals`（b11669）。固定原版完整函数体在追踪原生端口上产出 {internalsContracts['caseCount']} 组对照，核对调用顺序、固定 1024/32 字节缓冲、tokenize 负数重试、detokenize BOS 首空格、metadata 扩容、llama_decode 返回码报错、ExitStack 关闭顺序、批次字段逐元素写入及采样器链添加时序。见 [本轮记录](docs/PYTHON_INTERNALS_COMPATIBILITY.md)。
 
 ### 测试数据管理
 

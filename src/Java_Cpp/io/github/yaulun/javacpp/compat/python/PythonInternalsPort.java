@@ -1,12 +1,15 @@
 package io.github.yaulun.javacpp.compat.python;
 
 /**
- * C-level port for the pinned _internals.py wrappers. Method order, argument
- * values and return codes mirror the ctypes calls so a traced stub can certify
- * the control flow without loading any native library. Handles are opaque.
+ * C-level port for the pinned _internals.py wrappers. Method order, argument values and return
+ * codes mirror the ctypes calls so a traced stub can certify the control flow without loading any
+ * native library. Handles are opaque.
  */
 public interface PythonInternalsPort {
   boolean exists(String path);
+
+  /** Enters suppress_stdout_stderr(disable=verbose) before the native load call. */
+  void suppressStdoutStderr(boolean disable);
 
   Object modelDefaultParams();
 
@@ -64,14 +67,15 @@ public interface PythonInternalsPort {
 
   Object samplerInitTopK(int k);
 
-  Object samplerInitTopP(float p, long minKeep);
+  /** Python float arguments are converted to c_float at the native boundary. */
+  Object samplerInitTopP(double p, long minKeep);
 
-  Object samplerInitMinP(float p, long minKeep);
+  Object samplerInitMinP(double p, long minKeep);
 
-  Object samplerInitTemp(float temperature);
+  Object samplerInitTemp(double temperature);
 
   Object samplerInitPenalties(
-      int nVocab, int penaltyLastN, float repeat, float freq, float present);
+      int nVocab, int penaltyLastN, double repeat, double freq, double present);
 
   /** Unsigned 32-bit seed as a nonnegative long. */
   long samplerGetSeed(Object sampler);
