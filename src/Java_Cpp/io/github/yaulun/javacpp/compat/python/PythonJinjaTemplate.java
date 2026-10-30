@@ -27,7 +27,7 @@ public final class PythonJinjaTemplate {
             JinjavaConfig.newBuilder()
                 .withTrimBlocks(true)
                 .withLstripBlocks(true)
-                .withKeepTrailingNewline(false)
+                .withKeepTrailingNewline(true)
                 .withNestedInterpretationEnabled(false)
                 .withMaxRenderDepth(Integer.MAX_VALUE)
                 .withMaxMacroRecursionDepth(Integer.MAX_VALUE)
@@ -52,6 +52,8 @@ public final class PythonJinjaTemplate {
                         .withUsePyishObjectMapper(true)
                         .withUseNaturalOperatorPrecedence(true)
                         .withHandleBackslashInQuotesOnly(true)
+                        .withParseWhitespaceControlStrictly(true)
+                        .withUseTrimmingForNotesAndExpressions(true)
                         .build())
                 .build());
     engine.getGlobalContext().setAutoEscape(false);
@@ -97,6 +99,26 @@ public final class PythonJinjaTemplate {
                 .write(value);
           }
         });
+    for (String method : PythonStrings.NAMES) {
+      engine.registerFilter(
+          new Filter() {
+            public String getName() {
+              return "py_" + method;
+            }
+
+            public Object filter(Object var, JinjavaInterpreter interpreter, String... args) {
+              return PythonStrings.apply(method, var, args);
+            }
+
+            public Object filter(
+                Object var,
+                JinjavaInterpreter interpreter,
+                Object[] args,
+                Map<String, Object> kwargs) {
+              return PythonStrings.apply(method, var, args);
+            }
+          });
+    }
     engine.registerTag(
         new Tag() {
           public String getName() {

@@ -1,6 +1,6 @@
 # Java.cpp
 
-2026-10-29 实现补充：已加入 Python 默认采样策略、embedding、completion（stop/echo/logprobs/流式）、chat/OpenAI 转发、配置重建及仓库文件匹配端口；原生入口为 `PythonLlama.load(Map)`。新增 449 组固定原版对照。完整构造/Jinja2 和动态类型错误继续核实，实现状态与待验证范围见 [WORK_PLAN](WORK_PLAN.md)。本轮代码尚未换算为全函数一致性认证。
+2026-10-29 实现补充：已加入 Python 默认采样策略、embedding、completion（stop/echo/logprobs/流式）、chat/OpenAI 转发、配置重建及仓库文件匹配端口；原生入口为 `PythonLlama.load(Map)`。新增 449 组固定原版对照。Jinja 层面已补齐 38 个 str 方法（CPython 3.12 逐项对照）与 `{{-`/`-%}`/`{#-` 空白控制、keep_trailing_newline 源码级语义；完整构造/初始化失败状态及其余动态类型路径继续核实，实现状态与待验证范围见 [WORK_PLAN](WORK_PLAN.md)。本轮代码尚未换算为全函数一致性认证。
 
 Java 21 + JNA 5.19.1，直接调用 llama.cpp b11669 C API 的面向对象封装。
 
@@ -181,7 +181,7 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 
 本轮补齐 eval、save_state、load_state、token_nl、pooling_type 和 close 的窄范围实现，并接入 sample/generate 的执行状态机。207 组固定原版对照核对批处理、数组广播、错误后的状态、诊断顺序、临时采样器引用、前缀复用、send、停止条件和草稿路径；原生测试验证实际模型求值、保存恢复及继续生成。新增 7 项 b11669 C 入口，接口保持 JNA 类型封装。
 
-采样、embedding、completion/chat 转发、配置重建及仓库匹配已有实现；2026-10-29 已同步机器映射。services 235、completion 140、configuration/repository 89 组原版对照，共 464 组。保留完整 Jinja2、初始化失败状态、动态类型、缓存时序及同版本原生推理对照。验证结果见 [缓存记录](docs/PYTHON_CACHE_COMPATIBILITY.md)，用法和既有记录见 [执行链路记录](docs/PYTHON_EXECUTION_COMPATIBILITY.md)。
+采样、embedding、completion/chat 转发、配置重建及仓库匹配已有实现；2026-10-29 已同步机器映射。services 235、completion 140、configuration/repository 89 组原版对照，共 464 组。Jinja 字符串方法与空白控制已按 CPython 3.12 逐项对照（63 组模板契约通过）；保留初始化失败状态、其余动态类型路径、缓存时序及同版本原生推理对照。验证结果见 [缓存记录](docs/PYTHON_CACHE_COMPATIBILITY.md)，用法和既有记录见 [执行链路记录](docs/PYTHON_EXECUTION_COMPATIBILITY.md)。
 
 ### llama_cache.py 缓存补充（2026-10-29）
 

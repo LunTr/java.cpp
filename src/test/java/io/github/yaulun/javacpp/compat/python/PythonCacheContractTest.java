@@ -60,15 +60,15 @@ class PythonCacheContractTest {
             return BigInteger.ZERO;
           }
 
-          public PythonLlamaState get(List<BigInteger> key) {
+          public Object get(List<Object> key) {
             return null;
           }
 
-          public boolean contains(List<BigInteger> key) {
+          public boolean contains(List<Object> key) {
             return false;
           }
 
-          public void put(List<BigInteger> key, PythonLlamaState state) {}
+          public void put(List<Object> key, Object state) {}
         };
     assertEquals(BigInteger.ONE.shiftLeft(31), cache.capacityBytes());
     assertNull(cache.findLongestPrefixKey(null));
@@ -101,15 +101,15 @@ class PythonCacheContractTest {
             return BigInteger.ZERO;
           }
 
-          public PythonLlamaState get(List<BigInteger> key) {
+          public Object get(List<Object> key) {
             return null;
           }
 
-          public boolean contains(List<BigInteger> key) {
+          public boolean contains(List<Object> key) {
             return false;
           }
 
-          public void put(List<BigInteger> key, PythonLlamaState state) {}
+          public void put(List<Object> key, Object state) {}
         };
     return dict(
         "capacity", cache.capacityBytes().toString(), "prefix", cache.findLongestPrefixKey(null));
@@ -123,12 +123,14 @@ class PythonCacheContractTest {
     }
   }
 
-  private static List<BigInteger> key(Object value) {
+  private static List<Object> key(Object value) {
     return ((List<?>) value)
-        .stream().map(token -> token == null ? null : new BigInteger((String) token)).toList();
+        .stream()
+        .map(token -> token == null ? null : (Object) new BigInteger((String) token))
+        .toList();
   }
 
-  private static Object strings(List<BigInteger> key) {
+  private static Object strings(List<?> key) {
     return key == null
         ? null
         : key.stream().map(token -> token == null ? null : token.toString()).toList();
@@ -161,7 +163,10 @@ class PythonCacheContractTest {
                           new PythonLlamaState(
                               null, null, 0, null, new BigInteger((String) step.get(2)), 0));
                   case "get" -> {
-                    return cache.get(key(step.get(1))).llamaStateSize().toString();
+                    Object found = cache.get(key(step.get(1)));
+                    return found == null
+                        ? null
+                        : ((PythonLlamaState) found).llamaStateSize().toString();
                   }
                   case "contains" -> {
                     return cache.contains(key(step.get(1)));
@@ -195,7 +200,7 @@ class PythonCacheContractTest {
   }
 
   private static final class TracedStore implements PythonLlamaDiskCache.Store {
-    private final LinkedHashMap<List<BigInteger>, PythonLlamaState> data = new LinkedHashMap<>();
+    private final LinkedHashMap<List<Object>, Object> data = new LinkedHashMap<>();
     private final List<Object> trace = new ArrayList<>();
     private String failure;
 
@@ -211,32 +216,32 @@ class PythonCacheContractTest {
     public BigInteger volume() {
       call("volume");
       return data.values().stream()
-          .map(PythonLlamaState::llamaStateSize)
+          .map(value -> ((PythonLlamaState) value).llamaStateSize())
           .reduce(BigInteger.TEN, BigInteger::add);
     }
 
-    public Iterable<List<BigInteger>> iterKeys() {
+    public Iterable<List<Object>> iterKeys() {
       call("iterKeys");
       return data.keySet();
     }
 
-    public PythonLlamaState pop(List<BigInteger> key) {
+    public Object pop(List<Object> key) {
       call("pop", strings(key));
       return data.remove(key);
     }
 
-    public boolean contains(List<BigInteger> key) {
+    public boolean contains(List<Object> key) {
       call("contains", strings(key));
       return data.containsKey(key);
     }
 
-    public void delete(List<BigInteger> key) {
+    public void delete(List<Object> key) {
       call("delete", strings(key));
       data.remove(key);
     }
 
-    public void put(List<BigInteger> key, PythonLlamaState value) {
-      call("put", strings(key), value.llamaStateSize().toString());
+    public void put(List<Object> key, Object value) {
+      call("put", strings(key), ((PythonLlamaState) value).llamaStateSize().toString());
       data.put(key, value);
     }
 
@@ -245,7 +250,7 @@ class PythonCacheContractTest {
       return BigInteger.valueOf(data.size());
     }
 
-    public List<BigInteger> firstKey() {
+    public List<Object> firstKey() {
       call("firstKey");
       return data.keySet().iterator().next();
     }

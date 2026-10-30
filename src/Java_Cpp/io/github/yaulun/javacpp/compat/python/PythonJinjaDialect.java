@@ -5,6 +5,8 @@ final class PythonJinjaDialect {
   private PythonJinjaDialect() {}
 
   static String normalize(String source) {
+    source = source.replace("\r\n", "\n").replace('\r', '\n');
+    if (source.endsWith("\n")) source = source.substring(0, source.length() - 1);
     StringBuilder result = new StringBuilder();
     int offset = 0;
     while (offset < source.length()) {
@@ -35,7 +37,7 @@ final class PythonJinjaDialect {
       boolean left = content.startsWith("-") || content.startsWith("+"),
           right = content.endsWith("-") || content.endsWith("+");
       String expression = content.substring(left ? 1 : 0, content.length() - (right ? 1 : 0));
-      expression = PythonJinjaSlices.normalize(expression);
+      expression = methods(PythonJinjaSlices.normalize(expression));
       result.append('{').append(kind);
       if (left) result.append(content.charAt(0));
       result.append(
@@ -69,6 +71,41 @@ final class PythonJinjaDialect {
       else if (source.startsWith(close, i)) return i;
     }
     return -1;
+  }
+
+  /** Rewrites Python str method calls {@code x.name(args)} into {@code x|py_name(args)} filters. */
+  private static String methods(String text) {
+    StringBuilder result = new StringBuilder(text.length());
+    char quote = 0;
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
+      if (quote != 0) {
+        result.append(c);
+        if (c == '\\' && i + 1 < text.length()) result.append(text.charAt(++i));
+        else if (c == quote) quote = 0;
+        continue;
+      }
+      if (c == '\'' || c == '"') {
+        quote = c;
+        result.append(c);
+        continue;
+      }
+      if (c == '.'
+          && i + 1 < text.length()
+          && (Character.isLetter(text.charAt(i + 1)) || text.charAt(i + 1) == '_')) {
+        int j = i + 2;
+        while (j < text.length()
+            && (Character.isLetterOrDigit(text.charAt(j)) || text.charAt(j) == '_')) j++;
+        String name = text.substring(i + 1, j);
+        if (j < text.length() && text.charAt(j) == '(' && PythonStrings.NAMES.contains(name)) {
+          result.append("|py_").append(name);
+          i = j - 1;
+          continue;
+        }
+      }
+      result.append(c);
+    }
+    return result.toString();
   }
 
   private static String named(String text) {

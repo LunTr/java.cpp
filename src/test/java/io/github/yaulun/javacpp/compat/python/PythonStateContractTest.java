@@ -77,12 +77,14 @@ class PythonStateContractTest {
     throw new AssertionError(kind);
   }
 
-  private static List<BigInteger> key(Object value) {
+  private static List<Object> key(Object value) {
     return ((List<?>) value)
-        .stream().map(token -> token == null ? null : new BigInteger((String) token)).toList();
+        .stream()
+        .map(token -> token == null ? null : (Object) new BigInteger((String) token))
+        .toList();
   }
 
-  private static Object keyStrings(List<BigInteger> key) {
+  private static Object keyStrings(List<?> key) {
     return key == null
         ? null
         : key.stream().map(token -> token == null ? null : token.toString()).toList();
@@ -138,7 +140,7 @@ class PythonStateContractTest {
                 switch ((String) step.get(0)) {
                   case "put" -> cache.put(key(step.get(1)), states.get(number(step.get(2))));
                   case "get" -> {
-                    PythonLlamaState found = cache.get(key(step.get(1)));
+                    Object found = cache.get(key(step.get(1)));
                     return found == null ? null : states.indexOf(found);
                   }
                   case "contains" -> {
@@ -308,15 +310,15 @@ class PythonStateContractTest {
     byte[] data = {1};
     var state = new PythonLlamaState(ids, scores, 1, data, BigInteger.ONE, 2);
     var cache = new PythonLlamaRamCache(BigInteger.TEN);
-    cache.put(List.of(BigInteger.ONE), state);
+    cache.put(List.<Object>of(BigInteger.ONE), state);
     assertSame(ids, state.inputIds());
     assertSame(scores, state.scores());
     assertSame(data, state.llamaState());
     state.setLlamaStateSize(BigInteger.valueOf(20));
     assertEquals(BigInteger.valueOf(20), cache.cacheSize());
-    assertSame(state, cache.get(List.of(BigInteger.ONE)));
+    assertSame(state, cache.get(List.<Object>of(BigInteger.ONE)));
     assertEquals(BigInteger.valueOf(20), cache.cacheSize());
-    cache.put(List.of(BigInteger.ONE), state);
+    cache.put(List.<Object>of(BigInteger.ONE), state);
     assertTrue(cache.cacheState().isEmpty());
   }
 }

@@ -517,9 +517,17 @@ public final class Py {
 
   // ---- Comparison ---------------------------------------------------------------------------
 
-  /** Python equality (==): value equality for containers, identity for other objects. */
+  /** Python equality (==): custom __eq__ first, then builtin value equality, then identity. */
   public static boolean equal(Object left, Object right) {
     if (left == right) return true;
+    if (left instanceof PyComparable comparable) {
+      Object result = comparable.pyCompare(right, Op.EQ);
+      if (result != NOT_IMPLEMENTED) return truth(result);
+    }
+    if (right instanceof PyComparable comparable) {
+      Object result = comparable.pyCompare(left, Op.EQ);
+      if (result != NOT_IMPLEMENTED) return truth(result);
+    }
     Type a = typeOf(left), b = typeOf(right);
     if (isNumber(left) && isNumber(right)) return numericCompare(left, right) == 0;
     if (a != b) return false;
@@ -557,7 +565,7 @@ public final class Py {
         }
         yield true;
       }
-      default -> compareCustom(left, Op.EQ, right);
+      default -> false;
     };
   }
 
@@ -617,29 +625,6 @@ public final class Py {
       case GT -> ">";
       case GE -> ">=";
     };
-  }
-
-  private static boolean compareCustom(Object left, Op operation, Object right) {
-    if (operation != Op.EQ && operation != Op.NE) {
-      if (left instanceof PyComparable comparable) {
-        Object result = comparable.pyCompare(right, operation);
-        if (result != NOT_IMPLEMENTED) return truth(result);
-      }
-      if (right instanceof PyComparable comparable) {
-        Object result = comparable.pyCompare(left, reflected(operation));
-        if (result != NOT_IMPLEMENTED) return truth(result);
-      }
-      return false;
-    }
-    if (left instanceof PyComparable comparable) {
-      Object result = comparable.pyCompare(right, Op.EQ);
-      if (result != NOT_IMPLEMENTED) return truth(result);
-    }
-    if (right instanceof PyComparable comparable) {
-      Object result = comparable.pyCompare(left, Op.EQ);
-      if (result != NOT_IMPLEMENTED) return truth(result);
-    }
-    return false;
   }
 
   private static boolean ordering(int result, Op operation) {
