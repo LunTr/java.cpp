@@ -68,3 +68,4 @@ Python 仅用于维护阶段生成对照数据。Java 类库、打包产物及�
 - ：llama_grammar.py 全部 29 项固定源码契约，16 组用例 →  + 
 - ：mtmd_cpp.py 首批 30 项（29 项 ctypes 绑定经 internal.MtmdLibrary JNA + 弃用包装 mtmd_get_audio_bitrate）固定源码契约，2 组用例 →  + 
 - ：mtmd_cpp.py 第二批 35 项（chunk/image_tokens/encode/batch/gen_audio/helper 绑定 + init_from_file/buf 实体包装）固定源码契约，4 组用例 →  + 
+- ：mtmd_cpp.py 收尾 22 项（eval/decode/video/gen_audio helper/log_set 全为 JNA 绑定），文件 87/87 清零 → 

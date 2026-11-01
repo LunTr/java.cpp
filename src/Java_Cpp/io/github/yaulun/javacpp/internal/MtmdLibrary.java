@@ -202,7 +202,8 @@ public interface MtmdLibrary extends Library {
 
   MtmdTypes.VideoInitParams.ByValue mtmd_helper_video_init_params_default();
 
-  Pointer mtmd_helper_video_init(Pointer ctx, String path, MtmdTypes.VideoInitParams.ByValue params);
+  Pointer mtmd_helper_video_init(
+      Pointer ctx, String path, MtmdTypes.VideoInitParams.ByValue params);
 
   Pointer mtmd_helper_video_init_from_buf(
       Pointer ctx, Pointer buf, long length, MtmdTypes.VideoInitParams.ByValue params);
@@ -211,7 +212,8 @@ public interface MtmdLibrary extends Library {
 
   MtmdTypes.VideoInfo.ByValue mtmd_helper_video_get_info(Pointer ctx);
 
-  int mtmd_helper_video_read_next(Pointer ctx, PointerByReference outBitmap, PointerByReference outText);
+  int mtmd_helper_video_read_next(
+      Pointer ctx, PointerByReference outBitmap, PointerByReference outText);
 
   byte mtmd_helper_model_can_chat(Pointer lctx, Pointer mctx);
 
@@ -226,7 +228,11 @@ public interface MtmdLibrary extends Library {
   int mtmd_helper_gen_audio_step_prompt(Pointer ctx, int nBatch);
 
   int mtmd_helper_gen_audio_step_gen(
-      Pointer ctx, int sampled, Pointer hStateIn, PointerByReference hStateOut, ByteByReference outStop);
+      Pointer ctx,
+      int sampled,
+      Pointer hStateIn,
+      PointerByReference hStateOut,
+      ByteByReference outStop);
 
   int mtmd_helper_gen_audio_get_output(
       Pointer ctx,
