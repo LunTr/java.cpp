@@ -111,6 +111,70 @@ public final class PythonLlamaModel {
     exitStack.close();
   }
 
+  public int vocabType() {
+    return port.vocabType(vocab);
+  }
+
+  public double ropeFreqScaleTrain() {
+    return port.modelRopeFreqScaleTrain(model);
+  }
+
+  /** The original raises NotImplementedError unconditionally. */
+  public Object getTensor(String name) {
+    throw error(
+        PythonErrorType.NOT_IMPLEMENTED_ERROR, "get_tensor is not implemented in llama.cpp");
+  }
+
+  /** The port returns the decoded text, matching the original .decode("utf-8"). */
+  public String tokenGetText(int token) {
+    return port.vocabGetText(vocab, token);
+  }
+
+  public double tokenGetScore(int token) {
+    return port.vocabGetScore(vocab, token);
+  }
+
+  public int tokenGetAttr(int token) {
+    return port.vocabGetAttr(vocab, token);
+  }
+
+  /** token_cls deliberately forwards to bos, as in the original. */
+  public int tokenCls() {
+    return port.vocabBos(vocab);
+  }
+
+  public int tokenSep() {
+    return port.vocabSep(vocab);
+  }
+
+  public int tokenNl() {
+    return port.vocabNl(vocab);
+  }
+
+  public int tokenPrefix() {
+    return port.vocabFimPre(vocab);
+  }
+
+  public int tokenMiddle() {
+    return port.vocabFimMid(vocab);
+  }
+
+  public int tokenSuffix() {
+    return port.vocabFimSuf(vocab);
+  }
+
+  public int tokenEot() {
+    return port.vocabEot(vocab);
+  }
+
+  public boolean addBosToken() {
+    return port.vocabGetAddBos(vocab);
+  }
+
+  public boolean addEosToken() {
+    return port.vocabGetAddEos(vocab);
+  }
+
   /** Fixed 1024 byte buffer; the returned text stops at the first NUL. */
   public String desc() {
     byte[] buffer = new byte[1024];

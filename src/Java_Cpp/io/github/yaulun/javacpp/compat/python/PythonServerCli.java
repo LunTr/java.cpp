@@ -1,0 +1,277 @@
+package io.github.yaulun.javacpp.compat.python;
+
+import io.github.yaulun.javacpp.python.Py;
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Ports server/cli.py argparse helpers. Typing annotations arrive as an injectable port so the
+ * Literal/Union/List/Dict shape checks replay deterministically; the parser and pydantic model are
+ * ports too.
+ */
+public final class PythonServerCli {
+  private PythonServerCli() {}
+
+  /** Annotation port: origin marker plus positional args, mirroring typing internals. */
+  public interface Annotation {
+    /** One of: literal, union, list, dict, or null for unparameterized types. */
+    String origin();
+
+    List<Annotation> args();
+
+    /** type(arg) of the first literal arg, or a plain type for terminals. */
+    String baseType();
+  }
+
+  /** Parser port recording add_argument calls in order. */
+  public interface ArgumentParser {
+    void addArgument(String flag, String dest, Object nargs, Object type, Object help);
+  }
+
+  /** pydantic model port: field description/default/required and annotation, plus ctor. */
+  public interface ModelField {
+    String name();
+
+    String description();
+
+    boolean required();
+
+    Object defaultValue();
+
+    Annotation annotation();
+  }
+
+  public interface Model {
+    List<ModelField> modelFields();
+
+    Object construct(Map<String, Object> kwargs);
+  }
+
+  /** Ports _get_base_type; assertion failures map to Python AssertionError. */
+  public static String getBaseType(Annotation annotation) {
+    String origin = annotation.origin();
+    if ("literal".equals(origin)) {
+      assertArgs(annotation);
+      return annotation.args().get(0).baseType();
+    }
+    if ("union".equals(origin)) {
+      assertArgs(annotation);
+      List<Annotation> nonOptional =
+          annotation.args().stream().filter(a -> !"none".equals(a.origin())).toList();
+      if (!nonOptional.isEmpty()) {
+        return getBaseType(nonOptional.get(0));
+      }
+      return annotation.baseType();
+    }
+    if ("list".equals(origin)) {
+      assertArgs(annotation);
+      return getBaseType(annotation.args().get(0));
+    }
+    return annotation.baseType();
+  }
+
+  /** Ports _contains_list_type. */
+  public static boolean containsListType(Annotation annotation) {
+    if (annotation == null) return false;
+    String origin = annotation.origin();
+    if ("list".equals(origin)) return true;
+    if ("literal".equals(origin) || "union".equals(origin)) {
+      return annotation.args().stream().anyMatch(PythonServerCli::containsListType);
+    }
+    return false;
+  }
+
+  /** Ports _contains_dict_type. */
+  public static boolean containsDictType(Annotation annotation) {
+    if (annotation == null) return false;
+    String origin = annotation.origin();
+    if ("dict".equals(origin)) return true;
+    if ("literal".equals(origin) || "union".equals(origin)) {
+      return annotation.args().stream().anyMatch(PythonServerCli::containsDictType);
+    }
+    return false;
+  }
+
+  /** Ports _parse_bool_arg; bytes decode first, then lowercase/strip membership. */
+  public static boolean parseBoolArg(Object arg) {
+    if (arg instanceof byte[] bytes) {
+      arg = new String(bytes, StandardCharsets.UTF_8);
+    }
+    String argStr = String.valueOf(arg).toLowerCase().strip();
+    if (TRUE_VALUES.contains(argStr)) return true;
+    if (FALSE_VALUES.contains(argStr)) return false;
+    throw Py.error(PythonErrorType.VALUE_ERROR, "Invalid boolean argument: " + arg);
+  }
+
+  private static final java.util.Set<String> TRUE_VALUES =
+      java.util.Set.of("1", "on", "t", "true", "y", "yes");
+  private static final java.util.Set<String> FALSE_VALUES =
+      java.util.Set.of("0", "off", "f", "false", "n", "no");
+
+  /** Ports _parse_json_object_arg; bad JSON raises JSONDecodeError, non-dict raises ValueError. */
+  public static Map<String, Object> parseJsonObjectArg(Object arg) {
+    if (arg instanceof byte[] bytes) {
+      arg = new String(bytes, StandardCharsets.UTF_8);
+    }
+    Object value = parseJson((String) arg);
+    if (!(value instanceof Map)) {
+      throw Py.error(PythonErrorType.VALUE_ERROR, "Invalid JSON object argument: " + arg);
+    }
+    @SuppressWarnings("unchecked")
+    Map<String, Object> map = (Map<String, Object>) value;
+    return map;
+  }
+
+  /** Minimal JSON parser for the dict-detection contract; failures raise JSONDecodeError. */
+  private static Object parseJson(String text) {
+    int[] pos = {0};
+    try {
+      Object value = jsonValue(text, pos);
+      jsonSpace(text, pos);
+      if (pos[0] != text.length()) throw new IllegalArgumentException();
+      return value;
+    } catch (RuntimeException failure) {
+      throw Py.error(
+          PythonErrorType.JSON_DECODE_ERROR,
+          "Expecting value: line 1 column " + (pos[0] + 1) + " (char " + pos[0] + ")");
+    }
+  }
+
+  private static void jsonSpace(String text, int[] pos) {
+    while (pos[0] < text.length() && " \t\n\r".indexOf(text.charAt(pos[0])) >= 0) pos[0]++;
+  }
+
+  private static Object jsonValue(String text, int[] pos) {
+    jsonSpace(text, pos);
+    if (pos[0] >= text.length()) throw new IllegalArgumentException();
+    char c = text.charAt(pos[0]);
+    return switch (c) {
+      case '{' -> {
+        Map<String, Object> map = new java.util.LinkedHashMap<>();
+        pos[0]++;
+        jsonSpace(text, pos);
+        if (pos[0] < text.length() && text.charAt(pos[0]) == '}') pos[0]++;
+        else {
+          while (true) {
+            jsonSpace(text, pos);
+            String key = (String) jsonValue(text, pos);
+            jsonSpace(text, pos);
+            if (text.charAt(pos[0]++) != ':') throw new IllegalArgumentException();
+            map.put(key, jsonValue(text, pos));
+            jsonSpace(text, pos);
+            char sep = text.charAt(pos[0]++);
+            if (sep == '}') break;
+            if (sep != ',') throw new IllegalArgumentException();
+          }
+        }
+        yield map;
+      }
+      case '[' -> {
+        List<Object> list = new java.util.ArrayList<>();
+        pos[0]++;
+        jsonSpace(text, pos);
+        if (pos[0] < text.length() && text.charAt(pos[0]) == ']') pos[0]++;
+        else {
+          while (true) {
+            list.add(jsonValue(text, pos));
+            jsonSpace(text, pos);
+            char sep = text.charAt(pos[0]++);
+            if (sep == ']') break;
+            if (sep != ',') throw new IllegalArgumentException();
+          }
+        }
+        yield list;
+      }
+      case '"' -> jsonString(text, pos);
+      case 't' -> jsonLiteral(text, pos, "true", Boolean.TRUE);
+      case 'f' -> jsonLiteral(text, pos, "false", Boolean.FALSE);
+      case 'n' -> jsonLiteral(text, pos, "null", null);
+      default -> {
+        int start = pos[0];
+        while (pos[0] < text.length() && "-+0123456789.eE".indexOf(text.charAt(pos[0])) >= 0)
+          pos[0]++;
+        if (pos[0] == start) throw new IllegalArgumentException();
+        String number = text.substring(start, pos[0]);
+        // An if/else keeps Long unboxed: a Long/Double ternary promotes to double.
+        if (number.contains(".") || number.contains("e") || number.contains("E")) {
+          yield Double.valueOf(number);
+        }
+        yield Long.valueOf(number);
+      }
+    };
+  }
+
+  private static String jsonString(String text, int[] pos) {
+    StringBuilder out = new StringBuilder();
+    pos[0]++;
+    while (pos[0] < text.length()) {
+      char c = text.charAt(pos[0]++);
+      if (c == '"') return out.toString();
+      if (c == '\\' && pos[0] < text.length()) {
+        c =
+            switch (text.charAt(pos[0]++)) {
+              case 'n' -> '\n';
+              case 't' -> '\t';
+              case 'r' -> '\r';
+              case 'b' -> '\b';
+              case 'f' -> '\f';
+              case 'u' -> {
+                yield (char) Integer.parseInt(text.substring(pos[0], pos[0] += 4), 16);
+              }
+              default -> text.charAt(pos[0] - 1);
+            };
+      }
+      out.append(c);
+    }
+    throw new IllegalArgumentException();
+  }
+
+  private static Object jsonLiteral(String text, int[] pos, String literal, Object value) {
+    if (!text.startsWith(literal, pos[0])) throw new IllegalArgumentException();
+    pos[0] += literal.length();
+    return value;
+  }
+
+  /** Ports add_args_from_model: fields iterate in definition order. */
+  public static void addArgsFromModel(ArgumentParser parser, Model model) {
+    for (ModelField field : model.modelFields()) {
+      String description = field.description();
+      if (description != null && !field.required() && field.defaultValue() != null) {
+        description += " (default: " + field.defaultValue() + ")";
+      }
+      String baseType = field.annotation() != null ? getBaseType(field.annotation()) : "str";
+      boolean listType = containsListType(field.annotation());
+      boolean dictType = containsDictType(field.annotation());
+      if (dictType) {
+        parser.addArgument("--" + field.name(), field.name(), null, "json_arg", description);
+      } else if (!"bool".equals(baseType)) {
+        parser.addArgument(
+            "--" + field.name(), field.name(), listType ? "*" : null, baseType, description);
+      }
+      if ("bool".equals(baseType)) {
+        parser.addArgument("--" + field.name(), field.name(), null, "bool_arg", description);
+      }
+    }
+  }
+
+  /** Ports parse_model_from_args: only non-None namespace values matching model fields. */
+  public static Object parseModelFromArgs(Model model, Map<String, Object> namespace) {
+    Map<String, Object> kwargs = new java.util.LinkedHashMap<>();
+    java.util.Set<String> fields = new java.util.HashSet<>();
+    for (ModelField field : model.modelFields()) fields.add(field.name());
+    for (Map.Entry<String, Object> entry : namespace.entrySet()) {
+      if (entry.getValue() != null && fields.contains(entry.getKey())) {
+        kwargs.put(entry.getKey(), entry.getValue());
+      }
+    }
+    return model.construct(kwargs);
+  }
+
+  private static void assertArgs(Annotation annotation) {
+    if (annotation.args() == null || annotation.args().isEmpty()) {
+      throw Py.error(PythonErrorType.ASSERTION_ERROR, "");
+    }
+  }
+}

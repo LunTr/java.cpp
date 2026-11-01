@@ -1,0 +1,31 @@
+{
+  "pythonPackage": "0.3.36",
+  "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
+  "fixtureRuntime": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "caseCount": 31,
+  "uniqueFunctions": 20,
+  "functions": [
+    "suppress_stdout_stderr.__init__",
+    "suppress_stdout_stderr.__enter__",
+    "suppress_stdout_stderr.__exit__",
+    "MetaSingleton.__call__",
+    "Singleton.__init__",
+    "BaseLlamaTokenizer.tokenize",
+    "BaseLlamaTokenizer.detokenize",
+    "LlamaHFTokenizer.__init__",
+    "LlamaHFTokenizer.tokenize",
+    "LlamaHFTokenizer.detokenize",
+    "LlamaHFTokenizer.from_pretrained",
+    "LlamaDraftModel.__call__",
+    "LlamaPromptLookupDecoding.__init__",
+    "LlamaPromptLookupDecoding.find_candidate_pred_tokens",
+    "LlamaPromptLookupDecoding.__call__",
+    "ErrorResponseFormatters.context_length_exceeded",
+    "ErrorResponseFormatters.model_not_found",
+    "RouteErrorHandler.error_message_wrapper",
+    "RouteErrorHandler.get_route_handler",
+    "RouteErrorHandler.get_route_handler.custom_route_handler"
+  ],
+  "fixtureSha256": "a69a4be3f90dd4434eecf6570d43e2bfba51ea6c4602023b654c991cb7d7e160",
+  "method": "Hash-verified pinned bodies over stub os/sys/HF/transformers/FastAPI ports; dedup registries, ABC checks and stderr fragments recorded verbatim."
+}

@@ -87,4 +87,20 @@ public final class PythonLlamaBatch {
     }
     batch.logits(count - 1, true);
   }
+
+  /** Appends a run under a new seq_id; positions restart at zero for the new sequence. */
+  public void addSequence(List<Integer> tokens, int seqId, boolean logitsAll) {
+    int count = tokens.size();
+    int offset = batch.nTokens();
+    batch.nTokens(offset + count);
+    for (int i = 0; i < count; i++) {
+      int j = offset + i;
+      batch.token(j, tokens.get(i));
+      batch.pos(j, i);
+      batch.seqId(j, 0, seqId);
+      batch.nSeqId(j, 1);
+      batch.logits(j, logitsAll);
+    }
+    batch.logits(offset + count - 1, true);
+  }
 }

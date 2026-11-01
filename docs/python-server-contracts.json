@@ -1,0 +1,31 @@
+{
+  "pythonPackage": "0.3.36",
+  "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
+  "fixtureRuntime": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "caseCount": 47,
+  "uniqueFunctions": 20,
+  "functions": [
+    "_get_base_type",
+    "_contains_list_type",
+    "_contains_dict_type",
+    "_parse_bool_arg",
+    "_parse_json_object_arg",
+    "add_args_from_model",
+    "parse_model_from_args",
+    "ModelSettings.set_dynamic_defaults",
+    "set_server_settings",
+    "get_server_settings",
+    "set_llama_proxy",
+    "set_ping_message_factory",
+    "get_llama_proxy",
+    "_logit_bias_tokens_to_input_ids",
+    "LlamaProxy.__init__",
+    "LlamaProxy.__call__",
+    "LlamaProxy.__getitem__",
+    "LlamaProxy.__setitem__",
+    "LlamaProxy.__iter__",
+    "LlamaProxy.free"
+  ],
+  "fixtureSha256": "e692bb1df6094ec3b1538c700540d504c01cfdca041db42593e1211737ef4e26",
+  "method": "Hash-verified pinned bodies over stub pydantic/argparse/asyncio-lock/Llama ports; lock acquisition order and parser add_argument calls recorded verbatim."
+}

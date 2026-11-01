@@ -5,6 +5,8 @@ import ast
 import base64
 import contextlib
 import ctypes
+import dataclasses
+import gc
 import hashlib
 import json
 import pathlib
@@ -25,7 +27,9 @@ for source in audit["baseline"]["files"]:
     assert hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest() == source["sha"]
 
 future = ast.ImportFrom(module="__future__", names=[ast.alias(name="annotations")], level=0)
-namespace = {"ExitStack": contextlib.ExitStack, "ctypes": ctypes}
+namespace = {"ExitStack": contextlib.ExitStack, "ctypes": ctypes,
+             "dataclass": dataclasses.dataclass, "field": dataclasses.field,
+             "Optional": object, "LlamaGrammar": object}
 
 
 def execute(nodes):
@@ -34,11 +38,74 @@ def execute(nodes):
 
 
 tree = ast.parse((args.source_root / "llama_cpp/_internals.py").read_text(encoding="utf-8"))
-wanted = {"LlamaModel", "LlamaContext", "LlamaBatch", "LlamaSampler"}
+wanted = {"LlamaModel", "LlamaContext", "LlamaBatch", "LlamaSampler", "LlamaTokenDataArray",
+          "LlamaSamplingParams", "LlamaSamplingContext", "CustomSampler"}
 execute([node for node in tree.body if isinstance(node, ast.ClassDef) and node.name in wanted])
+execute([node for node in tree.body
+         if isinstance(node, ast.FunctionDef) and node.name == "normalize_embedding"])
+
+
+class _RecField(list):
+    """numpy field access returning a list supporting slice assignment."""
+
+    def __setitem__(self, key, value):
+        if isinstance(key, slice):
+            list.__setitem__(self, key, list(value))
+        else:
+            list.__setitem__(self, key, value)
+
+
+class FakeRec:
+    """np.recarray stand-in: id/logit/p fields plus the ctypes data_as hook."""
+
+    def __init__(self, n):
+        self.id = _RecField([0] * n)
+        self.logit = _RecField([0.0] * n)
+        self.p = _RecField([0.0] * n)
+        self.ctypes = types.SimpleNamespace(data_as=lambda ptr: Handle("data_ptr"))
+
+
+class NumpyStub:
+    """Just enough numpy for normalize_embedding and LlamaTokenDataArray."""
+
+    intc = "intc"
+    single = "single"
+
+    class linalg:
+        @staticmethod
+        def norm(values):
+            return float(sum(float(v) * float(v) for v in values) ** 0.5)
+
+    @staticmethod
+    def dtype(*args, **kwargs):
+        return Handle("dtype")
+
+    @staticmethod
+    def recarray(shape, dtype=None):
+        return FakeRec(shape[0])
+
+    @staticmethod
+    def arange(n, dtype=None):
+        return _RecField(range(n))
+
+    @staticmethod
+    def zeros(n, dtype=None):
+        return _RecField([0.0] * n)
+
+
+namespace["np"] = NumpyStub
+
+
+def custom_apply(cur_p):
+    pass
+
+
+namespace["custom_apply"] = custom_apply
 
 
 def show(value):
+    if callable(value):
+        return getattr(value, "__name__", "fn")
     if isinstance(value, bytes):
         return value.hex()
     if isinstance(value, Handle):
@@ -139,6 +206,87 @@ class Stubs:
             "llama_sampler_get_seed", lambda chain: self.case.get("seed", 0))
         ns.llama_sampler_sample = self.recording("llama_sampler_sample", self.sample)
         ns.llama_sampler_free = self.recording("llama_sampler_free", lambda chain: None)
+        ns.llama_vocab_type = self.recording(
+            "llama_vocab_type", lambda vocab: self.case.get("vocabType", 2))
+        ns.llama_model_rope_freq_scale_train = self.recording(
+            "llama_model_rope_freq_scale_train",
+            lambda model: self.case.get("ropeScale", 0.25))
+        ns.llama_vocab_get_text = self.recording(
+            "llama_vocab_get_text",
+            lambda vocab, token: bytes.fromhex(self.case.get("textHex", "e4bda0")))
+        ns.llama_vocab_get_score = self.recording(
+            "llama_vocab_get_score", lambda vocab, token: self.case.get("score", -1.5))
+        ns.llama_vocab_get_attr = self.recording(
+            "llama_vocab_get_attr", lambda vocab, token: self.case.get("attr", 3))
+        for name in ["llama_vocab_eos", "llama_vocab_sep", "llama_vocab_nl",
+                     "llama_vocab_fim_pre", "llama_vocab_fim_mid", "llama_vocab_fim_suf",
+                     "llama_vocab_eot"]:
+            setattr(ns, name, self.recording(
+                name, lambda vocab, n=name: self.case.get(n, 0)))
+        ns.llama_vocab_get_add_bos = self.recording(
+            "llama_vocab_get_add_bos", lambda vocab: self.case.get("addBos", True))
+        ns.llama_vocab_get_add_eos = self.recording(
+            "llama_vocab_get_add_eos", lambda vocab: self.case.get("addEos", False))
+        ns.llama_memory_seq_rm = self.recording(
+            "llama_memory_seq_rm",
+            lambda mem, seq, p0, p1: self.queue("seqRm") if "seqRm" in self.queues else True)
+        ns.llama_memory_seq_cp = self.recording(
+            "llama_memory_seq_cp", lambda mem, src, dst, p0, p1: None)
+        ns.llama_memory_seq_keep = self.recording(
+            "llama_memory_seq_keep", lambda mem, seq: None)
+        ns.llama_memory_seq_add = self.recording(
+            "llama_memory_seq_add", lambda mem, seq, p0, p1, shift: None)
+        ns.llama_state_get_size = self.recording(
+            "llama_state_get_size", lambda ctx: self.case.get("stateSize", 1024))
+        ns.llama_encode = self.recording("llama_encode", self.encode)
+        ns.llama_set_n_threads = self.recording(
+            "llama_set_n_threads", lambda ctx, n, nb: None)
+        ns.llama_pooling_type = self.recording(
+            "llama_pooling_type", lambda ctx: self.case.get("pooling", 1))
+        for name in ["llama_get_logits", "llama_get_logits_ith", "llama_get_embeddings",
+                     "llama_get_embeddings_ith", "llama_get_embeddings_seq"]:
+            setattr(ns, name, self.recording(
+                name, lambda *a, n=name: Handle(n.replace("llama_", "") + "_ptr")))
+        ns.llama_perf_context_reset = self.recording(
+            "llama_perf_context_reset", lambda ctx: None)
+        ns.llama_perf_context_print = self.recording(
+            "llama_perf_context_print", lambda ctx: None)
+        for name in ["llama_sampler_init_typical", "llama_sampler_init_temp_ext",
+                     "llama_sampler_init_xtc", "llama_sampler_init_top_n_sigma",
+                     "llama_sampler_init_mirostat", "llama_sampler_init_mirostat_v2",
+                     "llama_sampler_init_grammar", "llama_sampler_init_grammar_lazy_patterns",
+                     "llama_sampler_init_dry", "llama_sampler_init_logit_bias",
+                     "llama_sampler_init_infill"]:
+            setattr(ns, name, self.recording(name, self.spawn(name)))
+        ns.llama_sampler_chain_n = self.recording(
+            "llama_sampler_chain_n", lambda chain: self.case.get("chainN", 4))
+        ns.llama_sampler_accept = self.recording(
+            "llama_sampler_accept", lambda chain, token: None)
+        ns.llama_sampler_reset = self.recording(
+            "llama_sampler_reset", lambda chain: None)
+        ns.llama_sampler_clone = self.recording(
+            "llama_sampler_clone", self.spawn("llama_sampler_clone"))
+        ns.llama_sampler_i = self.recording(
+            "llama_sampler_i", lambda: types.SimpleNamespace(_hname="sampler_i"))
+        ns.llama_sampler = self.recording(
+            "llama_sampler", lambda: types.SimpleNamespace(_hname="sampler"))
+        for name in ["llama_sampler_i_apply", "llama_sampler_i_name",
+                     "llama_sampler_i_accept", "llama_sampler_i_reset",
+                     "llama_sampler_i_clone", "llama_sampler_i_free"]:
+            setattr(ns, name, self.recording(
+                name, lambda arg, n=name: Handle("cfunc_" + n.rsplit("_", 1)[1])))
+
+        class LogitBias(ctypes.Structure):
+            _fields_ = [("token", ctypes.c_int32), ("bias", ctypes.c_float)]
+
+        ns.llama_logit_bias = LogitBias
+        ns.llama_token_data_p = "token_data_p"
+
+        def token_data_array(data=None, size=None, sorted=None):
+            self.trace.append(["llama_token_data_array", show(data), size, sorted])
+            return types.SimpleNamespace(data=data, size=size, sorted=sorted)
+
+        ns.llama_token_data_array = token_data_array
         self.llama_cpp = ns
         self.os = types.SimpleNamespace(path=types.SimpleNamespace(exists=self.exists))
         self.warnings = types.SimpleNamespace(warn=self.warn)
@@ -206,6 +354,9 @@ class Stubs:
     def decode(self, ctx, batch):
         return self.queue("decode")
 
+    def encode(self, ctx, batch):
+        return self.queue("encode")
+
     def sample(self, chain, ctx, index):
         return self.queue("sample")
 
@@ -217,6 +368,18 @@ def capture(action):
         return dict(error=type(error).__name__, message=str(error))
 
 
+class FakeGrammar:
+    """llama_grammar.LlamaGrammar stand-in; reset() is observable."""
+
+    def __init__(self, trace, grammar="root ::= 'ab'", root="root"):
+        self._grammar = grammar
+        self._root = root
+        self.trace = trace
+
+    def reset(self):
+        self.trace.append(["grammar_reset"])
+
+
 def drive(case):
     trace = []
     stubs = Stubs(case, trace)
@@ -224,10 +387,17 @@ def drive(case):
     namespace["os"] = stubs.os
     namespace["warnings"] = stubs.warnings
     namespace["suppress_stdout_stderr"] = stubs.suppress
+    real_pointer = ctypes.pointer
+    ctypes.pointer = lambda obj: Handle("ptr:" + getattr(obj, "_hname", "obj"))
     results = []
     box = {}
     Model, Context, Batch, Sampler = (namespace[name] for name in
                                       ["LlamaModel", "LlamaContext", "LlamaBatch", "LlamaSampler"])
+    TokenDataArray = namespace["LlamaTokenDataArray"]
+    SamplingParams = namespace["LlamaSamplingParams"]
+    SamplingContext = namespace["LlamaSamplingContext"]
+    CustomSampler = namespace["CustomSampler"]
+    grammar = FakeGrammar(trace)
     for step in case["ops"]:
         name = step[0]
 
@@ -263,6 +433,11 @@ def drive(case):
                 return "ok"
             if name == "batchReset": return box["batch"].reset()
             if name == "batchTokens": return box["batch"].n_tokens()
+            if name == "batchAdd":
+                box["batch"].add_sequence(step[1], step[2], step[3])
+                return "ok"
+            if name == "batchDump":
+                return box["batch"].batch.snapshot()
             if name == "greedy": return box["sampler"].add_greedy()
             if name == "dist": return box["sampler"].add_dist(step[1])
             if name == "softmax": return box["sampler"].add_softmax()
@@ -283,8 +458,132 @@ def drive(case):
             if name == "close":
                 box[step[1]].close()
                 return "ok"
+            if name == "vocabType": return box["model"].vocab_type()
+            if name == "ropeScale": return box["model"].rope_freq_scale_train()
+            if name == "getTensor": return box["model"].get_tensor(step[1])
+            if name == "tokenText": return box["model"].token_get_text(step[1])
+            if name == "tokenScore": return box["model"].token_get_score(step[1])
+            if name == "tokenAttr": return box["model"].token_get_attr(step[1])
+            if name == "tokenCls": return box["model"].token_cls()
+            if name == "tokenSep": return box["model"].token_sep()
+            if name == "tokenNl": return box["model"].token_nl()
+            if name == "tokenPrefix": return box["model"].token_prefix()
+            if name == "tokenMiddle": return box["model"].token_middle()
+            if name == "tokenSuffix": return box["model"].token_suffix()
+            if name == "tokenEot": return box["model"].token_eot()
+            if name == "addBos": return box["model"].add_bos_token()
+            if name == "addEos": return box["model"].add_eos_token()
+            if name == "pooling": return box["ctx"].pooling_type()
+            if name == "kvRm": return box["ctx"].kv_cache_seq_rm(*step[1:])
+            if name == "kvCp":
+                box["ctx"].kv_cache_seq_cp(*step[1:])
+                return "ok"
+            if name == "kvKeep":
+                box["ctx"].kv_cache_seq_keep(*step[1:])
+                return "ok"
+            if name == "kvShift":
+                box["ctx"].kv_cache_seq_shift(*step[1:])
+                return "ok"
+            if name == "stateSize": return box["ctx"].get_state_size()
+            if name == "encode":
+                box["ctx"].encode(box["batch"])
+                return "ok"
+            if name == "nThreads":
+                box["ctx"].set_n_threads(*step[1:])
+                return "ok"
+            if name == "logits": return show(box["ctx"].get_logits())
+            if name == "logitsIth": return show(box["ctx"].get_logits_ith(step[1]))
+            if name == "emb": return show(box["ctx"].get_embeddings())
+            if name == "embIth": return show(box["ctx"].get_embeddings_ith(step[1]))
+            if name == "embSeq": return show(box["ctx"].get_embeddings_seq(step[1]))
+            if name == "resetTimings":
+                box["ctx"].reset_timings()
+                return "ok"
+            if name == "printTimings":
+                box["ctx"].print_timings()
+                return "ok"
+            if name == "deprecated":
+                return getattr(box["ctx"], step[1])(*step[2:])
+            if name == "normalize":
+                return namespace["normalize_embedding"](step[1])
+            if name == "tda":
+                box["tda"] = TokenDataArray(n_vocab=step[1])
+                return "ok"
+            if name == "tdaCopy":
+                box["tda"].copy_logits(step[1])
+                return "ok"
+            if name == "tdaDump":
+                tda = box["tda"]
+                return [list(tda.candidates_data.id), list(tda.candidates_data.logit),
+                        list(tda.candidates_data.p), tda.candidates.sorted, tda.candidates.size]
+            if name == "sctx":
+                box["sctx"] = SamplingContext(params=SamplingParams())
+                return "ok"
+            if name == "sctxGrammar":
+                box["sctx"].grammar = grammar
+                return "ok"
+            if name == "sctxPrev":
+                box["sctx"].prev.extend(step[1])
+                return "ok"
+            if name == "sctxReset":
+                box["sctx"].reset()
+                return "ok"
+            if name == "sctxCp":
+                box["sctx2"] = box["sctx"].cp()
+                box["sctx2"].prev.append(99)
+                return [list(box["sctx"].prev), list(box["sctx2"].prev),
+                        box["sctx2"].params is box["sctx"].params]
+            if name == "sctxLast":
+                return box["sctx"].last()
+            if name == "sctxPrevStr":
+                return box["sctx"].prev_str(box["ctx"], step[1])
+            if name == "sctxSample":
+                return box["sctx"].sample(box["ctx"], step[1], None)
+            if name == "sctxAccept":
+                box["sctx"].accept(box["ctx"], step[1], step[2])
+                return list(box["sctx"].prev)
+            if name == "custom":
+                box["custom"] = CustomSampler(apply_func=namespace["custom_apply"])
+                return "ok"
+            if name == "customGet":
+                return show(box["custom"].get_sampler())
+            if name == "typical": return box["sampler"].add_typical(*step[1:])
+            if name == "tempExt": return box["sampler"].add_temp_ext(*step[1:])
+            if name == "xtc": return box["sampler"].add_xtc(*step[1:])
+            if name == "topNSigma": return box["sampler"].add_top_n_sigma(step[1])
+            if name == "mirostat": return box["sampler"].add_mirostat(*step[1:])
+            if name == "mirostatV2": return box["sampler"].add_mirostat_v2(*step[1:])
+            if name == "grammarAdd":
+                box["sampler"].add_grammar(box["model"], grammar)
+                return "ok"
+            if name == "grammarLazy":
+                box["sampler"].add_grammar_lazy_patterns(
+                    box["model"], grammar, step[1], step[2])
+                return "ok"
+            if name == "dry":
+                box["sampler"].add_dry(box["model"], *step[1:])
+                return "ok"
+            if name == "logitBias":
+                box["sampler"].add_logit_bias(step[1], step[2])
+                return "ok"
+            if name == "infill":
+                box["sampler"].add_infill(box["model"])
+                return "ok"
+            if name == "addCustom":
+                box["sampler"].add_custom(namespace["custom_apply"])
+                return "ok"
+            if name == "acceptTok":
+                box["sampler"].accept(step[1])
+                return "ok"
+            if name == "resetSampler":
+                box["sampler"].reset()
+                return "ok"
+            if name == "clone":
+                box["sampler2"] = box["sampler"].clone()
+                return "ok"
             raise AssertionError("unknown op " + name)
         results.append(capture(run))
+    ctypes.pointer = real_pointer
     return dict(results=results, trace=trace)
 
 
@@ -361,9 +660,98 @@ add("sampler", path="m.gguf", exists={"m.gguf": True}, verbose=False, seed=42949
 add("sampler", path="m.gguf", exists={"m.gguf": True}, verbose=True, seed=0, queues={"sample": [0]},
     ops=[["sampler"], ["seedSamplers", "sampler", [[1, "cs0"], [0, "cs1"]]], ["close", "sampler"]])
 
+# Model vocab/accessor passthroughs and the unconditional get_tensor error.
+add("modelAttrs", path="m.gguf", exists={"m.gguf": True}, verbose=False,
+    vocabType=2, ropeScale=0.03125, score=-2.75, attr=5, textHex="e4bda0e5a5bd",
+    llama_vocab_eos=2, llama_vocab_sep=13, llama_vocab_nl=10, llama_vocab_fim_pre=21,
+    llama_vocab_fim_mid=22, llama_vocab_fim_suf=23, llama_vocab_eot=24,
+    addBos=True, addEos=False, bos=1,
+    ops=[["model"], ["vocabType"], ["ropeScale"], ["tokenText", 5], ["tokenScore", 5],
+         ["tokenAttr", 5], ["tokenCls"], ["tokenSep"], ["tokenNl"], ["tokenPrefix"],
+         ["tokenMiddle"], ["tokenSuffix"], ["tokenEot"], ["addBos"], ["addEos"],
+         ["getTensor", "blk.0.weight"], ["close", "model"]])
+# Context memory ops: assert gate, negative seq clamp, queue-driven seq_rm result.
+add("contextKv", path="m.gguf", exists={"m.gguf": True}, verbose=False,
+    stateSize=4096, pooling=2, queues={"seqRm": [True, False]},
+    ops=[["model"], ["context"], ["pooling"], ["kvRm", 3, 0, -1], ["kvRm", -2, 0, -1],
+         ["kvCp", 1, 2, 0, 5], ["kvKeep", 1], ["kvShift", 1, 2, 8, -3],
+         ["stateSize"], ["close", "ctx"], ["close", "model"]])
+# Missing memory asserts before any native call.
+add("contextKv", path="m.gguf", exists={"m.gguf": True}, verbose=False, memory=False,
+    ops=[["model"], ["context"], ["kvRm", 0, 0, -1], ["kvCp", 0, 1, 0, 1],
+         ["kvKeep", 0], ["kvShift", 0, 0, 1, 1], ["close", "model"]])
+# encode return-code contract, thread setter, pointer getters and timings.
+add("contextOps", path="m.gguf", exists={"m.gguf": True}, verbose=False,
+    queues={"encode": [0, -1]},
+    ops=[["model"], ["context"], ["batch", 4, 0, 1],
+         ["batchSet", [10, 11], 0, False], ["encode"], ["encode"], ["nThreads", 4, 4],
+         ["logits"], ["logitsIth", 2], ["emb"], ["embIth", 1], ["embSeq", 0],
+         ["resetTimings"], ["printTimings"], ["close", "ctx"], ["close", "model"]])
+# Deprecated sampling entry points raise NotImplementedError unchanged.
+add("deprecated", path="m.gguf", exists={"m.gguf": True}, verbose=False,
+    ops=[["model"], ["context"],
+         ["deprecated", "set_rng_seed", 7],
+         ["deprecated", "sample_repetition_penalties", "cand", "last", 8, 1.1, 0.0, 0.0],
+         ["deprecated", "sample_softmax", "cand"],
+         ["deprecated", "sample_top_k", "cand", 40, 1],
+         ["deprecated", "sample_top_p", "cand", 0.9, 1],
+         ["deprecated", "sample_min_p", "cand", 0.05, 1],
+         ["deprecated", "sample_typical", "cand", 1.0, 1],
+         ["deprecated", "sample_temp", "cand", 0.8],
+         ["deprecated", "sample_grammar", "cand", "gram"],
+         ["deprecated", "sample_token_mirostat", "cand", 5.0, 0.1, 100, "mu"],
+         ["deprecated", "sample_token_mirostat_v2", "cand", 5.0, 0.1, "mu"],
+         ["deprecated", "sample_token_greedy", "cand"],
+         ["deprecated", "sample_token", "cand"],
+         ["deprecated", "grammar_accept_token", "gram", 5],
+         ["close", "ctx"], ["close", "model"]])
+# add_sequence appends with its own seq_id and restarts positions.
+add("batch", verbose=False,
+    ops=[["batch", 8, 0, 2], ["batchSet", [10, 11], 3, False], ["batchAdd", [20, 21, 22], 5, True],
+         ["batchDump"], ["close", "batch"]])
+# normalize_embedding: zero norm passes through, otherwise scaled elementwise.
+add("normalize", ops=[["normalize", [3.0, 4.0]], ["normalize", [0.0, 0.0]],
+                      ["normalize", [1.5, -2.0, 0.5]]])
+# LlamaTokenDataArray: recarray layout, copy_logits resets id/p/sorted/size.
+add("tokenDataArray",
+    ops=[["tda", 4], ["tdaDump"], ["tdaCopy", [0.5, -1.0, 2.5, 0.0]], ["tdaDump"],
+         ["tdaCopy", [9.0, 8.0, 7.0, 6.0]], ["tdaDump"]])
+# LlamaSamplingContext: reset rebinds and resets grammar; cp shares scalars, copies lists.
+add("samplingContext", path="m.gguf", exists={"m.gguf": True}, verbose=False,
+    queues={"piece": [["e4bda0", 3], ["e5a5bd", 3], ["41", 1]]},
+    ops=[["model"], ["context"], ["sctx"], ["sctxPrev", [10, 11, 12]], ["sctxLast"],
+         ["sctxPrevStr", 2], ["sctxAccept", 13, True], ["sctxCp"], ["sctxGrammar"],
+         ["sctxReset"], ["sctxLast"], ["sctxSample", 0],
+         ["close", "ctx"], ["close", "model"]])
+# CustomSampler: sampler_i field order, literal-0 optional slots, pointer plumbing.
+add("customSampler", chainN=4,
+    ops=[["sampler"], ["addCustom"], ["close", "sampler"]])
+add("customSampler", chainN=1,
+    ops=[["custom"], ["customGet"]])
+# Remaining add_* passthroughs in call order; dict order kept for logit_bias.
+add("samplerAdd", path="m.gguf", exists={"m.gguf": True}, verbose=False, chainN=3,
+    ops=[["model"], ["sampler"], ["typical", 0.9], ["typical", 0.9, 2],
+         ["tempExt", 0.7, 0.1, 1.2], ["xtc", 0.4, 0.8, 5, 4242],
+         ["topNSigma", 2.5], ["mirostat", 32000, 99, 5.0, 0.1, 100],
+         ["mirostatV2", 1001, 5.0, 0.1], ["grammarAdd"],
+         ["grammarLazy", ["abc", "d"], [7, 8]],
+         ["dry", 0.8, 1.75, 2, 20, ["\n", "##"]],
+         ["logitBias", 6, {5: -1.5, 2: 3.25}], ["infill"],
+         ["acceptTok", 17], ["resetSampler"], ["close", "sampler"], ["close", "model"]])
+# clone succeeds without custom samplers and frees only the clone on close.
+add("samplerClone",
+    ops=[["sampler"], ["clone"], ["close", "sampler2"], ["close", "sampler"]])
+# clone with custom samplers raises NotImplementedError before the native call.
+add("samplerClone", chainN=2,
+    ops=[["sampler"], ["addCustom"], ["clone"], ["close", "sampler"]])
+
+gc.disable()
 rows = []
 for index, case in enumerate(cases):
     try:
+        # Flush cycles from earlier cases into the previous stub trace so cyclic
+        # garbage collection can never leak frees into this case's recording.
+        gc.collect()
         rows.append("\t".join([case["kind"], base64.b64encode(wire(case)).decode(),
                                base64.b64encode(wire(drive(case))).decode()]))
     except Exception:
@@ -381,6 +769,39 @@ functions = [
     "LlamaSampler.add_dist", "LlamaSampler.add_softmax", "LlamaSampler.add_top_k",
     "LlamaSampler.add_top_p", "LlamaSampler.add_min_p", "LlamaSampler.add_temp",
     "LlamaSampler.add_penalties", "LlamaSampler.get_seed", "LlamaSampler.sample",
+    "LlamaModel.__init__.free_model", "LlamaModel.__del__", "LlamaModel.vocab_type",
+    "LlamaModel.rope_freq_scale_train", "LlamaModel.get_tensor",
+    "LlamaModel.token_get_text", "LlamaModel.token_get_score", "LlamaModel.token_get_attr",
+    "LlamaModel.token_cls", "LlamaModel.token_sep", "LlamaModel.token_nl",
+    "LlamaModel.token_prefix", "LlamaModel.token_middle", "LlamaModel.token_suffix",
+    "LlamaModel.token_eot", "LlamaModel.add_bos_token", "LlamaModel.add_eos_token",
+    "LlamaContext.__init__.free_ctx", "LlamaContext.__del__", "LlamaContext.pooling_type",
+    "LlamaContext.kv_cache_seq_rm", "LlamaContext.kv_cache_seq_cp",
+    "LlamaContext.kv_cache_seq_keep", "LlamaContext.kv_cache_seq_shift",
+    "LlamaContext.get_state_size", "LlamaContext.encode", "LlamaContext.set_n_threads",
+    "LlamaContext.get_logits", "LlamaContext.get_logits_ith", "LlamaContext.get_embeddings",
+    "LlamaContext.get_embeddings_ith", "LlamaContext.get_embeddings_seq",
+    "LlamaContext.set_rng_seed", "LlamaContext.sample_repetition_penalties",
+    "LlamaContext.sample_softmax", "LlamaContext.sample_top_k", "LlamaContext.sample_top_p",
+    "LlamaContext.sample_min_p", "LlamaContext.sample_typical", "LlamaContext.sample_temp",
+    "LlamaContext.sample_grammar", "LlamaContext.sample_token_mirostat",
+    "LlamaContext.sample_token_mirostat_v2", "LlamaContext.sample_token_greedy",
+    "LlamaContext.sample_token", "LlamaContext.grammar_accept_token",
+    "LlamaContext.reset_timings", "LlamaContext.print_timings",
+    "LlamaBatch.__init__.free_batch", "LlamaBatch.__del__", "LlamaBatch.n_tokens",
+    "LlamaBatch.add_sequence", "normalize_embedding",
+    "LlamaTokenDataArray.__init__", "LlamaTokenDataArray.copy_logits",
+    "LlamaSamplingContext.reset", "LlamaSamplingContext.cp", "LlamaSamplingContext.last",
+    "LlamaSamplingContext.prev_str", "LlamaSamplingContext.sample",
+    "LlamaSamplingContext.accept", "CustomSampler.__init__",
+    "CustomSampler.__init__.apply_wrapper", "CustomSampler.__init__.free_wrapper",
+    "CustomSampler.get_sampler", "LlamaSampler.__init__.free_sampler",
+    "LlamaSampler.__del__", "LlamaSampler.add_typical", "LlamaSampler.add_temp_ext",
+    "LlamaSampler.add_xtc", "LlamaSampler.add_top_n_sigma", "LlamaSampler.add_mirostat",
+    "LlamaSampler.add_mirostat_v2", "LlamaSampler.add_grammar",
+    "LlamaSampler.add_grammar_lazy_patterns", "LlamaSampler.add_dry",
+    "LlamaSampler.add_logit_bias", "LlamaSampler.add_infill", "LlamaSampler.add_custom",
+    "LlamaSampler.accept", "LlamaSampler.clone", "LlamaSampler.clone.free_sampler",
 ]
 metadata = dict(pythonPackage="0.3.36", sourceCommit=audit["baseline"]["commit"],
                 fixtureRuntime=sys.version, caseCount=len(rows), uniqueFunctions=len(functions),

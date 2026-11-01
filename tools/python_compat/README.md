@@ -1,5 +1,11 @@
 # Python 原版对照数据生成
 
+2026-11-01 chatregistry 补充：`generate_chatregistry_contracts.py` 执行固定原版 `llama_cpp_ext` 装饰器、`llama_chat_format` 注册表/Protocol/静态方法与嵌套 handler、`server/app.py` 五个端点共 21 项，生成 14 组对照。Java 入口为 `PythonCtypesExt`/`PythonChatHandlerRegistry`/`PythonChatFormat`/`PythonJson`/`PythonServerApp`。`generate_all_contracts.py` 已接入；数据位于 `src/test/resources/python-0.3.36-chatregistry-contracts.tsv`，元数据见 `docs/python-chatregistry-contracts.json`。详见 [本轮记录](../../docs/PYTHON_CHATREGISTRY_COMPATIBILITY.md)。
+
+2026-11-01 server 补充：`generate_server_contracts.py` 执行固定原版 `server/cli.py`（7 个 argparse 帮助函数）、`settings.set_dynamic_defaults`、`app.py` 模块级 6 项与 `model.py` LlamaProxy 6 项，生成 47 组对照。Java 入口为 `PythonServerCli`/`PythonServerSettings`/`PythonServerApp`/`PythonLlamaProxy`。`generate_all_contracts.py` 已接入；数据位于 `src/test/resources/python-0.3.36-server-contracts.tsv`，元数据见 `docs/python-server-contracts.json`。详见 [本轮记录](../../docs/PYTHON_SERVER_COMPATIBILITY.md)。
+
+2026-11-01 helpers 补充：`generate_helpers_contracts.py` 执行固定原版 `_utils.py`（suppress_stdout_stderr、MetaSingleton/Singleton）、`llama_tokenizer.py` 的 BaseLlamaTokenizer/LlamaHFTokenizer、`llama_speculative.py` 与 `server/errors.py` 共 20 项完整函数体，生成 31 组对照。Java 入口为 `PythonSuppressStdoutStderr`/`PythonSingleton`/`PythonBaseLlamaTokenizer`/`PythonHfTokenizer`/`PythonDraftModel`/`PythonPromptLookupDecoding`/`PythonServerErrors`，ABC 检查共用 `PythonAbstract`。`generate_all_contracts.py` 已接入；数据位于 `src/test/resources/python-0.3.36-helpers-contracts.tsv`，元数据见 `docs/python-helpers-contracts.json`。详见 [本轮记录](../../docs/PYTHON_HELPERS_COMPATIBILITY.md)。
+
 2026-10-30 lowlevel 补充：`generate_lowlevel_contracts.py` 执行固定原版 `_logger.py` 两个函数、`llama_cpp._warn_deprecated`、`llama.py` 的 ctx/model/__del__/free_lora_adapter 以及 `llama_tokenizer.from_ggml_file` 的完整函数体，在桩端口上生成 25 组对照，核对日志级别映射与门控、stderr 分写、warnings 过滤器/调用方模块、LoRA 释放时序和工厂 kwargs。`generate_cache_contracts.py` 同步新增 8 组 ABC 实例化/基类方法体场景。Java 入口为 `PythonLlamaLogger`、`PythonWarnings.deprecated`、`PythonLlamaTokenizer.fromGgmlFile`、`PythonLlama.ctx/model` 与 `PythonLlamaResource.free`。数据位于 `src/test/resources/python-0.3.36-lowlevel-contracts.tsv`，元数据见 `docs/python-lowlevel-contracts.json`。详见 [本轮记录](../../docs/PYTHON_LOWLEVEL_COMPATIBILITY.md)。
 
 2026-10-30 internals 补充：`generate_internals_contracts.py` 执行固定原版 `_internals.py` 的 LlamaModel/LlamaContext/LlamaBatch/LlamaSampler 四个类完整函数体，在追踪原生端口上生成 17 组对照，核对调用顺序、固定缓冲区、tokenize 重试、detokenize BOS 首空格、metadata 扩容、decode 返回码、ExitStack 关闭顺序、批次字段写入与采样器链时序。Java 入口为 `PythonLlamaModel`/`PythonLlamaContext`/`PythonLlamaBatch`/`PythonInternalsSampler` + `PythonInternalsPort`，原生实现 `PythonNativeInternals`。`generate_all_contracts.py` 已接入；数据位于 `src/test/resources/python-0.3.36-internals-contracts.tsv`，元数据见 `docs/python-internals-contracts.json`。详见 [internals 迁移记录](../../docs/PYTHON_INTERNALS_COMPATIBILITY.md)。
@@ -58,3 +64,5 @@ Python 仅用于维护阶段生成对照数据。Java 类库、打包产物及�
 ```
 
 206 组对照比较执行结果、异常消息、错误后的状态和回调时序。map_llama_functions.py 校验 llama.py 的全部 49 个定义项、4 个嵌套函数与 23 处显式异常/警告站点，生成文档和 JSON；其中实现状态来自审计清单。全文件映射在更新 inventory 后生成，详见 [执行链路记录](../../docs/PYTHON_EXECUTION_COMPATIBILITY.md)。
+- ：llama_chat_format.py 剩余 29 个重项（Jinja2/functionary 外层/Llava15/MTMD/chatml）固定源码契约，24 组用例 →  +
+- ：llama_grammar.py 全部 29 项固定源码契约，16 组用例 →  + 

@@ -96,6 +96,22 @@ public interface LlamaLibrary extends Library {
 
   byte llama_vocab_is_eog(Pointer vocab, int token);
 
+  int llama_vocab_type(Pointer vocab);
+
+  float llama_model_rope_freq_scale_train(Pointer model);
+
+  float llama_vocab_get_score(Pointer vocab, int token);
+
+  int llama_vocab_get_attr(Pointer vocab, int token);
+
+  int llama_vocab_eot(Pointer vocab);
+
+  int llama_vocab_fim_pre(Pointer vocab);
+
+  int llama_vocab_fim_suf(Pointer vocab);
+
+  int llama_vocab_fim_mid(Pointer vocab);
+
   int llama_tokenize(
       Pointer vocab,
       byte[] text,
@@ -148,6 +164,20 @@ public interface LlamaLibrary extends Library {
   void llama_perf_context_print(Pointer context);
 
   void llama_memory_clear(Pointer memory, byte data);
+
+  void llama_memory_seq_cp(Pointer memory, int src, int dst, int start, int end);
+
+  void llama_memory_seq_keep(Pointer memory, int sequence);
+
+  void llama_memory_seq_add(Pointer memory, int sequence, int start, int end, int shift);
+
+  int llama_encode(Pointer context, LlamaBatch.ByValue batch);
+
+  void llama_set_n_threads(Pointer context, int nThreads, int nThreadsBatch);
+
+  Pointer llama_get_logits(Pointer context);
+
+  Pointer llama_get_embeddings_ith(Pointer context, int index);
 
   int llama_memory_seq_pos_max(Pointer memory, int sequence);
 
@@ -209,6 +239,36 @@ public interface LlamaLibrary extends Library {
   int llama_sampler_sample(Pointer sampler, Pointer context, int index);
 
   int llama_sampler_get_seed(Pointer sampler);
+
+  Pointer llama_sampler_clone(Pointer sampler);
+
+  Pointer llama_sampler_init_temp_ext(float t, float delta, float exponent);
+
+  Pointer llama_sampler_init_xtc(float p, float t, long minKeep, int seed);
+
+  Pointer llama_sampler_init_top_n_sigma(float n);
+
+  Pointer llama_sampler_init_grammar_lazy_patterns(
+      Pointer vocab,
+      String grammar,
+      String root,
+      String[] triggerPatterns,
+      long numTriggerPatterns,
+      int[] triggerTokens,
+      long numTriggerTokens);
+
+  Pointer llama_sampler_init_dry(
+      Pointer vocab,
+      float dryMultiplier,
+      float dryBase,
+      int dryAllowedLength,
+      int dryPenaltyLastN,
+      String[] seqBreakers,
+      long numBreakers);
+
+  Pointer llama_sampler_init_logit_bias(int nVocab, int nLogitBias, Pointer logitBias);
+
+  Pointer llama_sampler_init_infill(Pointer vocab);
 
   void llama_sampler_reset(Pointer sampler);
 

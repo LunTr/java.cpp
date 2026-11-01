@@ -415,6 +415,11 @@ public final class PythonCtypesExtensions {
         "'" + Py.typeName(owner) + "' object has no attribute '" + name + "'");
   }
 
+  /** functools.wraps(wrapped)(wrapper) applied to a mutable attributed object. */
+  public static void wraps(Object wrapper, Object wrapped) {
+    updateWrapper(wrapper, wrapped);
+  }
+
   /** functools.update_wrapper(wrapper, wrapped) for the pinned WRAPPER_ASSIGNMENTS order. */
   private static void updateWrapper(Object wrapper, Object wrapped) {
     for (String attribute : WRAPPER_ASSIGNMENTS) {

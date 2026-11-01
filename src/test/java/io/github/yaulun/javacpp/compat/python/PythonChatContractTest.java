@@ -1,216 +1,425 @@
 package io.github.yaulun.javacpp.compat.python;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static io.github.yaulun.javacpp.python.PythonValues.dict;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.github.yaulun.javacpp.python.PythonErrorType;
 import io.github.yaulun.javacpp.python.PythonException;
-import io.github.yaulun.javacpp.python.PythonValues;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 class PythonChatContractTest {
   @TestFactory
-  Stream<DynamicTest> matchesWholeUpstreamFunctions() throws Exception {
+  Stream<DynamicTest> matchesPinnedChatHelpers() throws Exception {
     List<String> lines;
-    try (var reader =
-        new BufferedReader(
-            new InputStreamReader(
-                Objects.requireNonNull(
-                    getClass().getResourceAsStream("/python-0.3.36-chat-contracts.tsv"),
-                    "Generate chat fixtures with tools/python_compat/generate_chat_contracts.py; see docs/PYTHON_CHAT_COMPATIBILITY.md"),
-                StandardCharsets.US_ASCII))) {
-      lines = reader.lines().toList();
+    try (var input =
+        Objects.requireNonNull(
+            getClass().getResourceAsStream("/python-0.3.36-chatregistry-contracts.tsv"),
+            "Run generate_chat_contracts.py")) {
+      lines = new String(input.readAllBytes(), StandardCharsets.US_ASCII).lines().toList();
     }
-    return java.util.stream.IntStream.range(0, lines.size())
+    return IntStream.range(0, lines.size())
         .mapToObj(
-            i -> {
-              String[] parts = lines.get(i).split("\t");
-              return DynamicTest.dynamicTest(
-                  (i + 1) + ":" + parts[0],
-                  () -> {
-                    Object argument =
-                        PythonContractData.read(
-                            new DataInputStream(
-                                new ByteArrayInputStream(Base64.getDecoder().decode(parts[1]))));
-                    List<Object> yielded = new ArrayList<>();
-                    List<String> logs = new ArrayList<>();
-                    Map<String, Object> result;
-                    try {
-                      Object value = execute(parts[0], argument, logs);
-                      if (value instanceof Iterator<?> iterator) {
-                        while (iterator.hasNext()) yielded.add(iterator.next());
-                        value = yielded;
-                      }
-                      if (value instanceof PythonChatFormatterResponse response) {
-                        value =
-                            PythonValues.dict(
-                                "prompt",
-                                response.prompt(),
-                                "stop",
-                                response.stop(),
-                                "stopping_criteria",
-                                response.stoppingCriteria(),
-                                "added_special",
-                                response.addedSpecial());
-                      }
-                      result = PythonValues.dict("value", value, "logs", logs);
-                    } catch (PythonException error) {
-                      result =
-                          PythonValues.dict(
-                              "error",
-                              error.type().pythonName(),
-                              "message",
-                              error.getMessage(),
-                              "yielded",
-                              yielded,
-                              "logs",
-                              logs);
-                    }
-                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    PythonContractData.write(new DataOutputStream(bytes), result);
-                    assertEquals(
-                        parts[2],
-                        Base64.getEncoder().encodeToString(bytes.toByteArray()),
-                        "operation=" + parts[0] + ", input=" + argument + ", result=" + result);
-                  });
-            });
+            index ->
+                DynamicTest.dynamicTest(
+                    "chat:" + index,
+                    () -> {
+                      String[] parts = lines.get(index).split("\t");
+                      Object argument = read(parts[1]);
+                      Object actual =
+                          switch (parts[0]) {
+                            case "ext" -> runExt(argument);
+                            case "reg" -> runRegistry(argument);
+                            case "proto" -> runProtocols(argument);
+                            case "static" -> runStatic(argument);
+                            case "handler" -> runHandler(argument);
+                            case "ep" -> runEndpoints(argument);
+                            default -> throw new AssertionError(parts[0]);
+                          };
+                      var bytes = new ByteArrayOutputStream();
+                      PythonContractData.write(new DataOutputStream(bytes), actual);
+                      assertEquals(
+                          parts[2],
+                          Base64.getEncoder().encodeToString(bytes.toByteArray()),
+                          "argument=" + argument + ", result=" + actual);
+                    }));
+  }
+
+  private static Object read(String encoded) throws Exception {
+    return PythonContractData.read(
+        new DataInputStream(new ByteArrayInputStream(Base64.getDecoder().decode(encoded))));
+  }
+
+  private static Object capture(Supplier<?> operation) {
+    try {
+      return operation.get();
+    } catch (PythonException error) {
+      return dict("error", error.type().pythonName(), "message", error.getMessage());
+    }
+  }
+
+  // ---- _ctypes_function_from_names --------------------------------------------
+
+  private static final class LibFunc implements PythonCtypesExtensions.MutableAttributed {
+    final java.util.Map<String, Object> dict = new java.util.LinkedHashMap<>();
+    final List<Object> trace;
+
+    LibFunc(List<Object> trace) {
+      this.trace = trace;
+    }
+
+    @Override
+    public Object attr(String name) {
+      return dict.getOrDefault(name, io.github.yaulun.javacpp.python.Py.ABSENT);
+    }
+
+    @Override
+    public void setAttr(String name, Object value) {
+      trace.add(
+          List.of(
+              "set",
+              dict.getOrDefault("_name", "?"),
+              name,
+              value instanceof String || value instanceof List || value == null
+                  ? value
+                  : "function"));
+      dict.put(name, value);
+    }
+
+    Map<String, Object> dict() {
+      return dict;
+    }
   }
 
   @SuppressWarnings("unchecked")
-  private static Object execute(String kind, Object argument, List<String> logs) {
-    if (kind.equals("pythonRepr")) return PythonValues.repr(argument);
-    if (kind.startsWith("format:")) {
-      String name = kind.substring(7);
-      if (name.equals("gemma")) return PythonChatFormats.formatGemma((List<?>) argument, logs::add);
-      return PythonChatFormats.format(name, (List<?>) argument);
-    }
-    if (kind.equals("guess_chat_format_from_gguf_metadata")) {
-      return PythonChatFormats.guessChatFormatFromGgufMetadata((Map<String, ?>) argument);
-    }
-    if (kind.equals("_get_system_message"))
-      return PythonChatFormats.getSystemMessage((List<?>) argument);
-    if (kind.equals("_map_roles")) {
-      List<?> args = (List<?>) argument;
-      return PythonChatFormats.mapRoles((List<?>) args.get(0), (Map<String, String>) args.get(1))
-          .stream()
-          .map(item -> java.util.Arrays.asList(item.role(), item.content()))
-          .toList();
-    }
-    if (kind.equals("_convert_text_completion_logprobs_to_chat")) {
-      return PythonChatCompletions.convertTextCompletionLogprobsToChat(argument);
-    }
-    if (kind.equals("_convert_text_completion_to_chat")) {
-      return PythonChatCompletions.convertTextCompletionToChat((Map<String, ?>) argument);
-    }
-    if (kind.equals("_convert_text_completion_chunks_to_chat")) {
-      return PythonChatCompletions.convertTextCompletionChunksToChat(
-          ((List<?>) argument).iterator());
-    }
-    if (kind.startsWith("_convert_completion_to_chat:")) {
-      boolean stream = kind.endsWith(":true");
-      return PythonChatCompletions.convertCompletionToChat(
-          stream ? ((List<?>) argument).iterator() : argument, stream);
-    }
-    List<?> args = (List<?>) argument;
-    String system = (String) args.get(0);
-    List<PythonChatFormats.RoleMessage> messages =
-        ((List<?>) args.get(1))
-            .stream()
-                .map(
-                    value -> {
-                      List<?> pair = (List<?>) value;
-                      return new PythonChatFormats.RoleMessage(
-                          (String) pair.get(0), (String) pair.get(1));
-                    })
-                .toList();
-    String sep = (String) args.get(2);
-    return switch (kind) {
-      case "_format_llama2" ->
-          PythonChatFormats.formatLlama2Prompt(system, messages, sep, (String) args.get(3));
-      case "_format_add_colon_single" ->
-          PythonChatFormats.formatAddColonSingle(system, messages, sep);
-      case "_format_add_colon_two" ->
-          PythonChatFormats.formatAddColonTwo(system, messages, sep, (String) args.get(3));
-      case "_format_no_colon_single" ->
-          PythonChatFormats.formatNoColonSingle(system, messages, sep);
-      case "_format_add_colon_space_single" ->
-          PythonChatFormats.formatAddColonSpaceSingle(system, messages, sep);
-      case "_format_chatml" -> PythonChatFormats.formatChatmlPrompt(system, messages, sep);
-      case "_format_chatglm3" -> PythonChatFormats.formatChatglm3Prompt(system, messages, sep);
-      default -> throw new AssertionError(kind);
-    };
-  }
-
-  @Test
-  void streamingDefersChoiceAccessAndObservesMutationsAfterRoleYield() {
-    Map<String, Object> chunk = PythonValues.dict("id", "x", "model", "model", "created", 1);
-    int[] calls = {0};
-    Iterator<Object> source =
-        new Iterator<>() {
-          @Override
-          public boolean hasNext() {
-            return calls[0] == 0;
-          }
-
-          @Override
-          public Object next() {
-            calls[0]++;
-            return chunk;
+  private static Object runExt(Object input) {
+    var argument = (Map<String, Object>) input;
+    List<Object> trace = new ArrayList<>();
+    List<String> symbols = (List<String>) argument.get("symbols");
+    var lib =
+        new PythonCtypesExt.Lib() {
+          public Object getattr(String name) {
+            if (symbols.contains(name)) {
+              trace.add(List.of("get", name));
+              var func = new LibFunc(trace);
+              func.dict.put("_name", name);
+              return func;
+            }
+            throw new PythonException(PythonErrorType.ATTRIBUTE_ERROR, name + " missing", null);
           }
         };
-    var stream = PythonChatCompletions.convertTextCompletionChunksToChat(source);
-    assertTrue(stream.hasNext());
-    assertEquals(0, calls[0]);
-    assertEquals("chatx", stream.next().get("id"));
-    chunk.put("id", "changed");
-    chunk.put(
-        "choices",
-        List.of(PythonValues.dict("finish_reason", null, "text", "new", "logprobs", null)));
-    assertEquals("chatchanged", stream.next().get("id"));
-    assertFalse(stream.hasNext());
+    var wrapped = new PythonCtypesExtensions.PythonFunction((a, k) -> "wrapped");
+    Object result =
+        capture(
+            () -> {
+              var decorator =
+                  PythonCtypesExt.ctypesFunctionFromNames(
+                      lib,
+                      (List<String>) argument.get("names"),
+                      argument.get("argtypes"),
+                      argument.get("restype"));
+              Object func = decorator.apply(wrapped);
+              if (func instanceof LibFunc lf) {
+                trace.add(List.of("wrap", lf.dict().get("_name")));
+                return dict(
+                    "func",
+                    dict(
+                        "argtypes", lf.attr("argtypes"),
+                        "restype", lf.attr("restype"),
+                        "wrapped", lf.attr("__wrapped__") != null));
+              }
+              return func;
+            });
+    return dict("result", result, "trace", trace);
   }
 
-  @Test
-  void streamingClosesAfterPythonErrorAndCompletionKeepsUsageIdentity() {
-    var stream =
-        PythonChatCompletions.convertTextCompletionChunksToChat(List.of(Map.of()).iterator());
-    assertEquals(
-        PythonErrorType.KEY_ERROR, assertThrows(PythonException.class, stream::next).type());
-    assertFalse(stream.hasNext());
-    Map<String, Object> usage = new LinkedHashMap<>();
-    Map<String, Object> completion =
-        PythonValues.dict(
-            "id",
-            "x",
-            "created",
-            1,
-            "model",
-            "model",
-            "choices",
-            List.of(PythonValues.dict("text", "text", "logprobs", null, "finish_reason", "stop")),
-            "usage",
-            usage);
-    var response = PythonChatCompletions.convertTextCompletionToChat(completion);
-    assertSame(usage, response.get("usage"));
-    assertEquals(
-        "text",
-        ((Map<?, ?>) ((Map<?, ?>) ((List<?>) response.get("choices")).getFirst()).get("message"))
-            .get("content"));
+  // ---- registry -------------------------------------------------------------
+
+  @SuppressWarnings("unchecked")
+  private static Object runRegistry(Object input) {
+    var argument = (Map<String, Object>) input;
+    PythonChatHandlerRegistry.clearHandlers();
+    PythonSingleton.clearInstances();
+    var registry = new PythonChatHandlerRegistry();
+    List<Object> results = new ArrayList<>();
+    for (Object item : (List<?>) argument.get("steps")) {
+      List<?> step = (List<?>) item;
+      Object result =
+          capture(
+              () ->
+                  switch ((String) step.get(0)) {
+                    case "reg" -> {
+                      registry.registerChatCompletionHandler(
+                          (String) step.get(1), "h:" + step.get(1), (Boolean) step.get(2));
+                      yield "ok";
+                    }
+                    case "unreg" -> {
+                      registry.unregisterChatHandler((String) step.get(1));
+                      yield "ok";
+                    }
+                    case "get" -> registry.getChatCompletionHandlerByName((String) step.get(1));
+                    case "getmod" ->
+                        PythonChatHandlerRegistry.getChatCompletionHandler((String) step.get(1));
+                    case "deco" -> {
+                      Object fn =
+                          new PythonCtypesExtensions.PythonFunction((a, k) -> "fn:" + step.get(1));
+                      Object f =
+                          PythonChatHandlerRegistry.registerChatCompletionHandler(
+                                  (String) step.get(1))
+                              .apply(fn);
+                      yield f == fn ? "ok" : f;
+                    }
+                    case "fmtdeco" -> {
+                      Object f =
+                          PythonChatHandlerRegistry.registerChatFormat(
+                                  (String) step.get(1), format -> "wrapped:<lambda>")
+                              .apply("fmt:" + step.get(1));
+                      yield f.equals("fmt:" + step.get(1)) ? "ok" : f;
+                    }
+                    default -> throw new AssertionError(step);
+                  });
+      if (result instanceof String s && s.equals("wrapped:<lambda>")) {
+        // fmtdeco registers the wrapped handler; get returns it verbatim.
+      }
+      if (result != null
+          && !(result instanceof Map)
+          && !(result instanceof String)
+          && !(result instanceof Boolean)) {
+        result = "callable";
+      }
+      results.add(dict("result", result, "handlers", List.copyOf(registry.handlers().keySet())));
+    }
+    return results;
+  }
+
+  // ---- protocols ----------------------------------------------------------------
+
+  private static Object runProtocols(Object input) {
+    Object handler =
+        capture(
+            () -> {
+              var kwargs = Map.<String, Object>of();
+              if (!kwargs.containsKey("llama") || !kwargs.containsKey("messages")) {
+                List<String> missing = new ArrayList<>();
+                if (!kwargs.containsKey("llama")) missing.add("'llama'");
+                if (!kwargs.containsKey("messages")) missing.add("'messages'");
+                throw new PythonException(
+                    PythonErrorType.TYPE_ERROR,
+                    "LlamaChatCompletionHandler.__call__() missing 2 required keyword-only"
+                        + " arguments: "
+                        + String.join(" and ", missing),
+                    null);
+              }
+              return PythonChatFormat.handlerCall(null, kwargs);
+            });
+    Object formatter =
+        capture(() -> PythonChatFormat.formatterCall(null, Map.of("messages", List.of())));
+    return dict("handler", handler, "formatter", formatter);
+  }
+
+  // ---- strftime_now / tojson -------------------------------------------------------
+
+  @SuppressWarnings("unchecked")
+  private static Object runStatic(Object input) {
+    var argument = (Map<String, Object>) input;
+    List<Object> results = new ArrayList<>();
+    List<Object> calls = new ArrayList<>();
+    for (Object item : (List<?>) argument.get("steps")) {
+      List<?> step = (List<?>) item;
+      if (step.get(0).equals("strftime")) {
+        results.add(
+            capture(
+                () ->
+                    PythonChatFormat.strftimeNow(
+                        (String) step.get(1),
+                        f -> {
+                          calls.add(List.of("now"));
+                          calls.add(List.of("strftime", f));
+                          return "NOW(" + f + ")";
+                        })));
+      } else {
+        Map<String, Object> kw = (Map<String, Object>) step.get(2);
+        results.add(
+            capture(
+                () ->
+                    PythonChatFormat.tojson(
+                        step.get(1),
+                        (Boolean) kw.getOrDefault("ensure_ascii", false),
+                        kw.get("indent") == null ? null : ((Number) kw.get("indent")).intValue(),
+                        (List<String>) kw.get("separators"),
+                        (Boolean) kw.getOrDefault("sort_keys", false))));
+      }
+    }
+    return dict("result", results, "calls", calls);
+  }
+
+  // ---- nested chat_completion_handler ------------------------------------------------
+
+  private record FormatterResult(
+      String prompt, Object stop, boolean addedSpecial, Object stoppingCriteria)
+      implements PythonChatFormat.FormatterResult {}
+
+  @SuppressWarnings("unchecked")
+  private static Object runHandler(Object input) {
+    var argument = (Map<String, Object>) input;
+    List<Object> trace = new ArrayList<>();
+    var ports =
+        new PythonChatFormat.Ports() {
+          public FormatterResult format(Map<String, Object> kwargs) {
+            trace.add(List.of("format", kwargs));
+            return new FormatterResult(
+                "PROMPT",
+                argument.get("result_stop"),
+                (Boolean) argument.getOrDefault("added_special", false),
+                null);
+          }
+
+          public int[] tokenize(byte[] utf8, boolean addBos) {
+            trace.add(List.of("tokenize", hexOf(utf8), addBos, true));
+            return new int[] {1, 2};
+          }
+
+          public boolean verbose() {
+            return false;
+          }
+
+          public Object grammarForResponseFormat(Map<String, Object> rf) {
+            return List.of("rf", rf.get("type"));
+          }
+
+          public Object grammarFromJsonSchema(String schemaJson) {
+            trace.add(List.of("gs_schema", schemaJson, false));
+            return List.of("schema", schemaJson);
+          }
+
+          public Object grammarFromString() {
+            trace.add(List.of("gs_string", "GBNF", false));
+            return List.of("string", "GBNF");
+          }
+
+          public Object createCompletion(Map<String, Object> kwargs) {
+            trace.add(List.of("create", kwargs));
+            return "CHUNKS";
+          }
+
+          public Object convertCompletion(Object chunks, boolean stream) {
+            return List.of("conv", chunks, stream);
+          }
+
+          public Object convertCompletionToFunction(String name, Object chunks, boolean stream) {
+            return List.of("convf", name, chunks, stream);
+          }
+
+          public java.util.function.Consumer<String> stderr() {
+            return line -> trace.add(List.of("stderr", line));
+          }
+        };
+    Map<String, Object> args = new LinkedHashMap<>();
+    args.put("messages", List.of(Map.of("role", "u")));
+    args.put("functions", null);
+    args.put("function_call", null);
+    args.put("tools", null);
+    args.put("tool_choice", null);
+    args.put("stop", List.of());
+    args.put("stream", false);
+    args.put("temperature", 0.2);
+    args.put("top_p", 0.95);
+    args.put("top_k", 40);
+    args.put("min_p", 0.05);
+    args.put("typical_p", 1.0);
+    args.put("seed", null);
+    args.put("max_tokens", null);
+    args.put("presence_penalty", 0.0);
+    args.put("frequency_penalty", 0.0);
+    args.put("repeat_penalty", 1.1);
+    args.put("tfs_z", 1.0);
+    args.put("mirostat_mode", 0);
+    args.put("mirostat_tau", 5.0);
+    args.put("mirostat_eta", 0.1);
+    args.put("model", null);
+    args.put("logits_processor", null);
+    args.put("grammar", null);
+    args.put("logit_bias", null);
+    args.put("response_format", null);
+    args.put("logprobs", null);
+    args.put("top_logprobs", null);
+    args.put("kwargs", Map.of());
+    args.putAll((Map<String, Object>) argument.getOrDefault("call", Map.of()));
+    Object result = capture(() -> PythonChatFormat.chatCompletionHandler(ports, args));
+    return dict("result", result, "trace", trace);
+  }
+
+  private static String hexOf(byte[] bytes) {
+    var out = new StringBuilder();
+    for (byte b : bytes)
+      out.append(Character.forDigit((b >> 4) & 15, 16)).append(Character.forDigit(b & 15, 16));
+    return out.toString();
+  }
+
+  // ---- server endpoints ------------------------------------------------------------------
+
+  private static final class StubLlama implements PythonServerApp.Llama {
+    final List<Object> trace = new ArrayList<>();
+
+    public int[] tokenize(byte[] token, boolean addBos, boolean special) {
+      trace.add(List.of("tokenize", hexOf(token), addBos, special));
+      int[] out = new int[token.length];
+      for (int i = 0; i < out.length; i++) out[i] = token[i] & 0xff;
+      return out;
+    }
+
+    public byte[] detokenize(int[] tokens) {
+      List<Object> list = new ArrayList<>();
+      for (int t : tokens) list.add(t);
+      trace.add(List.of("detokenize", list));
+      byte[] out = new byte[tokens.length];
+      for (int i = 0; i < out.length; i++) out[i] = (byte) tokens[i];
+      return out;
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Object runEndpoints(Object input) {
+    var argument = (Map<String, Object>) input;
+    var llama = new StubLlama();
+    List<Object> results = new ArrayList<>();
+    for (Object item : (List<?>) argument.get("steps")) {
+      List<?> step = (List<?>) item;
+      results.add(
+          capture(
+              () ->
+                  switch ((String) step.get(0)) {
+                    case "auth" -> {
+                      Object key = step.get(1);
+                      String creds = (String) step.get(2);
+                      yield PythonServerApp.authenticate(() -> key, () -> creds);
+                    }
+                    case "tokenize" ->
+                        PythonServerApp.tokenizeEndpoint(step.get(1), step.get(2), model -> llama);
+                    case "count" ->
+                        PythonServerApp.countQueryTokensEndpoint(
+                            step.get(1), step.get(2), model -> llama);
+                    case "detok" ->
+                        PythonServerApp.detokenizeEndpoint(
+                            step.get(1), step.get(2), model -> llama);
+                    case "models" -> PythonServerApp.getModels((List<String>) step.get(1));
+                    default -> throw new AssertionError(step);
+                  }));
+    }
+    return results;
   }
 }

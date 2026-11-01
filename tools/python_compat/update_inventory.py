@@ -181,6 +181,8 @@ for row in audit["functions"]:
                    reason="已逐句移植固定原版完整函数体；os/sys/ctypes/pathlib 及加载结果由显式端口提供，全分支、环境变更、kwargs、wraps 属性复制和参数绑定报错已有原版对照；真实操作系统加载效果继续验收",
                    contractEvidence="docs/python-ctypes-contracts.json")
 assert foundCtypes == set(ctypesMappings)
+chatHandlersContracts = json.loads(
+    pathlib.Path("docs/python-chathandlers-contracts.json").read_text(encoding="utf-8"))
 internalsContracts = json.loads((root / "docs/python-internals-contracts.json").read_text(encoding="utf-8"))
 internalsMappings = {
     "LlamaModel.__init__": "PythonLlamaModel",
@@ -212,8 +214,227 @@ internalsMappings = {
     "LlamaSampler.add_penalties": "PythonInternalsSampler.addPenalties",
     "LlamaSampler.get_seed": "PythonInternalsSampler.getSeed",
     "LlamaSampler.sample": "PythonInternalsSampler.sample",
+    "LlamaModel.__init__.free_model": "PythonLlamaModel.close",
+    "LlamaModel.__del__": "PythonLlamaModel.close",
+    "LlamaModel.vocab_type": "PythonLlamaModel.vocabType",
+    "LlamaModel.rope_freq_scale_train": "PythonLlamaModel.ropeFreqScaleTrain",
+    "LlamaModel.get_tensor": "PythonLlamaModel.getTensor",
+    "LlamaModel.token_get_text": "PythonLlamaModel.tokenGetText",
+    "LlamaModel.token_get_score": "PythonLlamaModel.tokenGetScore",
+    "LlamaModel.token_get_attr": "PythonLlamaModel.tokenGetAttr",
+    "LlamaModel.token_cls": "PythonLlamaModel.tokenCls",
+    "LlamaModel.token_sep": "PythonLlamaModel.tokenSep",
+    "LlamaModel.token_nl": "PythonLlamaModel.tokenNl",
+    "LlamaModel.token_prefix": "PythonLlamaModel.tokenPrefix",
+    "LlamaModel.token_middle": "PythonLlamaModel.tokenMiddle",
+    "LlamaModel.token_suffix": "PythonLlamaModel.tokenSuffix",
+    "LlamaModel.token_eot": "PythonLlamaModel.tokenEot",
+    "LlamaModel.add_bos_token": "PythonLlamaModel.addBosToken",
+    "LlamaModel.add_eos_token": "PythonLlamaModel.addEosToken",
+    "LlamaContext.__init__.free_ctx": "PythonLlamaContext.close",
+    "LlamaContext.__del__": "PythonLlamaContext.close",
+    "LlamaContext.pooling_type": "PythonLlamaContext.poolingType",
+    "LlamaContext.kv_cache_seq_rm": "PythonLlamaContext.kvCacheSeqRm",
+    "LlamaContext.kv_cache_seq_cp": "PythonLlamaContext.kvCacheSeqCp",
+    "LlamaContext.kv_cache_seq_keep": "PythonLlamaContext.kvCacheSeqKeep",
+    "LlamaContext.kv_cache_seq_shift": "PythonLlamaContext.kvCacheSeqShift",
+    "LlamaContext.get_state_size": "PythonLlamaContext.getStateSize",
+    "LlamaContext.encode": "PythonLlamaContext.encode",
+    "LlamaContext.set_n_threads": "PythonLlamaContext.setNThreads",
+    "LlamaContext.get_logits": "PythonLlamaContext.getLogits",
+    "LlamaContext.get_logits_ith": "PythonLlamaContext.getLogitsIth",
+    "LlamaContext.get_embeddings": "PythonLlamaContext.getEmbeddings",
+    "LlamaContext.get_embeddings_ith": "PythonLlamaContext.getEmbeddingsIth",
+    "LlamaContext.get_embeddings_seq": "PythonLlamaContext.getEmbeddingsSeq",
+    "LlamaContext.set_rng_seed": "PythonLlamaContext.setRngSeed",
+    "LlamaContext.sample_repetition_penalties": "PythonLlamaContext.sampleRepetitionPenalties",
+    "LlamaContext.sample_softmax": "PythonLlamaContext.sampleSoftmax",
+    "LlamaContext.sample_top_k": "PythonLlamaContext.sampleTopK",
+    "LlamaContext.sample_top_p": "PythonLlamaContext.sampleTopP",
+    "LlamaContext.sample_min_p": "PythonLlamaContext.sampleMinP",
+    "LlamaContext.sample_typical": "PythonLlamaContext.sampleTypical",
+    "LlamaContext.sample_temp": "PythonLlamaContext.sampleTemp",
+    "LlamaContext.sample_grammar": "PythonLlamaContext.sampleGrammar",
+    "LlamaContext.sample_token_mirostat": "PythonLlamaContext.sampleTokenMirostat",
+    "LlamaContext.sample_token_mirostat_v2": "PythonLlamaContext.sampleTokenMirostatV2",
+    "LlamaContext.sample_token_greedy": "PythonLlamaContext.sampleTokenGreedy",
+    "LlamaContext.sample_token": "PythonLlamaContext.sampleToken",
+    "LlamaContext.grammar_accept_token": "PythonLlamaContext.grammarAcceptToken",
+    "LlamaContext.reset_timings": "PythonLlamaContext.resetTimings",
+    "LlamaContext.print_timings": "PythonLlamaContext.printTimings",
+    "LlamaBatch.__init__.free_batch": "PythonLlamaBatch.close",
+    "LlamaBatch.__del__": "PythonLlamaBatch.close",
+    "LlamaBatch.n_tokens": "PythonLlamaBatch.nTokens",
+    "LlamaBatch.add_sequence": "PythonLlamaBatch.addSequence",
+    "normalize_embedding": "PythonInternals.normalizeEmbedding",
+    "LlamaTokenDataArray.__init__": "PythonLlamaTokenDataArray",
+    "LlamaTokenDataArray.copy_logits": "PythonLlamaTokenDataArray.copyLogits",
+    "LlamaSamplingContext.reset": "PythonLlamaSamplingContext.reset",
+    "LlamaSamplingContext.cp": "PythonLlamaSamplingContext.cp",
+    "LlamaSamplingContext.last": "PythonLlamaSamplingContext.last",
+    "LlamaSamplingContext.prev_str": "PythonLlamaSamplingContext.prevStr",
+    "LlamaSamplingContext.sample": "PythonLlamaSamplingContext.sample",
+    "LlamaSamplingContext.accept": "PythonLlamaSamplingContext.accept",
+    "CustomSampler.__init__": "PythonCustomSampler",
+    "CustomSampler.__init__.apply_wrapper": "PythonCustomSampler",
+    "CustomSampler.__init__.free_wrapper": "PythonCustomSampler",
+    "CustomSampler.get_sampler": "PythonCustomSampler.getSampler",
+    "LlamaSampler.__init__.free_sampler": "PythonInternalsSampler.close",
+    "LlamaSampler.__del__": "PythonInternalsSampler.close",
+    "LlamaSampler.add_typical": "PythonInternalsSampler.addTypical",
+    "LlamaSampler.add_temp_ext": "PythonInternalsSampler.addTempExt",
+    "LlamaSampler.add_xtc": "PythonInternalsSampler.addXtc",
+    "LlamaSampler.add_top_n_sigma": "PythonInternalsSampler.addTopNSigma",
+    "LlamaSampler.add_mirostat": "PythonInternalsSampler.addMirostat",
+    "LlamaSampler.add_mirostat_v2": "PythonInternalsSampler.addMirostatV2",
+    "LlamaSampler.add_grammar": "PythonInternalsSampler.addGrammar",
+    "LlamaSampler.add_grammar_lazy_patterns": "PythonInternalsSampler.addGrammarLazyPatterns",
+    "LlamaSampler.add_dry": "PythonInternalsSampler.addDry",
+    "LlamaSampler.add_logit_bias": "PythonInternalsSampler.addLogitBias",
+    "LlamaSampler.add_infill": "PythonInternalsSampler.addInfill",
+    "LlamaSampler.add_custom": "PythonInternalsSampler.addCustom",
+    "LlamaSampler.accept": "PythonInternalsSampler.accept",
+    "LlamaSampler.clone": "PythonInternalsSampler.clone",
+    "LlamaSampler.clone.free_sampler": "PythonInternalsSampler.clone",
 }
-assert len(internalsMappings) == 29 == internalsContracts["uniqueFunctions"]
+assert len(internalsMappings) == 111 == internalsContracts["uniqueFunctions"]
+chatHandlersMappings = {
+    ("llama_chat_format.py", "_grammar_for_json"): ("PythonChatFormatHandlers.grammarForJson", "已移植 LlamaGrammar.from_string(JSON_GBNF) 直通"),
+    ("llama_chat_format.py", "_grammar_for_json_schema"): ("PythonChatFormatHandlers.grammarForJsonSchema", "已移植 from_json_schema 失败按 fallback_to_json 回落"),
+    ("llama_chat_format.py", "_grammar_for_response_format"): ("PythonChatFormatHandlers.grammarForResponseFormat", "已移植 type!=json_object 返回 None 与 schema 分支"),
+    ("llama_chat_format.py", "hf_autotokenizer_to_chat_formatter"): ("PythonChatFormatHandlers.hfAutotokenizerToChatFormatter", "已移植 AutoTokenizer.from_pretrained 端口"),
+    ("llama_chat_format.py", "hf_autotokenizer_to_chat_formatter.format_autotokenizer"): ("PythonChatFormatHandlers.hfAutotokenizerToChatFormatter", "已移植 use_default_system_prompt=False、apply_chat_template(tokenize=False,**kwargs) 与 eos_token stop"),
+    ("llama_chat_format.py", "hf_autotokenizer_to_chat_completion_handler"): ("PythonChatFormatHandlers.hfAutotokenizerToChatCompletionHandler", "已移植 formatter 构造后走 chat_formatter_to_chat_completion_handler"),
+    ("llama_chat_format.py", "hf_tokenizer_config_to_chat_formatter"): ("PythonChatFormatHandlers.hfTokenizerConfigToChatFormatter", "已移植三项断言与构造期 env.from_string"),
+    ("llama_chat_format.py", "hf_tokenizer_config_to_chat_formatter.format_tokenizer_config"): ("PythonChatFormatHandlers.hfTokenizerConfigToChatFormatter", "已移植 add_generation_prompt 追加空 assistant、render(messages,bos,eos,**kwargs) 与 [eos,bos] stop"),
+    ("llama_chat_format.py", "hf_tokenizer_config_to_chat_completion_handler"): ("PythonChatFormatHandlers.hfTokenizerConfigToChatCompletionHandler", "同 autotokenizer 包装"),
+    ("llama_chat_format.py", "_convert_completion_to_chat_function"): ("PythonChatFormatHandlers.convertCompletionToChatFunction", "已移植 call_ 前缀 tool_id、assert usage、function_call/tool_calls 双写与 finish_reason=tool_calls"),
+    ("llama_chat_format.py", "_convert_completion_to_chat_function._stream_response_to_function_stream"): ("PythonChatFormatHandlers.streamResponseToFunctionStream", "已移植首帧空 delta、后续 delta 双写与末帧 finish_reason 帧序"),
+    ("llama_chat_format.py", "functionary_chat_handler.generate_type_definition"): ("PythonChatFormatHandlers.generateTypeDefinition", "已移植 /Array<object>/enum 分支"),
+    ("llama_chat_format.py", "functionary_chat_handler.generate_shared_definitions"): ("PythonChatFormatHandlers.generateSharedDefinitions", "已移植两空格缩进 type 定义拼接"),
+    ("llama_chat_format.py", "functionary_chat_handler.generate_schema_from_functions"): ("PythonChatFormatHandlers.generateSchemaFromFunctionsV1", "v1 缩进与尾换行版本"),
+    ("llama_chat_format.py", "functionary_chat_handler.prepare_messages_for_inference"): ("PythonChatFormatHandlers.prepareMessagesForInferenceV1", "已移植 functions./SYSTEM_MESSAGE 注入与 join"),
+    ("llama_chat_format.py", "functionary_chat_handler.prepare_messages_for_inference.message_to_str"): ("PythonChatFormatHandlers.messageToStr", "全角色分支与 Unsupported role 原文"),
+    ("llama_chat_format.py", "functionary_v1_v2_chat_handler.generate_type_definition"): ("PythonChatFormatHandlers.generateTypeDefinition", "同一函数体"),
+    ("llama_chat_format.py", "functionary_v1_v2_chat_handler.generate_shared_definitions"): ("PythonChatFormatHandlers.generateSharedDefinitions", "同一函数体"),
+    ("llama_chat_format.py", "functionary_v1_v2_chat_handler.generate_schema_from_functions"): ("PythonChatFormatHandlers.generateSchemaFromFunctionsV2", "v1/v2 无缩进、无尾换行版本"),
+    ("llama_chat_format.py", "functionary_v1_v2_chat_handler.prepare_messages_for_inference"): ("PythonChatFormatHandlers.prepareMessagesForInferenceV2", "已移植 tool_choice==none 空 schema、tokenizer.hf_tokenizer.apply_chat_template 与版本后缀"),
+    ("llama_chat_format.py", "functionary_v1_v2_chat_handler.get_grammar"): ("PythonChatFormatHandlers.functionaryGetGrammar", "已移植 functions/tools 查找序、suppress 内 json_schema_to_gbnf 双调用+print 与 JSON_GBNF 兜底"),
+    ("llama_chat_format.py", "Llava15ChatHandler.get_image_urls"): ("PythonChatFormatHandlers.getImageUrls", "已移植 user/content 遍历与 image_url dict/str 双形态"),
+    ("llama_chat_format.py", "Llava15ChatHandler.split_text_on_image_urls"): ("PythonChatFormatHandlers.splitTextOnImageUrls", "已移植 substrs 顺序优先（非最左位置）语义"),
+    ("llama_chat_format.py", "Llava15ChatHandler.split_text_on_image_urls.find_first"): ("PythonChatFormatHandlers.splitTextOnImageUrls", "嵌套 find_first 随宿主覆盖"),
+    ("llama_chat_format.py", "MTMDChatHandler.get_image_urls"): ("PythonChatFormatHandlers.getImageUrls", "同一函数体"),
+    ("llama_chat_format.py", "MTMDChatHandler._get_template_messages"): ("PythonChatFormatHandlers.getTemplateMessages", "逐消息转换映射"),
+    ("llama_chat_format.py", "MTMDChatHandler._convert_message_for_template"): ("PythonChatFormatHandlers.convertMessageForTemplate", "dict 浅拷贝+list content 转换"),
+    ("llama_chat_format.py", "MTMDChatHandler._convert_content_part_for_template"): ("PythonChatFormatHandlers.convertContentPartForTemplate", "image_url 部件转 {type:text,text:media_marker}"),
+    ("llama_chat_format.py", "MTMDChatHandler._decode_token_piece"): ("PythonChatFormatHandlers.decodeTokenPiece", "bytes UTF-8 ignore 解码否则 str()"),
+    ("llama_chat_format.py", "MTMDChatHandler._postprocess_template_text"): ("PythonChatFormatHandlers.postprocessTemplateText", "逐 url 替换 media_marker"),
+    ("llama_chat_format.py", "Qwen25VLChatHandler.__call__"): ("PythonChatFormatHandlers.qwen25vlCall", "已移植 reset/kv_cache_clear/n_tokens=0/input_ids.fill(0)/_last_image_* 清理、verbose stderr 提示与 super().__call__"),
+}
+assert len(chatHandlersMappings) == 31 == chatHandlersContracts["uniqueFunctions"]
+assert set(key[1] for key in chatHandlersMappings) == set(chatHandlersContracts["functions"])
+foundChatHandlers = set()
+for row in audit["functions"]:
+    key = (row["file"].removeprefix("llama_cpp/"), row["qualname"])
+    if key in chatHandlersMappings:
+        target, reason = chatHandlersMappings[key]
+        foundChatHandlers.add(key)
+        row.update(status="covered", checked=True, pythonExactParity="not-certified",
+                   java="compat.python." + target, reason=reason,
+                   contractEvidence="docs/python-chathandlers-contracts.json")
+assert foundChatHandlers == set(chatHandlersMappings)
+
+chatFullMappings = {
+    ("llama_chat_format.py", "Jinja2ChatFormatter.IgnoreGenerationTags.parse"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "Jinja2ChatFormatter.__init__"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "Jinja2ChatFormatter.__call__"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "Jinja2ChatFormatter.__call__.raise_exception"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "Jinja2ChatFormatter.__call__.stop_on_last_token"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "Jinja2ChatFormatter.to_chat_handler"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "functionary_chat_handler"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "functionary_v1_v2_chat_handler"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "functionary_v1_v2_chat_handler.create_completion"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "functionary_v1_v2_chat_handler.generate_streaming"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "Llava15ChatHandler.__init__"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "Llava15ChatHandler._init_mtmd_context"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "Llava15ChatHandler._init_mtmd_context.mtmd_free"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "Llava15ChatHandler.load_image"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "Llava15ChatHandler._create_bitmap_from_bytes"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "Llava15ChatHandler.__call__"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "Llava15ChatHandler._load_image"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "Llava15ChatHandler.from_pretrained"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "MTMDChatHandler.__init__"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "MTMDChatHandler._init_mtmd_context"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "MTMDChatHandler._init_mtmd_context.mtmd_free"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "MTMDChatHandler.load_image"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "MTMDChatHandler._create_bitmap_from_bytes"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "MTMDChatHandler._get_chat_template"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "MTMDChatHandler.__call__"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "MTMDChatHandler.__call__.raise_exception"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "MTMDChatHandler._load_image"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "MTMDChatHandler.from_pretrained"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+    ("llama_chat_format.py", "chatml_function_calling"): ("PythonChatHandlersFull", "已移植固定源码函数体；jinja/mtmd/huggingface_hub/llama 全部经可注入端口回放"),
+}
+chatFullContracts = json.loads((root / "docs/python-chatfull-contracts.json").read_text(encoding="utf-8"))
+assert len(chatFullMappings) == 29 == chatFullContracts["uniqueFunctions"]
+assert set(key[1] for key in chatFullMappings) == set(chatFullContracts["functions"])
+foundChatFull = set()
+for row in audit["functions"]:
+    key = (row["file"].removeprefix("llama_cpp/"), row["qualname"])
+    if key in chatFullMappings:
+        target, reason = chatFullMappings[key]
+        foundChatFull.add(key)
+        row.update(status="covered", checked=True, pythonExactParity="not-certified",
+                   java="compat.python." + target, reason=reason,
+                   contractEvidence="docs/python-chatfull-contracts.json")
+assert foundChatFull == set(chatFullMappings)
+
+grammarMappings = {
+    ("llama_grammar.py", "LlamaGrammar.__init__"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "LlamaGrammar.from_string"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "LlamaGrammar.from_file"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "LlamaGrammar.from_json_schema"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "_build_repetition"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "_build_repetition.opt_repetitions"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "BuiltinRule.__init__"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter.__init__"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter._format_literal"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter.not_literal"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter.not_literal.recurse"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter._add_rule"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter.resolve_refs"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter.resolve_refs.visit"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter._generate_union_rule"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter._visit_pattern"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter._visit_pattern.to_rule"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter._visit_pattern.transform"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter._visit_pattern.transform.get_dot"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter._visit_pattern.transform.join_seq"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter._resolve_ref"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter._generate_constant_rule"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter.visit"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter.visit.add_component"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter._add_primitive"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter._build_object_rule"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter._build_object_rule.get_recursive_refs"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "SchemaConverter.format_grammar"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+    ("llama_grammar.py", "json_schema_to_gbnf"): ("PythonLlamaGrammar", "纯 Python 输入/输出等价移植；文件与网络经端口"),
+}
+grammarContracts = json.loads((root / "docs/python-grammar-contracts.json").read_text(encoding="utf-8"))
+assert len(grammarMappings) == 29 == grammarContracts["uniqueFunctions"]
+assert set(key[1] for key in grammarMappings) == set(grammarContracts["functions"])
+foundGrammar = set()
+for row in audit["functions"]:
+    key = (row["file"].removeprefix("llama_cpp/"), row["qualname"])
+    if key in grammarMappings:
+        target, reason = grammarMappings[key]
+        foundGrammar.add(key)
+        row.update(status="covered", checked=True, pythonExactParity="not-certified",
+                   java="compat.python." + target, reason=reason,
+                   contractEvidence="docs/python-grammar-contracts.json")
+assert foundGrammar == set(grammarMappings)
+
+
 assert set(internalsMappings) == set(internalsContracts["functions"])
 foundInternals = set()
 for row in audit["functions"]:
@@ -256,6 +477,157 @@ for row in audit["functions"]:
                    java="compat.python." + target, reason=reason,
                    contractEvidence="docs/python-lowlevel-contracts.json")
 assert foundLowlevel == set(lowlevelMappings)
+helpersContracts = json.loads((root / "docs/python-helpers-contracts.json").read_text(encoding="utf-8"))
+helpersMappings = {
+    ("_utils.py", "suppress_stdout_stderr.__init__"): ("PythonSuppressStdoutStderr",
+        "已移植构造即存 disable 标志；enter/exit 经注入 os/sys/null 文件端口重放原版 dup/dup2/close 顺序与 ipykernel _original_stdstream_copy 分支"),
+    ("_utils.py", "suppress_stdout_stderr.__enter__"): ("PythonSuppressStdoutStderr.enter", "同上"),
+    ("_utils.py", "suppress_stdout_stderr.__exit__"): ("PythonSuppressStdoutStderr.exit", "同上"),
+    ("_utils.py", "MetaSingleton.__call__"): ("PythonSingleton.call",
+        "已移植按类注册的共享实例表；构造异常传播且不写入注册表，原版对照核对缓存命中与异常路径"),
+    ("_utils.py", "Singleton.__init__"): ("PythonSingleton",
+        "已移植仅链接 super().__init__ 的空构造"),
+    ("llama_tokenizer.py", "BaseLlamaTokenizer.tokenize"): ("PythonBaseLlamaTokenizer.tokenize",
+        "已移植 abstractmethod 基类方法体抛 NotImplementedError；ABC 实例化 TypeError 名单按原版排序"),
+    ("llama_tokenizer.py", "BaseLlamaTokenizer.detokenize"): ("PythonBaseLlamaTokenizer.detokenize", "同上"),
+    ("llama_tokenizer.py", "LlamaHFTokenizer.__init__"): ("PythonHfTokenizer",
+        "已移植构造存 hf_tokenizer 引用"),
+    ("llama_tokenizer.py", "LlamaHFTokenizer.tokenize"): ("PythonHfTokenizer.tokenize",
+        "已移植 errors=ignore 解码后 encode(add_special_tokens=special) 调用"),
+    ("llama_tokenizer.py", "LlamaHFTokenizer.detokenize"): ("PythonHfTokenizer.detokenize",
+        "已移植 prev_tokens 前缀差分切片与 skip_special_tokens 取反语义"),
+    ("llama_tokenizer.py", "LlamaHFTokenizer.from_pretrained"): ("PythonHfTokenizer.fromPretrained",
+        "已移植 transformers 导入失败原文与 kwargs 工厂路径；transformers 由工厂端口注入"),
+    ("llama_speculative.py", "LlamaDraftModel.__call__"): ("PythonDraftModel.call",
+        "已移植 abstractmethod 抛 NotImplementedError 与 ABC 实例化 TypeError"),
+    ("llama_speculative.py", "LlamaPromptLookupDecoding.__init__"): ("PythonPromptLookupDecoding",
+        "已移植默认 max_ngram_size=2/num_pred_tokens=10 字段赋值"),
+    ("llama_speculative.py", "LlamaPromptLookupDecoding.find_candidate_pred_tokens"): ("PythonPromptLookupDecoding.findCandidatePredTokens",
+        "已移植降序 ngram 滑窗匹配与首个续写截取，空匹配返回空 intc 数组"),
+    ("llama_speculative.py", "LlamaPromptLookupDecoding.__call__"): ("PythonPromptLookupDecoding.call",
+        "已移植 kwargs 透传到静态查找"),
+    ("server/errors.py", "ErrorResponseFormatters.context_length_exceeded"): ("PythonServerErrors.contextLengthExceeded",
+        "已移植 chat/completion 两种消息模板、max_tokens None→0 求和与 400/invalid_request_error/messages/context_length_exceeded 载荷"),
+    ("server/errors.py", "ErrorResponseFormatters.model_not_found"): ("PythonServerErrors.modelNotFound",
+        "已移植模型路径反引号消息与固定 type/param/code 字段"),
+    ("server/errors.py", "RouteErrorHandler.error_message_wrapper"): ("PythonServerErrors.RouteErrorHandler.errorMessageWrapper",
+        "已移植 isinstance 门控、pattern 顺序搜索、未匹配时 stderr 四段写入与 500 兜底"),
+    ("server/errors.py", "RouteErrorHandler.get_route_handler"): ("PythonServerErrors.RouteErrorHandler",
+        "已移植 super().get_route_handler() 注入与异步包装"),
+    ("server/errors.py", "RouteErrorHandler.get_route_handler.custom_route_handler"): ("PythonServerErrors.RouteErrorHandler.customRouteHandler",
+        "已移植计时头、HTTPException 穿透、request.json() 异常传播与 body 重解析失败兜底"),
+}
+assert len(helpersMappings) == 20 == helpersContracts["uniqueFunctions"]
+assert set(key[1] for key in helpersMappings) == set(helpersContracts["functions"])
+foundHelpers = set()
+for row in audit["functions"]:
+    key = (row["file"].removeprefix("llama_cpp/"), row["qualname"])
+    if key in helpersMappings:
+        target, reason = helpersMappings[key]
+        foundHelpers.add(key)
+        row.update(status="covered", checked=True, pythonExactParity="not-certified",
+                   java="compat.python." + target, reason=reason,
+                   contractEvidence="docs/python-helpers-contracts.json")
+assert foundHelpers == set(helpersMappings)
+serverContracts = json.loads((root / "docs/python-server-contracts.json").read_text(encoding="utf-8"))
+serverMappings = {
+    ("server/cli.py", "_get_base_type"): ("PythonServerCli.getBaseType",
+        "已移植 typing origin 递归展开：Literal 取首参类型、Union 过滤 NoneType 取首项、list 递归参数；断言语义由注入注解端口承担"),
+    ("server/cli.py", "_contains_list_type"): ("PythonServerCli.containsListType",
+        "已移植 origin 为 list 命中、Literal/Union 任一参数递归判定"),
+    ("server/cli.py", "_contains_dict_type"): ("PythonServerCli.containsDictType", "同上 dict 判定"),
+    ("server/cli.py", "_parse_bool_arg"): ("PythonServerCli.parseBoolArg",
+        "已移植 bytes 解码、小写去空白、true/false 集合与 ValueError 原文"),
+    ("server/cli.py", "_parse_json_object_arg"): ("PythonServerCli.parseJsonObjectArg",
+        "已移植 bytes 解码、json 解析（内部最小解析器）、非 dict 时 ValueError 原文；JSONDecodeError 类别保留"),
+    ("server/cli.py", "add_args_from_model"): ("PythonServerCli.addArgsFromModel",
+        "已移植 description 追加 default、base/list/dict 分派、bool 专用 _parse_bool_arg 分支与 add_argument 调用顺序"),
+    ("server/cli.py", "parse_model_from_args"): ("PythonServerCli.parseModelFromArgs",
+        "已移植仅取非 None 且属于 model_fields 的命名空间项构造模型"),
+    ("server/settings.py", "ModelSettings.set_dynamic_defaults"): ("PythonServerSettings.setDynamicDefaults",
+        "已移植 n_threads/n_threads_batch 的 -1→cpu_count 替换与原地写入"),
+    ("server/app.py", "set_server_settings"): ("PythonServerApp.setServerSettings", "已移植全局赋值"),
+    ("server/app.py", "get_server_settings"): ("PythonServerApp.getServerSettings",
+        "已移植单次 yield 的生成器语义"),
+    ("server/app.py", "set_llama_proxy"): ("PythonServerApp.setLlamaProxy",
+        "已移植 LlamaProxy(models=...) 构造，代理工厂注入"),
+    ("server/app.py", "set_ping_message_factory"): ("PythonServerApp.setPingMessageFactory", "已移植全局赋值"),
+    ("server/app.py", "get_llama_proxy"): ("PythonServerApp.getLlamaProxy",
+        "已移植 outer acquire→inner acquire→outer release→inner release 双锁顺序与 releaseOuterLock 兜底"),
+    ("server/app.py", "_logit_bias_tokens_to_input_ids"): ("PythonServerApp.logitBiasTokensToInputIds",
+        "已移植 utf-8 编码后 tokenize(add_bos=False,special=True) 遍历写 str(input_id)->score"),
+    ("server/model.py", "LlamaProxy.__init__"): ("PythonLlamaProxy",
+        "已移植空列表 AssertionError 原文、alias 回填 model、默认模型即时加载"),
+    ("server/model.py", "LlamaProxy.__call__"): ("PythonLlamaProxy.call",
+        "已移植未知模型回落默认、同 alias 命中直返、切换前关闭旧模型"),
+    ("server/model.py", "LlamaProxy.__getitem__"): ("PythonLlamaProxy.get", "已移植 model_dump 转发与 KeyError 引号消息"),
+    ("server/model.py", "LlamaProxy.__setitem__"): ("PythonLlamaProxy.set", "已移植 str/bytes 走 model_validate_json 端口"),
+    ("server/model.py", "LlamaProxy.__iter__"): ("PythonLlamaProxy.keys", "已移植字典序迭代"),
+    ("server/model.py", "LlamaProxy.free"): ("PythonLlamaProxy.free", "已移植关闭并删除当前模型引用"),
+}
+assert len(serverMappings) == 20 == serverContracts["uniqueFunctions"]
+assert set(key[1] for key in serverMappings) == set(serverContracts["functions"])
+foundServer = set()
+for row in audit["functions"]:
+    key = (row["file"].removeprefix("llama_cpp/"), row["qualname"])
+    if key in serverMappings:
+        target, reason = serverMappings[key]
+        foundServer.add(key)
+        row.update(status="covered", checked=True, pythonExactParity="not-certified",
+                   java="compat.python." + target, reason=reason,
+                   contractEvidence="docs/python-server-contracts.json")
+assert foundServer == set(serverMappings)
+chatContracts = json.loads((root / "docs/python-chatregistry-contracts.json").read_text(encoding="utf-8"))
+chatMappings = {
+    ("llama_cpp_ext.py", "_ctypes_function_from_names"): ("PythonCtypesExt.ctypesFunctionFromNames",
+        "已移植逐名 getattr 收集 missing、首个命中赋值 argtypes/restype、wraps 后返回、全部缺失抛 AttributeError 原文"),
+    ("llama_cpp_ext.py", "_ctypes_function_from_names.decorator"): ("PythonCtypesExt.ctypesFunctionFromNames", "同上嵌套装饰器"),
+    ("llama_chat_format.py", "LlamaChatCompletionHandler.__call__"): ("PythonChatFormat.handlerCall",
+        "Protocol 省略号方法体返回 None；缺参 TypeError 由测试侧参数绑定复刻"),
+    ("llama_chat_format.py", "LlamaChatCompletionHandlerRegistry.register_chat_completion_handler"): ("PythonChatHandlerRegistry.registerChatCompletionHandler",
+        "已移植 overwrite=False 重复名 ValueError 原文；处理表挂在类属性上按单例共享"),
+    ("llama_chat_format.py", "LlamaChatCompletionHandlerRegistry.unregister_chat_handler"): ("PythonChatHandlerRegistry.unregisterChatHandler",
+        "已移植未注册 ValueError 原文"),
+    ("llama_chat_format.py", "LlamaChatCompletionHandlerRegistry.get_chat_completion_handler_by_name"): ("PythonChatHandlerRegistry.getChatCompletionHandlerByName",
+        "已移植 KeyError→NotFound 自定义异常与合法名单 repr"),
+    ("llama_chat_format.py", "get_chat_completion_handler"): ("PythonChatHandlerRegistry.getChatCompletionHandler",
+        "已移植经 Singleton 注册表的模块级查询"),
+    ("llama_chat_format.py", "register_chat_completion_handler"): ("PythonChatHandlerRegistry.registerChatCompletionHandler",
+        "已移植返回装饰器的工厂"),
+    ("llama_chat_format.py", "register_chat_completion_handler.decorator"): ("PythonChatHandlerRegistry.registerChatCompletionHandler",
+        "已移植装饰器注册并原样返回 f"),
+    ("llama_chat_format.py", "register_chat_format"): ("PythonChatHandlerRegistry.registerChatFormat",
+        "已移植经 formatterToHandler 端口包装后注册"),
+    ("llama_chat_format.py", "register_chat_format.decorator"): ("PythonChatHandlerRegistry.registerChatFormat", "同上嵌套装饰器"),
+    ("llama_chat_format.py", "ChatFormatter.__call__"): ("PythonChatFormat.formatterCall",
+        "Protocol 省略号方法体返回 None"),
+    ("llama_chat_format.py", "Jinja2ChatFormatter.strftime_now"): ("PythonChatFormat.strftimeNow",
+        "已移植 datetime.now().strftime(f)，时钟注入"),
+    ("llama_chat_format.py", "Jinja2ChatFormatter.tojson"): ("PythonChatFormat.tojson + PythonJson",
+        "已移植 json.dumps 参数组；新增 PythonJson 复刻 ensure_ascii/indent/separators/sort_keys 与浮点 repr"),
+    ("llama_chat_format.py", "chat_formatter_to_chat_completion_handler"): ("PythonChatFormat.chatFormatterToChatCompletionHandler",
+        "已移植返回嵌套闭包；真实 handler 体经端口重放"),
+    ("llama_chat_format.py", "chat_formatter_to_chat_completion_handler.chat_completion_handler"): ("PythonChatFormat.chatCompletionHandler",
+        "已移植完整嵌套体：stop 合并、response_format grammar、functions/tool_call 转换、tool_choice 查找与 ValueError、grammar 失败回退 JSON_GBNF、create_completion 23 个 kwargs 与两个 convert 出口"),
+    ("server/app.py", "authenticate"): ("PythonServerApp.authenticate",
+        "已移植 api_key 未配置放行、credentials 命中返回、否则 HTTP 401"),
+    ("server/app.py", "tokenize"): ("PythonServerApp.tokenizeEndpoint", "已移植 utf-8 编码 + special=True tokenize"),
+    ("server/app.py", "detokenize"): ("PythonServerApp.detokenizeEndpoint", "已移植 detokenize + utf-8 解码"),
+    ("server/app.py", "count_query_tokens"): ("PythonServerApp.countQueryTokensEndpoint", "已移植 len(tokens) 返回"),
+    ("server/app.py", "get_models"): ("PythonServerApp.getModels", "已移植代理迭代生成固定字段模型列表"),
+}
+assert len(chatMappings) == 21 == len(chatContracts["functions"]) == chatContracts["uniqueFunctions"]
+assert set(key[1] for key in chatMappings) == set(chatContracts["functions"])
+foundChat = set()
+for row in audit["functions"]:
+    key = (row["file"].removeprefix("llama_cpp/"), row["qualname"])
+    if key in chatMappings:
+        target, reason = chatMappings[key]
+        foundChat.add(key)
+        row.update(status="covered", checked=True, pythonExactParity="not-certified",
+                   java="compat.python." + target, reason=reason,
+                   contractEvidence="docs/python-chatregistry-contracts.json")
+assert foundChat == set(chatMappings)
 for row in audit["functions"]:
     if row["file"] == "llama_cpp/llama_cpp.py" and row["qualname"] in {
             "llama_batch_init", "llama_batch_free", "llama_decode",
@@ -387,9 +759,33 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 
 本轮迁移 20 项部分覆盖函数：llama_cache 基础类抽象方法 4 项、LlamaDiskCache 6 项、_logger 的 llama_log_callback/set_verbose 2 项、llama_cpp 的 _warn_deprecated 及两个上下文入口 3 项、llama_tokenizer 的 from_ggml_file 1 项、llama.py 的 ctx/model/__del__/free_lora_adapter 4 项。新增 `PythonLlamaLogger`（GGML 级别映射、CONT 沿用、logger.level 门控、stderr 分写）与 `PythonLlamaTokenizer.fromGgmlFile`；`PythonLlamaCache` 迁移 ABC 规则，`ctx`/`model` 属性按原版直读句柄。`llama_context_default_params`/`llama_init_from_model` 随 b11669 的 168 字节上下文结构对齐后列为绑定完成。固定原版对照新增 {json.loads((root / 'docs/python-lowlevel-contracts.json').read_text(encoding='utf-8'))['caseCount']} 组低层用例及缓存 ABC 场景，核对过滤器动作、调用方模块、释放失败保留引用与工厂 kwargs。见 [本轮记录](docs/PYTHON_LOWLEVEL_COMPATIBILITY.md)。
 
+### llama_chat_format.py 处理器与辅助函数（2026-11-01，第八轮）
+
+本轮迁移 llama_chat_format.py 剩余 31 项：_grammar_for_json/_schema/_response_format（llama_grammar 端口，schema 失败按 fallback_to_json 回落）、HF 两组 formatter/handler 封装（AutoTokenizer 端口 use_default_system_prompt=False 加 apply_chat_template(tokenize=False,**kwargs)；tokenizer_config 版在构造期建 ImmutableSandboxedEnvironment、调用期 render，add_generation_prompt 默认追加空 assistant）、_convert_completion_to_chat_function 与流式生成器（call_ 前缀 id、tool_calls/function_call 双写、首帧空 delta 与末帧 finish_reason）、functionary 两组嵌套 helper（generate_type_definition 的 /Array/object/enum 分支、v1/v2 两套缩进与尾换行差异、prepare_messages_for_inference 的 functions. 前缀/SYSTEM_MESSAGE 注入与 message_to_str 全分支、v1v2 get_grammar 的 suppress+json_schema_to_gbnf 双调用+print）、媒体消息辅助（get_image_urls、split_text_on_image_urls 的 substrs 顺序优先语义、image_url 转 media_marker、_decode_token_piece、Qwen25VL __call__ 前置清状态+stderr 提示+super 调用）。固定原版对照 {chatHandlersContracts['caseCount']} 组。见 [本轮记录](docs/PYTHON_CHATHANDLERS_COMPATIBILITY.md)。
+
+### _internals.py 收尾：TokenDataArray、SamplingContext、CustomSampler 与采样器补全（2026-11-01，第七轮）
+
+本轮迁移剩余 29 项，`_internals.py` 至此 **120 项全覆盖**：`LlamaTokenDataArray` 2 项（recarray 式 id/logit/p 存储经 `candidatesData`/`tokenDataArray`/`candidatesStore`/`candidatesAssign` 端口，copy_logits 重置 id/p/sorted/size）、`LlamaSamplingContext` 6 项（reset 重绑列表+grammar.reset、cp 共享标量复制列表、last/prev_str[-n:] 反 detokenize、sample 弃用 NIE、accept 追加）、`CustomSampler` 4 项（sampler_i 六槽位按序赋值、可选槽位 literal 0、sampler.iface/ctx 指针装配、get_sampler 取指针）、`LlamaSampler` 17 项（typical/temp_ext/xtc/top_n_sigma/mirostat/mirostat_v2/grammar/grammar_lazy_patterns/dry/logit_bias/infill/custom/accept/free_sampler/__del__/clone 及 clone.free_sampler——clone 对 custom samplers 抛 NIE 原文，克隆体注册无移除循环的 free）。新增 JNA 绑定 8 个（temp_ext/xtc/top_n_sigma/grammar_lazy_patterns/dry/logit_bias/infill/sampler_clone）及 `LlamaSamplerApply` 回调与 `NativeSamplerI`/`NativeLlamaSampler` 结构。固定原版对照增至 {internalsContracts['caseCount']} 组。见 [本轮记录](docs/PYTHON_INTERNALS_COMPATIBILITY.md)。
+
+### _internals.py 访问器、KV/state/encode 与批次追加（2026-11-01，第六轮）
+
+本轮迁移 53 项未覆盖函数：`LlamaModel` 17 项（vocab_type、rope_freq_scale_train、token_get_text/score/attr、七个特殊 token、add_bos/eos_token、get_tensor 的 NotImplementedError、free_model/__del__ 闭包）、`LlamaContext` 31 项（free_ctx/__del__、pooling_type、kv_cache_seq_rm/cp/keep/shift——其中 shift 经 `llama_memory_seq_add`、负 seq_id 夹取与 None memory 断言原文、state 大小、encode 返回码报错、set_n_threads、logits/embeddings 五个指针入口、reset/print_timings、14 项 deprecated NotImplementedError）、`LlamaBatch` 4 项（free_batch/__del__、n_tokens、add_sequence 位置重起与末位 logits）及模块级 `normalize_embedding`。`LlamaLibrary` 新增 15 个 b11669 JNA 绑定，`PythonInternalsPort`/`PythonNativeInternals` 对应扩展。固定原版对照增至 {internalsContracts['caseCount']} 组，核对断言门控、seq_id 夹取、encode 报错、指针入口与 deprecated 原文。见 [本轮记录](docs/PYTHON_INTERNALS_COMPATIBILITY.md)。
+
 ### _internals.py 模型、上下文、批次与采样器（2026-10-30）
 
 本轮迁移 29 项部分覆盖函数：`_internals.LlamaModel` 8 项、`LlamaContext` 5 项、`LlamaBatch` 4 项、`LlamaSampler` 12 项。Java 入口为 `compat.python.PythonLlamaModel`、`PythonLlamaContext`、`PythonLlamaBatch`、`PythonInternalsSampler`，统一经 `PythonInternalsPort` 访问 C 入口，原生实现为 `PythonNativeInternals`（b11669）。固定原版完整函数体在追踪原生端口上产出 {internalsContracts['caseCount']} 组对照，核对调用顺序、固定 1024/32 字节缓冲、tokenize 负数重试、detokenize BOS 首空格、metadata 扩容、llama_decode 返回码报错、ExitStack 关闭顺序、批次字段逐元素写入及采样器链添加时序。见 [本轮记录](docs/PYTHON_INTERNALS_COMPATIBILITY.md)。
+
+### _utils、tokenizer 基类/HF、speculative 与 server/errors（2026-11-01）
+
+本轮迁移 20 项：`_utils` 的 suppress_stdout_stderr 三项与 Singleton 两项、llama_tokenizer 的 BaseLlamaTokenizer 与 LlamaHFTokenizer 六项、llama_speculative 四项、server/errors 五项。新增 `PythonAbstract` 共享 ABC 实例化检查（PythonLlamaCache 已复用）、`PythonSuppressStdoutStderr` 的 os/sys/null 文件端口、`PythonSingleton` 按类注册表、`PythonBaseLlamaTokenizer`/`PythonHfTokenizer`（errors=ignore 编解码与 prev_tokens 前缀差分）、`PythonPromptLookupDecoding` 滑窗查找、`PythonServerErrors` 错误格式化与路由包装端口。固定原版对照 {json.loads((root / 'docs/python-helpers-contracts.json').read_text(encoding='utf-8'))['caseCount']} 组，核对 fd 操作顺序、单例缓存与异常传播、transformers 导入失败原文、消息模板与 stderr 分段。见 [本轮记录](docs/PYTHON_HELPERS_COMPATIBILITY.md)。
+
+### server 模块级函数与 LlamaProxy（2026-11-01）
+
+本轮迁移 20 项：`server/cli.py` 的 7 个 argparse/pydantic 帮助函数（注入 typing 注解端口与 parser/model 端口，含最小 JSON 解析器与 JSONDecodeError）、`settings.set_dynamic_defaults`（cpu_count 端口）、`app.py` 模块级 6 项（全局赋值、单次 yield、双锁 get_llama_proxy 顺序、logit_bias tokenize 遍历）、`model.py` LlamaProxy 容器 6 项（默认模型加载、切换关闭旧模型、dump/validate/iter/free）。固定原版对照 {json.loads((root / 'docs/python-server-contracts.json').read_text(encoding='utf-8'))['caseCount']} 组，核对 add_argument 调用序列、锁顺序与关闭时机。见 [本轮记录](docs/PYTHON_SERVER_COMPATIBILITY.md)。
+
+### chat_format 注册表/转换器、app 端点与 ext 装饰器（2026-11-01）
+
+本轮迁移 21 项：`llama_cpp_ext._ctypes_function_from_names` 两项（逐名 getattr 缺失收集、命中赋值 argtypes/restype、wraps、全缺 AttributeError 原文）、chat_format 注册表 7 项与两个装饰器工厂（类属性共享 handler 表、单例查询、自定义 NotFound 异常与合法名单 repr）、两个 Protocol 省略号方法体、`strftime_now`/`tojson`（新增 `PythonJson` 复刻 dumps 参数组与浮点 repr）、`chat_formatter_to_chat_completion_handler` 及嵌套 handler（stop 合并、response_format grammar、tool_choice 查找 ValueError、grammar 失败回退、create_completion 全参数）、app.py 五个端点（authenticate/tokenize/detokenize/count/get_models）。固定原版对照 {json.loads((root / 'docs/python-chatregistry-contracts.json').read_text(encoding='utf-8'))['caseCount']} 组，核对 add_argument 式调用序列与 kwargs 组装。见 [本轮记录](docs/PYTHON_CHAT_COMPATIBILITY.md)。
 
 ### 测试数据管理
 

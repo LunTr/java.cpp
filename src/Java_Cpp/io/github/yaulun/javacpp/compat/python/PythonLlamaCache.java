@@ -4,7 +4,6 @@ import io.github.yaulun.javacpp.python.Py;
 import io.github.yaulun.javacpp.python.PyItemAccess;
 import io.github.yaulun.javacpp.python.PythonErrorType;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Shared BaseLlamaCache contract from the pinned Python source. The class stays concrete so the
@@ -12,12 +11,6 @@ import java.util.Map;
  * instantiation rule by checking which of the four abstract methods a subclass still inherits.
  */
 public class PythonLlamaCache implements PyItemAccess {
-  private static final Map<String, String> ABSTRACT =
-      Map.of(
-          "cacheSize", "cache_size",
-          "contains", "__contains__",
-          "get", "__getitem__",
-          "put", "__setitem__");
   private Object capacityBytes;
 
   protected PythonLlamaCache() {
@@ -25,47 +18,20 @@ public class PythonLlamaCache implements PyItemAccess {
   }
 
   protected PythonLlamaCache(Object capacityBytes) {
-    List<String> missing =
-        ABSTRACT.entrySet().stream()
-            .filter(entry -> inherited(entry.getKey()))
-            .map(Map.Entry::getValue)
-            .sorted()
-            .toList();
-    if (!missing.isEmpty()) {
-      throw Py.error(
-          PythonErrorType.TYPE_ERROR,
-          "Can't instantiate abstract class "
-              + pythonTypeName()
-              + " without an implementation for abstract method"
-              + (missing.size() == 1 ? " " : "s ")
-              + missing.stream()
-                  .map(name -> "'" + name + "'")
-                  .reduce((a, b) -> a + ", " + b)
-                  .orElseThrow());
-    }
+    PythonAbstract.checkInstance(
+        this,
+        PythonLlamaCache.class,
+        pythonTypeName(),
+        PythonAbstract.method("cacheSize", "cache_size"),
+        PythonAbstract.method("get", "__getitem__", List.class),
+        PythonAbstract.method("contains", "__contains__", List.class),
+        PythonAbstract.method("put", "__setitem__", List.class, Object.class));
     this.capacityBytes = capacityBytes;
   }
 
   /** Python-facing class name used in the ABCMeta instantiation message. */
   protected String pythonTypeName() {
     return "BaseLlamaCache";
-  }
-
-  private boolean inherited(String method) {
-    try {
-      return getClass().getMethod(method, parameterTypes(method)).getDeclaringClass()
-          == PythonLlamaCache.class;
-    } catch (NoSuchMethodException failure) {
-      throw new AssertionError(failure);
-    }
-  }
-
-  private static Class<?>[] parameterTypes(String method) {
-    return switch (method) {
-      case "cacheSize" -> new Class<?>[0];
-      case "get", "contains" -> new Class<?>[] {List.class};
-      default -> new Class<?>[] {List.class, Object.class};
-    };
   }
 
   /** Returns capacity_bytes verbatim; the original attribute accepts any object. */

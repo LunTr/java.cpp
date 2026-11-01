@@ -199,6 +199,91 @@ class PythonInternalsContractTest {
     }
 
     @Override
+    public int vocabType(Object vocab) {
+      trace.add(List.of("llama_vocab_type", name(vocab)));
+      return i(kase.getOrDefault("vocabType", 2));
+    }
+
+    @Override
+    public double modelRopeFreqScaleTrain(Object model) {
+      trace.add(List.of("llama_model_rope_freq_scale_train", name(model)));
+      return ((Number) kase.getOrDefault("ropeScale", 0.25)).doubleValue();
+    }
+
+    @Override
+    public String vocabGetText(Object vocab, int token) {
+      trace.add(List.of("llama_vocab_get_text", name(vocab), token));
+      return new String(
+          hex((String) kase.getOrDefault("textHex", "e4bda0")), StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public double vocabGetScore(Object vocab, int token) {
+      trace.add(List.of("llama_vocab_get_score", name(vocab), token));
+      return ((Number) kase.getOrDefault("score", -1.5)).doubleValue();
+    }
+
+    @Override
+    public int vocabGetAttr(Object vocab, int token) {
+      trace.add(List.of("llama_vocab_get_attr", name(vocab), token));
+      return i(kase.getOrDefault("attr", 3));
+    }
+
+    @Override
+    public int vocabEos(Object vocab) {
+      trace.add(List.of("llama_vocab_eos", name(vocab)));
+      return i(kase.getOrDefault("llama_vocab_eos", 0));
+    }
+
+    @Override
+    public int vocabSep(Object vocab) {
+      trace.add(List.of("llama_vocab_sep", name(vocab)));
+      return i(kase.getOrDefault("llama_vocab_sep", 0));
+    }
+
+    @Override
+    public int vocabNl(Object vocab) {
+      trace.add(List.of("llama_vocab_nl", name(vocab)));
+      return i(kase.getOrDefault("llama_vocab_nl", 0));
+    }
+
+    @Override
+    public int vocabFimPre(Object vocab) {
+      trace.add(List.of("llama_vocab_fim_pre", name(vocab)));
+      return i(kase.getOrDefault("llama_vocab_fim_pre", 0));
+    }
+
+    @Override
+    public int vocabFimSuf(Object vocab) {
+      trace.add(List.of("llama_vocab_fim_suf", name(vocab)));
+      return i(kase.getOrDefault("llama_vocab_fim_suf", 0));
+    }
+
+    @Override
+    public int vocabFimMid(Object vocab) {
+      trace.add(List.of("llama_vocab_fim_mid", name(vocab)));
+      return i(kase.getOrDefault("llama_vocab_fim_mid", 0));
+    }
+
+    @Override
+    public int vocabEot(Object vocab) {
+      trace.add(List.of("llama_vocab_eot", name(vocab)));
+      return i(kase.getOrDefault("llama_vocab_eot", 0));
+    }
+
+    @Override
+    public boolean vocabGetAddBos(Object vocab) {
+      trace.add(List.of("llama_vocab_get_add_bos", name(vocab)));
+      return flag("addBos", true);
+    }
+
+    @Override
+    public boolean vocabGetAddEos(Object vocab) {
+      trace.add(List.of("llama_vocab_get_add_eos", name(vocab)));
+      return flag("addEos", false);
+    }
+
+    @Override
     public int tokenize(
         Object vocab, byte[] text, int[] tokens, int capacity, boolean addBos, boolean special) {
       trace.add(
@@ -257,6 +342,90 @@ class PythonInternalsContractTest {
     @Override
     public void memoryClear(Object memory, boolean data) {
       trace.add(List.of("llama_memory_clear", name(memory), data));
+    }
+
+    @Override
+    public boolean memorySeqRm(Object memory, int seqId, int p0, int p1) {
+      trace.add(List.of("llama_memory_seq_rm", name(memory), seqId, p0, p1));
+      return queues.containsKey("seqRm") ? (boolean) queue("seqRm") : true;
+    }
+
+    @Override
+    public void memorySeqCp(Object memory, int seqIdSrc, int seqIdDst, int p0, int p1) {
+      trace.add(List.of("llama_memory_seq_cp", name(memory), seqIdSrc, seqIdDst, p0, p1));
+    }
+
+    @Override
+    public void memorySeqKeep(Object memory, int seqId) {
+      trace.add(List.of("llama_memory_seq_keep", name(memory), seqId));
+    }
+
+    @Override
+    public void memorySeqAdd(Object memory, int seqId, int p0, int p1, int shift) {
+      trace.add(List.of("llama_memory_seq_add", name(memory), seqId, p0, p1, shift));
+    }
+
+    @Override
+    public long stateGetSize(Object context) {
+      trace.add(List.of("llama_state_get_size", name(context)));
+      return ((Number) kase.getOrDefault("stateSize", 1024)).longValue();
+    }
+
+    @Override
+    public int encode(Object context, PythonInternalsBatch batch) {
+      trace.add(List.of("llama_encode", name(context), ((StubBatch) batch).snapshot()));
+      return i(queue("encode"));
+    }
+
+    @Override
+    public void setNThreads(Object context, int nThreads, int nThreadsBatch) {
+      trace.add(List.of("llama_set_n_threads", name(context), nThreads, nThreadsBatch));
+    }
+
+    @Override
+    public int poolingType(Object context) {
+      trace.add(List.of("llama_pooling_type", name(context)));
+      return i(kase.getOrDefault("pooling", 1));
+    }
+
+    @Override
+    public Object getLogits(Object context) {
+      trace.add(List.of("llama_get_logits", name(context)));
+      return new Handle("get_logits_ptr");
+    }
+
+    @Override
+    public Object getLogitsIth(Object context, int index) {
+      trace.add(List.of("llama_get_logits_ith", name(context), index));
+      return new Handle("get_logits_ith_ptr");
+    }
+
+    @Override
+    public Object getEmbeddings(Object context) {
+      trace.add(List.of("llama_get_embeddings", name(context)));
+      return new Handle("get_embeddings_ptr");
+    }
+
+    @Override
+    public Object getEmbeddingsIth(Object context, int index) {
+      trace.add(List.of("llama_get_embeddings_ith", name(context), index));
+      return new Handle("get_embeddings_ith_ptr");
+    }
+
+    @Override
+    public Object getEmbeddingsSeq(Object context, int seqId) {
+      trace.add(List.of("llama_get_embeddings_seq", name(context), seqId));
+      return new Handle("get_embeddings_seq_ptr");
+    }
+
+    @Override
+    public void perfContextReset(Object context) {
+      trace.add(List.of("llama_perf_context_reset", name(context)));
+    }
+
+    @Override
+    public void perfContextPrint(Object context) {
+      trace.add(List.of("llama_perf_context_print", name(context)));
     }
 
     @Override
@@ -364,6 +533,167 @@ class PythonInternalsContractTest {
     public void samplerFree(Object sampler) {
       trace.add(List.of("llama_sampler_free", name(sampler)));
     }
+
+    @Override
+    public int samplerChainN(Object chain) {
+      trace.add(List.of("llama_sampler_chain_n", name(chain)));
+      return i(kase.getOrDefault("chainN", 4));
+    }
+
+    @Override
+    public void samplerAccept(Object sampler, int token) {
+      trace.add(List.of("llama_sampler_accept", name(sampler), token));
+    }
+
+    @Override
+    public void samplerReset(Object sampler) {
+      trace.add(List.of("llama_sampler_reset", name(sampler)));
+    }
+
+    @Override
+    public Object samplerClone(Object sampler) {
+      trace.add(List.of("llama_sampler_clone", name(sampler)));
+      return spawn("llama_sampler_clone");
+    }
+
+    private Object init(String name, Object... args) {
+      List<Object> entry = new ArrayList<>(List.of(name));
+      entry.addAll(List.of(args));
+      trace.add(entry);
+      return spawn(name);
+    }
+
+    @Override
+    public Object samplerInitTypical(double p, long minKeep) {
+      return init("llama_sampler_init_typical", p, minKeep);
+    }
+
+    @Override
+    public Object samplerInitTempExt(double t, double delta, double exponent) {
+      return init("llama_sampler_init_temp_ext", t, delta, exponent);
+    }
+
+    @Override
+    public Object samplerInitXtc(double p, double t, long minKeep, long seed) {
+      return init("llama_sampler_init_xtc", p, t, minKeep, seed);
+    }
+
+    @Override
+    public Object samplerInitTopNSigma(double n) {
+      return init("llama_sampler_init_top_n_sigma", n);
+    }
+
+    @Override
+    public Object samplerInitMirostat(int nVocab, long seed, double tau, double eta, int m) {
+      return init("llama_sampler_init_mirostat", nVocab, seed, tau, eta, m);
+    }
+
+    @Override
+    public Object samplerInitMirostatV2(long seed, double tau, double eta) {
+      return init("llama_sampler_init_mirostat_v2", seed, tau, eta);
+    }
+
+    private static String hexBytes(byte[] data) {
+      return HexFormat.of().formatHex(data);
+    }
+
+    @Override
+    public Object samplerInitGrammar(Object vocab, byte[] grammar, byte[] root) {
+      return init("llama_sampler_init_grammar", name(vocab), hexBytes(grammar), hexBytes(root));
+    }
+
+    @Override
+    public Object samplerInitGrammarLazyPatterns(
+        Object vocab,
+        byte[] grammar,
+        byte[] root,
+        List<byte[]> triggerPatterns,
+        List<Integer> triggerTokens) {
+      return init(
+          "llama_sampler_init_grammar_lazy_patterns",
+          name(vocab),
+          hexBytes(grammar),
+          hexBytes(root),
+          "buf" + triggerPatterns.size(),
+          triggerPatterns.size(),
+          "buf" + triggerTokens.size(),
+          triggerTokens.size());
+    }
+
+    @Override
+    public Object samplerInitDry(
+        Object vocab,
+        double dryMultiplier,
+        double dryBase,
+        int dryAllowedLength,
+        int dryPenaltyLastN,
+        List<byte[]> seqBreakers) {
+      return init(
+          "llama_sampler_init_dry",
+          name(vocab),
+          dryMultiplier,
+          dryBase,
+          dryAllowedLength,
+          dryPenaltyLastN,
+          "buf" + seqBreakers.size(),
+          seqBreakers.size());
+    }
+
+    @Override
+    public Object samplerInitLogitBias(int nVocab, int[] tokens, double[] biases) {
+      return init("llama_sampler_init_logit_bias", nVocab, tokens.length, "buf" + tokens.length);
+    }
+
+    @Override
+    public Object samplerInitInfill(Object vocab) {
+      return init("llama_sampler_init_infill", name(vocab));
+    }
+
+    @Override
+    public Object newSamplerInterface() {
+      trace.add(List.of("llama_sampler_i"));
+      return new Handle("sampler_i");
+    }
+
+    @Override
+    public Object samplerIFunction(String field, Object arg) {
+      trace.add(List.of("llama_sampler_i_" + field, arg instanceof Number ? arg : arg.toString()));
+      return new Handle("cfunc_" + field);
+    }
+
+    @Override
+    public void samplerIAssign(Object samplerI, String field, Object value) {}
+
+    @Override
+    public Object newLlamaSampler() {
+      trace.add(List.of("llama_sampler"));
+      return new Handle("sampler");
+    }
+
+    @Override
+    public Object pointerOf(Object target) {
+      return new Handle("ptr:" + name(target));
+    }
+
+    @Override
+    public void samplerAssign(Object sampler, String field, Object value) {}
+
+    @Override
+    public Object candidatesData(int nVocab) {
+      return new Handle("data_ptr");
+    }
+
+    @Override
+    public Object tokenDataArray(Object data, int size, boolean sorted) {
+      trace.add(List.of("llama_token_data_array", name(data), size, sorted));
+      return new Handle("candidates");
+    }
+
+    @Override
+    public void candidatesStore(Object data, int[] ids, float[] logits, float[] probs) {}
+
+    @Override
+    public void candidatesAssign(Object candidates, String field, Object value) {}
   }
 
   /** List-backed batch stand-in reproducing ctypes field and negative index semantics. */
@@ -447,6 +777,30 @@ class PythonInternalsContractTest {
     @Override
     public void logits(int index, boolean value) {
       logits[index(index)] = value;
+    }
+  }
+
+  /** llama_grammar.LlamaGrammar stand-in whose reset() is observable on the trace. */
+  private static final class FakeGrammar implements PythonGrammar {
+    private final List<Object> trace;
+
+    private FakeGrammar(List<Object> trace) {
+      this.trace = trace;
+    }
+
+    @Override
+    public String grammar() {
+      return "root ::= 'ab'";
+    }
+
+    @Override
+    public String root() {
+      return "root";
+    }
+
+    @Override
+    public void reset() {
+      trace.add(List.of("grammar_reset"));
     }
   }
 
@@ -541,6 +895,307 @@ class PythonInternalsContractTest {
       case "batchTokens" -> {
         return ((PythonLlamaBatch) box.get("batch")).nTokens();
       }
+      case "batchAdd" -> {
+        ((PythonLlamaBatch) box.get("batch"))
+            .addSequence(
+                list(step.get(1)).stream().map(PythonInternalsContractTest::i).toList(),
+                i(step.get(2)),
+                (boolean) step.get(3));
+        return "ok";
+      }
+      case "batchDump" -> {
+        List<Object> snapshot =
+            ((StubBatch) ((PythonLlamaBatch) box.get("batch")).batch()).snapshot();
+        return snapshot.subList(1, snapshot.size());
+      }
+      case "vocabType" -> {
+        return ((PythonLlamaModel) box.get("model")).vocabType();
+      }
+      case "ropeScale" -> {
+        return ((PythonLlamaModel) box.get("model")).ropeFreqScaleTrain();
+      }
+      case "getTensor" -> {
+        return ((PythonLlamaModel) box.get("model")).getTensor((String) step.get(1));
+      }
+      case "tokenText" -> {
+        return ((PythonLlamaModel) box.get("model")).tokenGetText(i(step.get(1)));
+      }
+      case "tokenScore" -> {
+        return ((PythonLlamaModel) box.get("model")).tokenGetScore(i(step.get(1)));
+      }
+      case "tokenAttr" -> {
+        return ((PythonLlamaModel) box.get("model")).tokenGetAttr(i(step.get(1)));
+      }
+      case "tokenCls" -> {
+        return ((PythonLlamaModel) box.get("model")).tokenCls();
+      }
+      case "tokenSep" -> {
+        return ((PythonLlamaModel) box.get("model")).tokenSep();
+      }
+      case "tokenNl" -> {
+        return ((PythonLlamaModel) box.get("model")).tokenNl();
+      }
+      case "tokenPrefix" -> {
+        return ((PythonLlamaModel) box.get("model")).tokenPrefix();
+      }
+      case "tokenMiddle" -> {
+        return ((PythonLlamaModel) box.get("model")).tokenMiddle();
+      }
+      case "tokenSuffix" -> {
+        return ((PythonLlamaModel) box.get("model")).tokenSuffix();
+      }
+      case "tokenEot" -> {
+        return ((PythonLlamaModel) box.get("model")).tokenEot();
+      }
+      case "addBos" -> {
+        return ((PythonLlamaModel) box.get("model")).addBosToken();
+      }
+      case "addEos" -> {
+        return ((PythonLlamaModel) box.get("model")).addEosToken();
+      }
+      case "pooling" -> {
+        return ((PythonLlamaContext) box.get("ctx")).poolingType();
+      }
+      case "kvRm" -> {
+        return ((PythonLlamaContext) box.get("ctx"))
+            .kvCacheSeqRm(i(step.get(1)), i(step.get(2)), i(step.get(3)));
+      }
+      case "kvCp" -> {
+        ((PythonLlamaContext) box.get("ctx"))
+            .kvCacheSeqCp(i(step.get(1)), i(step.get(2)), i(step.get(3)), i(step.get(4)));
+        return "ok";
+      }
+      case "kvKeep" -> {
+        ((PythonLlamaContext) box.get("ctx")).kvCacheSeqKeep(i(step.get(1)));
+        return "ok";
+      }
+      case "kvShift" -> {
+        ((PythonLlamaContext) box.get("ctx"))
+            .kvCacheSeqShift(i(step.get(1)), i(step.get(2)), i(step.get(3)), i(step.get(4)));
+        return "ok";
+      }
+      case "stateSize" -> {
+        return ((PythonLlamaContext) box.get("ctx")).getStateSize();
+      }
+      case "encode" -> {
+        ((PythonLlamaContext) box.get("ctx")).encode((PythonLlamaBatch) box.get("batch"));
+        return "ok";
+      }
+      case "nThreads" -> {
+        ((PythonLlamaContext) box.get("ctx")).setNThreads(i(step.get(1)), i(step.get(2)));
+        return "ok";
+      }
+      case "logits" -> {
+        return name(((PythonLlamaContext) box.get("ctx")).getLogits());
+      }
+      case "logitsIth" -> {
+        return name(((PythonLlamaContext) box.get("ctx")).getLogitsIth(i(step.get(1))));
+      }
+      case "emb" -> {
+        return name(((PythonLlamaContext) box.get("ctx")).getEmbeddings());
+      }
+      case "embIth" -> {
+        return name(((PythonLlamaContext) box.get("ctx")).getEmbeddingsIth(i(step.get(1))));
+      }
+      case "embSeq" -> {
+        return name(((PythonLlamaContext) box.get("ctx")).getEmbeddingsSeq(i(step.get(1))));
+      }
+      case "resetTimings" -> {
+        ((PythonLlamaContext) box.get("ctx")).resetTimings();
+        return "ok";
+      }
+      case "printTimings" -> {
+        ((PythonLlamaContext) box.get("ctx")).printTimings();
+        return "ok";
+      }
+      case "deprecated" -> {
+        return deprecated((PythonLlamaContext) box.get("ctx"), (String) step.get(1), step);
+      }
+      case "normalize" -> {
+        return PythonInternals.normalizeEmbedding(
+            list(step.get(1)).stream().map(v -> (Number) v).toList());
+      }
+      case "tda" -> {
+        box.put("tda", new PythonLlamaTokenDataArray(port, i(step.get(1))));
+        return "ok";
+      }
+      case "tdaCopy" -> {
+        List<Object> values = list(step.get(1));
+        float[] logits = new float[values.size()];
+        for (int n = 0; n < values.size(); n++) {
+          logits[n] = ((Number) values.get(n)).floatValue();
+        }
+        ((PythonLlamaTokenDataArray) box.get("tda")).copyLogits(logits);
+        return "ok";
+      }
+      case "tdaDump" -> {
+        PythonLlamaTokenDataArray tda = (PythonLlamaTokenDataArray) box.get("tda");
+        List<Object> ids = new ArrayList<>();
+        for (int v : tda.ids()) ids.add(v);
+        List<Object> logits = new ArrayList<>();
+        for (float v : tda.logits()) logits.add((double) v);
+        List<Object> probs = new ArrayList<>();
+        for (float v : tda.probs()) probs.add((double) v);
+        return List.of(ids, logits, probs, tda.sorted(), tda.size());
+      }
+      case "sctx" -> {
+        box.put("sctx", new PythonLlamaSamplingContext(new PythonLlamaSamplingParams()));
+        return "ok";
+      }
+      case "sctxGrammar" -> {
+        ((PythonLlamaSamplingContext) box.get("sctx"))
+            .setGrammar(new FakeGrammar((List<Object>) box.get("trace")));
+        return "ok";
+      }
+      case "sctxPrev" -> {
+        ((PythonLlamaSamplingContext) box.get("sctx"))
+            .prev()
+            .addAll(list(step.get(1)).stream().map(PythonInternalsContractTest::i).toList());
+        return "ok";
+      }
+      case "sctxReset" -> {
+        ((PythonLlamaSamplingContext) box.get("sctx")).reset();
+        return "ok";
+      }
+      case "sctxCp" -> {
+        PythonLlamaSamplingContext sctx = (PythonLlamaSamplingContext) box.get("sctx");
+        PythonLlamaSamplingContext copy = sctx.cp();
+        box.put("sctx2", copy);
+        copy.prev().add(99);
+        return List.of(
+            new ArrayList<>(sctx.prev()),
+            new ArrayList<>(copy.prev()),
+            copy.params() == sctx.params());
+      }
+      case "sctxLast" -> {
+        return ((PythonLlamaSamplingContext) box.get("sctx")).last();
+      }
+      case "sctxPrevStr" -> {
+        return ((PythonLlamaSamplingContext) box.get("sctx"))
+            .prevStr((PythonLlamaContext) box.get("ctx"), i(step.get(1)));
+      }
+      case "sctxSample" -> {
+        return ((PythonLlamaSamplingContext) box.get("sctx"))
+            .sample((PythonLlamaContext) box.get("ctx"), i(step.get(1)), null);
+      }
+      case "sctxAccept" -> {
+        PythonLlamaSamplingContext sctx = (PythonLlamaSamplingContext) box.get("sctx");
+        sctx.accept((PythonLlamaContext) box.get("ctx"), i(step.get(1)), (boolean) step.get(2));
+        return new ArrayList<>(sctx.prev());
+      }
+      case "custom" -> {
+        box.put("custom", new PythonCustomSampler(port, curP -> {}));
+        return "ok";
+      }
+      case "customGet" -> {
+        return name(((PythonCustomSampler) box.get("custom")).getSampler());
+      }
+      case "typical" -> {
+        if (step.size() > 2) {
+          ((PythonInternalsSampler) box.get("sampler"))
+              .addTypical(((Number) step.get(1)).doubleValue(), ((Number) step.get(2)).longValue());
+        } else {
+          ((PythonInternalsSampler) box.get("sampler"))
+              .addTypical(((Number) step.get(1)).doubleValue());
+        }
+        return null;
+      }
+      case "tempExt" -> {
+        ((PythonInternalsSampler) box.get("sampler"))
+            .addTempExt(
+                ((Number) step.get(1)).doubleValue(),
+                ((Number) step.get(2)).doubleValue(),
+                ((Number) step.get(3)).doubleValue());
+        return null;
+      }
+      case "xtc" -> {
+        ((PythonInternalsSampler) box.get("sampler"))
+            .addXtc(
+                ((Number) step.get(1)).doubleValue(),
+                ((Number) step.get(2)).doubleValue(),
+                ((Number) step.get(3)).longValue(),
+                ((Number) step.get(4)).longValue());
+        return null;
+      }
+      case "topNSigma" -> {
+        ((PythonInternalsSampler) box.get("sampler"))
+            .addTopNSigma(((Number) step.get(1)).doubleValue());
+        return null;
+      }
+      case "mirostat" -> {
+        ((PythonInternalsSampler) box.get("sampler"))
+            .addMirostat(
+                i(step.get(1)),
+                ((Number) step.get(2)).longValue(),
+                ((Number) step.get(3)).doubleValue(),
+                ((Number) step.get(4)).doubleValue(),
+                i(step.get(5)));
+        return null;
+      }
+      case "mirostatV2" -> {
+        ((PythonInternalsSampler) box.get("sampler"))
+            .addMirostatV2(
+                ((Number) step.get(1)).longValue(),
+                ((Number) step.get(2)).doubleValue(),
+                ((Number) step.get(3)).doubleValue());
+        return null;
+      }
+      case "grammarAdd" -> {
+        ((PythonInternalsSampler) box.get("sampler"))
+            .addGrammar(
+                (PythonLlamaModel) box.get("model"),
+                new FakeGrammar((List<Object>) box.get("trace")));
+        return "ok";
+      }
+      case "grammarLazy" -> {
+        ((PythonInternalsSampler) box.get("sampler"))
+            .addGrammarLazyPatterns(
+                (PythonLlamaModel) box.get("model"),
+                new FakeGrammar((List<Object>) box.get("trace")),
+                list(step.get(1)).stream().map(v -> (String) v).toList(),
+                list(step.get(2)).stream().map(PythonInternalsContractTest::i).toList());
+        return "ok";
+      }
+      case "dry" -> {
+        ((PythonInternalsSampler) box.get("sampler"))
+            .addDry(
+                (PythonLlamaModel) box.get("model"),
+                ((Number) step.get(1)).doubleValue(),
+                ((Number) step.get(2)).doubleValue(),
+                i(step.get(3)),
+                i(step.get(4)),
+                list(step.get(5)).stream().map(v -> (String) v).toList());
+        return "ok";
+      }
+      case "logitBias" -> {
+        Map<Integer, Double> bias = new LinkedHashMap<>();
+        for (var entry : map(step.get(2)).entrySet()) {
+          bias.put(i(entry.getKey()), ((Number) entry.getValue()).doubleValue());
+        }
+        ((PythonInternalsSampler) box.get("sampler")).addLogitBias(i(step.get(1)), bias);
+        return "ok";
+      }
+      case "infill" -> {
+        ((PythonInternalsSampler) box.get("sampler"))
+            .addInfill((PythonLlamaModel) box.get("model"));
+        return "ok";
+      }
+      case "addCustom" -> {
+        ((PythonInternalsSampler) box.get("sampler")).addCustom(curP -> {});
+        return "ok";
+      }
+      case "acceptTok" -> {
+        ((PythonInternalsSampler) box.get("sampler")).accept(i(step.get(1)));
+        return "ok";
+      }
+      case "resetSampler" -> {
+        ((PythonInternalsSampler) box.get("sampler")).reset();
+        return "ok";
+      }
+      case "clone" -> {
+        box.put("sampler2", ((PythonInternalsSampler) box.get("sampler")).clone());
+        return "ok";
+      }
       case "greedy" -> {
         ((PythonInternalsSampler) box.get("sampler")).addGreedy();
         return null;
@@ -633,6 +1288,81 @@ class PythonInternalsContractTest {
         return "ok";
       }
       default -> throw new AssertionError("unknown op " + name);
+    }
+  }
+
+  private static Object deprecated(PythonLlamaContext ctx, String name, List<Object> step) {
+    switch (name) {
+      case "set_rng_seed" -> {
+        ctx.setRngSeed(i(step.get(2)));
+        return null;
+      }
+      case "sample_repetition_penalties" -> {
+        ctx.sampleRepetitionPenalties(
+            step.get(2),
+            step.get(3),
+            i(step.get(4)),
+            ((Number) step.get(5)).doubleValue(),
+            ((Number) step.get(6)).doubleValue(),
+            ((Number) step.get(7)).doubleValue());
+        return null;
+      }
+      case "sample_softmax" -> {
+        ctx.sampleSoftmax(step.get(2));
+        return null;
+      }
+      case "sample_top_k" -> {
+        ctx.sampleTopK(step.get(2), i(step.get(3)), i(step.get(4)));
+        return null;
+      }
+      case "sample_top_p" -> {
+        ctx.sampleTopP(step.get(2), ((Number) step.get(3)).doubleValue(), i(step.get(4)));
+        return null;
+      }
+      case "sample_min_p" -> {
+        ctx.sampleMinP(step.get(2), ((Number) step.get(3)).doubleValue(), i(step.get(4)));
+        return null;
+      }
+      case "sample_typical" -> {
+        ctx.sampleTypical(step.get(2), ((Number) step.get(3)).doubleValue(), i(step.get(4)));
+        return null;
+      }
+      case "sample_temp" -> {
+        ctx.sampleTemp(step.get(2), ((Number) step.get(3)).doubleValue());
+        return null;
+      }
+      case "sample_grammar" -> {
+        ctx.sampleGrammar(step.get(2), step.get(3));
+        return null;
+      }
+      case "sample_token_mirostat" -> {
+        ctx.sampleTokenMirostat(
+            step.get(2),
+            ((Number) step.get(3)).doubleValue(),
+            ((Number) step.get(4)).doubleValue(),
+            i(step.get(5)),
+            step.get(6));
+        return null;
+      }
+      case "sample_token_mirostat_v2" -> {
+        ctx.sampleTokenMirostatV2(
+            step.get(2),
+            ((Number) step.get(3)).doubleValue(),
+            ((Number) step.get(4)).doubleValue(),
+            step.get(5));
+        return null;
+      }
+      case "sample_token_greedy" -> {
+        return ctx.sampleTokenGreedy(step.get(2));
+      }
+      case "sample_token" -> {
+        return ctx.sampleToken(step.get(2));
+      }
+      case "grammar_accept_token" -> {
+        ctx.grammarAcceptToken(step.get(2), i(step.get(3)));
+        return null;
+      }
+      default -> throw new AssertionError("unknown deprecated " + name);
     }
   }
 
