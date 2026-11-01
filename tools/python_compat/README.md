@@ -66,3 +66,5 @@ Python 仅用于维护阶段生成对照数据。Java 类库、打包产物及�
 206 组对照比较执行结果、异常消息、错误后的状态和回调时序。map_llama_functions.py 校验 llama.py 的全部 49 个定义项、4 个嵌套函数与 23 处显式异常/警告站点，生成文档和 JSON；其中实现状态来自审计清单。全文件映射在更新 inventory 后生成，详见 [执行链路记录](../../docs/PYTHON_EXECUTION_COMPATIBILITY.md)。
 - ：llama_chat_format.py 剩余 29 个重项（Jinja2/functionary 外层/Llava15/MTMD/chatml）固定源码契约，24 组用例 →  +
 - ：llama_grammar.py 全部 29 项固定源码契约，16 组用例 →  + 
+- ：mtmd_cpp.py 首批 30 项（29 项 ctypes 绑定经 internal.MtmdLibrary JNA + 弃用包装 mtmd_get_audio_bitrate）固定源码契约，2 组用例 →  + 
+- ：mtmd_cpp.py 第二批 35 项（chunk/image_tokens/encode/batch/gen_audio/helper 绑定 + init_from_file/buf 实体包装）固定源码契约，4 组用例 →  + 

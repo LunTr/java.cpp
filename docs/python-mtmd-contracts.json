@@ -1,0 +1,10 @@
+{
+  "source": "llama_cpp/mtmd_cpp.py",
+  "cases": 4,
+  "functions": [
+    "mtmd_get_audio_bitrate",
+    "mtmd_helper_bitmap_init_from_file",
+    "mtmd_helper_bitmap_init_from_buf"
+  ],
+  "note": "ctypes binding declarations are bound via internal.MtmdLibrary JNA; this contract covers the real-bodied deprecation wrapper."
+}

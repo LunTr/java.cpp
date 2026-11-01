@@ -48,6 +48,12 @@ public final class NativeLoader {
     return new NativeLibraries(directory, llama, ggml, base);
   }
 
+  /** Loads the optional mtmd.dll; returns null when the directory has no multimodal library. */
+  public static MtmdLibrary loadMtmd(Path directory) {
+    Path file = directory.resolve("mtmd.dll");
+    return Files.isRegularFile(file) ? bind(file, MtmdLibrary.class) : null;
+  }
+
   private static <T extends Library> T bind(Path file, Class<T> type) {
     try {
       NativeLibrary library = NativeLibrary.getInstance(file.toString(), OPTIONS);

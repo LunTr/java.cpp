@@ -110,14 +110,14 @@ Java.cpp 与 bytedeco/JavaCPP 为独立项目。
 | 统计项 | 数量 |
 |---|---:|
 | Python 去重函数/方法总数 | 751 |
-| 已有完整同名 JNA 绑定 | 115 |
-| 已覆盖独立能力（含聊天、缓存、处理器及 Llama 辅助方法） | 382 |
-| 本清单打勾项合计 | 497 / 751（66.18%） |
+| 已有完整同名 JNA 绑定 | 177 |
+| 已覆盖独立能力（含聊天、缓存、处理器及 Llama 辅助方法） | 385 |
+| 本清单打勾项合计 | 562 / 751（74.83%） |
 | 部分覆盖，保持未勾选 | 6 |
-| 当前缺少明确对应迁移项 | 248 |
+| 当前缺少明确对应迁移项 | 183 |
 | 已通过 Python 全行为、报错、警告一致性验收 | **0** |
 
-原版 `llama_cpp.py` 共 256 项，其中 255 个公开 C API 函数和 1 个警告辅助函数。Java 已声明其中 117 个同名入口；上下文结构相关 2 项列为部分覆盖，其余 115 项标记绑定完成。Java 另有 9 个 ggml 补充入口，单独提供设备枚举等能力，不增加 Python 迁移计数。
+原版 `llama_cpp.py` 共 256 项，其中 255 个公开 C API 函数和 1 个警告辅助函数。Java 已声明其中 179 个同名入口；上下文结构相关 2 项列为部分覆盖，其余 177 项标记绑定完成。Java 另有 9 个 ggml 补充入口，单独提供设备枚举等能力，不增加 Python 迁移计数。
 
 高层 `Llama` 有 31 个普通公开命名成员（含 4 个属性 getter），其中 29 项已有查询或窄范围辅助能力；构造、生成、聊天、分词等继续逐项对照。构造器、`__call__`、析构、私有辅助成员在下表另行完整列出。
 
@@ -159,7 +159,7 @@ completionConfig 对 null、0、负数按剩余上下文处理，并截断过大
 
 固定原版完整函数体及 CPython repr 产生 10,376 条对照样例，比较 UTF-16 内容（包括未配对代理字符）、空值、角色过滤、异常类别/原文、字典顺序、debug 日志、数值和 Unicode 边界及出错前已产出的流式块。来源的 25 个文件均重新验证 Git blob SHA-1 / SHA-256，并用 AST 复核 786 个定义、751 个去重项。生成脚本已纳入版本控制，见 [本批验证记录](docs/PYTHON_CHAT_COMPATIBILITY.md)。
 
-清单尚未打勾 254 项，其中部分覆盖 6 项、尚无对应实现 248 项。所有 751 项继续保留全输入一致性待验收状态。
+清单尚未打勾 189 项，其中部分覆盖 6 项、尚无对应实现 183 项。所有 751 项继续保留全输入一致性待验收状态。
 
 ### RAM 缓存、状态与处理器逐项移植
 
@@ -905,73 +905,73 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 - [ ] [`llama_cpp.llava_cpp.clip_model_load`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llava_cpp.py#L146) — 未迁移。
 - [ ] [`llama_cpp.llava_cpp.clip_free`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llava_cpp.py#L154) — 未迁移。
 
-#### `llama_cpp/mtmd_cpp.py` — 87 项，勾选 0，部分 0
+#### `llama_cpp/mtmd_cpp.py` — 87 项，勾选 65，部分 0
 
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_default_marker`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L480) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_context_params_default`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L487) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_init_from_file`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L500) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_free`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L512) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_decode_use_non_causal`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L521) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_decode_use_mrope`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L530) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_support_vision`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L537) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_support_audio`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L544) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_get_audio_sample_rate`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L551) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_get_marker`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L558) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_get_audio_bitrate`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L564) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_bitmap_init`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L577) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_bitmap_init_from_audio`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L591) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_bitmap_free`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L602) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_bitmap_get_nx`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L607) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_bitmap_get_ny`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L614) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_bitmap_get_data`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L621) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_bitmap_get_n_bytes`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L628) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_bitmap_is_audio`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L635) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_bitmap_get_id`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L642) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_bitmap_set_id`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L649) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_bitmap_set_mergeable`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L657) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_bitmap_init_lazy`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L671) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_input_chunks_init`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L684) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_input_chunks_free`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L689) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_input_chunks_size`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L694) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_input_chunks_get`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L703) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_tokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L724) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_tokenize_from_parts`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L756) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_get_n_tokens`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L770) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_get_type`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L775) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_get_tokens_text`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L784) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_get_tokens_image`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L795) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_get_id`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L802) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_get_n_pos`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L813) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_copy`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L822) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_free`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L829) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_get_placeholder`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L841) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_save`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L859) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_load`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L877) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_image_tokens_get_n_tokens`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L890) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_image_tokens_get_nx`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L898) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_image_tokens_get_ny`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L906) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_image_tokens_get_id`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L913) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_image_tokens_get_n_pos`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L924) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_image_tokens_get_decoder_pos`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L936) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_encode`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L952) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_encode_chunk`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L963) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_get_output_embd`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L970) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_batch_init`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L977) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_batch_free`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L984) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_batch_add_chunk`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L993) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_batch_encode`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1004) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_batch_get_output_embd`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1015) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_get_cap_from_file`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1026) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_gen_audio_get_info`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1037) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_gen_inp_default`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1049) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_gen_audio_process`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1063) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_test_create_input_chunks`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1075) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_helper_support_video`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1091) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_helper_init_opt_default`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1098) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_helper_bitmap_init_from_file_wrapper`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1113) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_helper_bitmap_init_from_file`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1124) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_helper_bitmap_init_from_buf_wrapper`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1149) — 未迁移。
-- [ ] [`llama_cpp.mtmd_cpp.mtmd_helper_bitmap_init_from_buf`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1159) — 未迁移。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_default_marker`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L480) — 绑定完成 → `internal.MtmdLibrary.mtmd_default_marker`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_context_params_default`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L487) — 绑定完成 → `internal.MtmdLibrary.mtmd_context_params_default`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_init_from_file`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L500) — 绑定完成 → `internal.MtmdLibrary.mtmd_init_from_file`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_free`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L512) — 绑定完成 → `internal.MtmdLibrary.mtmd_free`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_decode_use_non_causal`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L521) — 绑定完成 → `internal.MtmdLibrary.mtmd_decode_use_non_causal`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_decode_use_mrope`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L530) — 绑定完成 → `internal.MtmdLibrary.mtmd_decode_use_mrope`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_support_vision`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L537) — 绑定完成 → `internal.MtmdLibrary.mtmd_support_vision`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_support_audio`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L544) — 绑定完成 → `internal.MtmdLibrary.mtmd_support_audio`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_get_audio_sample_rate`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L551) — 绑定完成 → `internal.MtmdLibrary.mtmd_get_audio_sample_rate`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_get_marker`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L558) — 绑定完成 → `internal.MtmdLibrary.mtmd_get_marker`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_get_audio_bitrate`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L564) — 能力已覆盖 → `compat.python.PythonMtmdCpp.getAudioBitrate`；已逐句移植固定原版函数体：DeprecationWarning 原文与 mtmd_get_audio_sample_rate 委托调用经原版对照。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_bitmap_init`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L577) — 绑定完成 → `internal.MtmdLibrary.mtmd_bitmap_init`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_bitmap_init_from_audio`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L591) — 绑定完成 → `internal.MtmdLibrary.mtmd_bitmap_init_from_audio`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_bitmap_free`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L602) — 绑定完成 → `internal.MtmdLibrary.mtmd_bitmap_free`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_bitmap_get_nx`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L607) — 绑定完成 → `internal.MtmdLibrary.mtmd_bitmap_get_nx`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_bitmap_get_ny`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L614) — 绑定完成 → `internal.MtmdLibrary.mtmd_bitmap_get_ny`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_bitmap_get_data`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L621) — 绑定完成 → `internal.MtmdLibrary.mtmd_bitmap_get_data`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_bitmap_get_n_bytes`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L628) — 绑定完成 → `internal.MtmdLibrary.mtmd_bitmap_get_n_bytes`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_bitmap_is_audio`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L635) — 绑定完成 → `internal.MtmdLibrary.mtmd_bitmap_is_audio`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_bitmap_get_id`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L642) — 绑定完成 → `internal.MtmdLibrary.mtmd_bitmap_get_id`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_bitmap_set_id`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L649) — 绑定完成 → `internal.MtmdLibrary.mtmd_bitmap_set_id`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_bitmap_set_mergeable`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L657) — 绑定完成 → `internal.MtmdLibrary.mtmd_bitmap_set_mergeable`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_bitmap_init_lazy`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L671) — 绑定完成 → `internal.MtmdLibrary.mtmd_bitmap_init_lazy`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_input_chunks_init`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L684) — 绑定完成 → `internal.MtmdLibrary.mtmd_input_chunks_init`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_input_chunks_free`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L689) — 绑定完成 → `internal.MtmdLibrary.mtmd_input_chunks_free`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_input_chunks_size`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L694) — 绑定完成 → `internal.MtmdLibrary.mtmd_input_chunks_size`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_input_chunks_get`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L703) — 绑定完成 → `internal.MtmdLibrary.mtmd_input_chunks_get`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_tokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L724) — 绑定完成 → `internal.MtmdLibrary.mtmd_tokenize`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_tokenize_from_parts`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L756) — 绑定完成 → `internal.MtmdLibrary.mtmd_tokenize_from_parts`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_get_n_tokens`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L770) — 绑定完成 → `internal.MtmdLibrary.mtmd_input_chunk_get_n_tokens`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_get_type`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L775) — 绑定完成 → `internal.MtmdLibrary.mtmd_input_chunk_get_type`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_get_tokens_text`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L784) — 绑定完成 → `internal.MtmdLibrary.mtmd_input_chunk_get_tokens_text`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_get_tokens_image`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L795) — 绑定完成 → `internal.MtmdLibrary.mtmd_input_chunk_get_tokens_image`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_get_id`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L802) — 绑定完成 → `internal.MtmdLibrary.mtmd_input_chunk_get_id`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_get_n_pos`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L813) — 绑定完成 → `internal.MtmdLibrary.mtmd_input_chunk_get_n_pos`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_copy`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L822) — 绑定完成 → `internal.MtmdLibrary.mtmd_input_chunk_copy`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_free`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L829) — 绑定完成 → `internal.MtmdLibrary.mtmd_input_chunk_free`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_get_placeholder`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L841) — 绑定完成 → `internal.MtmdLibrary.mtmd_input_chunk_get_placeholder`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_save`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L859) — 绑定完成 → `internal.MtmdLibrary.mtmd_input_chunk_save`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_input_chunk_load`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L877) — 绑定完成 → `internal.MtmdLibrary.mtmd_input_chunk_load`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_image_tokens_get_n_tokens`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L890) — 绑定完成 → `internal.MtmdLibrary.mtmd_image_tokens_get_n_tokens`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_image_tokens_get_nx`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L898) — 绑定完成 → `internal.MtmdLibrary.mtmd_image_tokens_get_nx`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_image_tokens_get_ny`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L906) — 绑定完成 → `internal.MtmdLibrary.mtmd_image_tokens_get_ny`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_image_tokens_get_id`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L913) — 绑定完成 → `internal.MtmdLibrary.mtmd_image_tokens_get_id`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_image_tokens_get_n_pos`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L924) — 绑定完成 → `internal.MtmdLibrary.mtmd_image_tokens_get_n_pos`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_image_tokens_get_decoder_pos`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L936) — 绑定完成 → `internal.MtmdLibrary.mtmd_image_tokens_get_decoder_pos`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_encode`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L952) — 绑定完成 → `internal.MtmdLibrary.mtmd_encode`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_encode_chunk`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L963) — 绑定完成 → `internal.MtmdLibrary.mtmd_encode_chunk`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_get_output_embd`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L970) — 绑定完成 → `internal.MtmdLibrary.mtmd_get_output_embd`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_batch_init`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L977) — 绑定完成 → `internal.MtmdLibrary.mtmd_batch_init`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_batch_free`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L984) — 绑定完成 → `internal.MtmdLibrary.mtmd_batch_free`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_batch_add_chunk`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L993) — 绑定完成 → `internal.MtmdLibrary.mtmd_batch_add_chunk`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_batch_encode`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1004) — 绑定完成 → `internal.MtmdLibrary.mtmd_batch_encode`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_batch_get_output_embd`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1015) — 绑定完成 → `internal.MtmdLibrary.mtmd_batch_get_output_embd`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_get_cap_from_file`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1026) — 绑定完成 → `internal.MtmdLibrary.mtmd_get_cap_from_file`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_gen_audio_get_info`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1037) — 绑定完成 → `internal.MtmdLibrary.mtmd_gen_audio_get_info`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_gen_inp_default`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1049) — 绑定完成 → `internal.MtmdLibrary.mtmd_gen_inp_default`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_gen_audio_process`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1063) — 绑定完成 → `internal.MtmdLibrary.mtmd_gen_audio_process`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_test_create_input_chunks`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1075) — 绑定完成 → `internal.MtmdLibrary.mtmd_test_create_input_chunks`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_helper_support_video`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1091) — 绑定完成 → `internal.MtmdLibrary.mtmd_helper_support_video`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_helper_init_opt_default`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1098) — 绑定完成 → `internal.MtmdLibrary.mtmd_helper_init_opt_default`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_helper_bitmap_init_from_file_wrapper`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1113) — 绑定完成 → `internal.MtmdLibrary.mtmd_helper_bitmap_init_from_file_wrapper`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_helper_bitmap_init_from_file`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1124) — 能力已覆盖 → `compat.python.PythonMtmdCpp.bitmapInitFromFile`；已逐句移植固定原版函数体：opt is None 时先取 mtmd_helper_init_opt_default 再调 wrapper 并返回 .bitmap，默认/自定义两路经原版对照。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_helper_bitmap_init_from_buf_wrapper`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1149) — 绑定完成 → `internal.MtmdLibrary.mtmd_helper_bitmap_init_from_buf_wrapper`；已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实。
+- [x] [`llama_cpp.mtmd_cpp.mtmd_helper_bitmap_init_from_buf`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1159) — 能力已覆盖 → `compat.python.PythonMtmdCpp.bitmapInitFromBuf`；已逐句移植固定原版函数体：opt is None 时先取 mtmd_helper_init_opt_default 再调 wrapper 并返回 .bitmap，默认/自定义两路经原版对照。
 - [ ] [`llama_cpp.mtmd_cpp.mtmd_helper_get_n_tokens`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1177) — 未迁移。
 - [ ] [`llama_cpp.mtmd_cpp.mtmd_helper_get_n_pos`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1186) — 未迁移。
 - [ ] [`llama_cpp.mtmd_cpp.mtmd_helper_image_get_decoder_pos`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/mtmd_cpp.py#L1198) — 未迁移。

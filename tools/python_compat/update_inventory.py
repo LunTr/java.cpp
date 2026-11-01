@@ -673,6 +673,23 @@ for row in audit["functions"]:
     if row["file"] == "llama_cpp/llama_cpp.py" and row["qualname"] in declared and row["status"] == "missing":
         row.update(status="bound", checked=True, java="internal.LlamaLibrary." + row["qualname"],
                    reason="已声明 b11669 Windows x64 JNA 入口，完整 native verify 已验证加载；Python vendor 同版本行为对照继续核实", pythonExactParity="not-certified")
+mtmdDeclared = {line.split("(")[0].split()[-1] for line in (root / "src/Java_Cpp/io/github/yaulun/javacpp/internal/MtmdLibrary.java").read_text(encoding="utf-8").splitlines() if " mtmd_" in line and "(" in line}
+for row in audit["functions"]:
+    if row["file"] == "llama_cpp/mtmd_cpp.py" and row["qualname"] in mtmdDeclared and row["status"] == "missing":
+        row.update(status="bound", checked=True, java="internal.MtmdLibrary." + row["qualname"],
+                   reason="已声明 pinned mtmd.h JNA 入口并支持 mtmd.dll 可选加载；Python vendor 同版本行为对照继续核实", pythonExactParity="not-certified")
+    if row["file"] == "llama_cpp/mtmd_cpp.py" and row["qualname"] == "mtmd_get_audio_bitrate" and row["status"] == "missing":
+        row.update(status="covered", checked=True, java="compat.python.PythonMtmdCpp.getAudioBitrate",
+                   reason="已逐句移植固定原版函数体：DeprecationWarning 原文与 mtmd_get_audio_sample_rate 委托调用经原版对照",
+                   pythonExactParity="not-certified", contractEvidence="docs/python-mtmd-contracts.json")
+mtmdHelpers = {"mtmd_helper_bitmap_init_from_file": "bitmapInitFromFile",
+               "mtmd_helper_bitmap_init_from_buf": "bitmapInitFromBuf"}
+for row in audit["functions"]:
+    if row["file"] == "llama_cpp/mtmd_cpp.py" and row["qualname"] in mtmdHelpers and row["status"] == "missing":
+        row.update(status="covered", checked=True,
+                   java="compat.python.PythonMtmdCpp." + mtmdHelpers[row["qualname"]],
+                   reason="已逐句移植固定原版函数体：opt is None 时先取 mtmd_helper_init_opt_default 再调 wrapper 并返回 .bitmap，默认/自定义两路经原版对照",
+                   pythonExactParity="not-certified", contractEvidence="docs/python-mtmd-contracts.json")
 for row in audit["functions"]:
     if row["file"] != "llama_cpp/llama_cache.py": continue
     owner, method = row["qualname"].split(".")
