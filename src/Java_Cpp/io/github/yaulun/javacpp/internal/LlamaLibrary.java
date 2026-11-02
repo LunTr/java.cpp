@@ -16,6 +16,16 @@ public interface LlamaLibrary extends Library {
     byte invoke(float progress, Pointer userData);
   }
 
+  /** User tensor-data callback for llama_model_init_from_user. */
+  interface SetTensorDataCallback extends Callback {
+    void invoke(Pointer tensor, Pointer userData);
+  }
+
+  /** Native C bool return; nonzero asks llama.cpp to abort evaluation. */
+  interface AbortCallback extends Callback {
+    byte invoke(Pointer userData);
+  }
+
   String llama_version();
 
   String llama_print_system_info();
@@ -281,4 +291,206 @@ public interface LlamaLibrary extends Library {
       byte addAssistant,
       byte[] buffer,
       int capacity);
+
+  LlamaModelQuantizeParams.ByValue llama_model_quantize_default_params();
+
+  String llama_flash_attn_type_name(int flashAttnType);
+
+  String llama_load_mode_name(int loadMode);
+
+  int llama_load_mode_from_str(String value);
+
+  String llama_ftype_name(int ftype);
+
+  void llama_backend_free();
+
+  Pointer llama_load_model_from_file(String pathModel, LlamaModelParams.ByValue params);
+
+  Pointer llama_model_load_from_splits(
+      String[] paths, long nPaths, LlamaModelParams.ByValue params);
+
+  Pointer llama_model_load_from_file_ptr(Pointer file, LlamaModelParams.ByValue params);
+
+  void llama_model_save_to_file(Pointer model, String pathModel);
+
+  void llama_free_model(Pointer model);
+
+  Pointer llama_model_init_from_user(
+      Pointer metadata,
+      SetTensorDataCallback setTensorData,
+      Pointer setTensorDataUd,
+      LlamaModelParams.ByValue params);
+
+  Pointer llama_new_context_with_model(Pointer model, LlamaContextParams.ByValue params);
+
+  long llama_time_us();
+
+  long llama_max_tensor_buft_overrides();
+
+  byte llama_supports_mmap();
+
+  byte llama_supports_mlock();
+
+  byte llama_supports_rpc();
+
+  int llama_n_ctx_seq(Pointer context);
+
+  int llama_n_ubatch(Pointer context);
+
+  int llama_n_seq_max(Pointer context);
+
+  int llama_n_rs_seq(Pointer context);
+
+  int llama_n_ctx_train(Pointer model);
+
+  int llama_n_embd(Pointer model);
+
+  int llama_n_layer(Pointer model);
+
+  int llama_n_head(Pointer model);
+
+  int llama_n_vocab(Pointer vocab);
+
+  Pointer llama_get_model(Pointer context);
+
+  int llama_model_rope_type(Pointer model);
+
+  int llama_model_n_embd_inp(Pointer model);
+
+  int llama_model_n_embd_out(Pointer model);
+
+  int llama_model_n_layer_nextn(Pointer model);
+
+  int llama_model_n_head(Pointer model);
+
+  int llama_model_n_head_kv(Pointer model);
+
+  int llama_model_n_swa(Pointer model);
+
+  int llama_model_n_cls_out(Pointer model);
+
+  String llama_model_cls_label(Pointer model, int i);
+
+  String llama_model_meta_key_str(int key);
+
+  int llama_model_ftype(Pointer model);
+
+  byte llama_model_has_encoder(Pointer model);
+
+  byte llama_model_has_decoder(Pointer model);
+
+  int llama_model_decoder_start_token(Pointer model);
+
+  byte llama_model_is_diffusion(Pointer model);
+
+  int llama_model_quantize(String fnameInp, String fnameOut, LlamaModelQuantizeParams params);
+
+  Pointer llama_adapter_lora_init_from_file_ptr(Pointer model, Pointer file);
+
+  int llama_adapter_meta_val_str(Pointer adapter, String key, byte[] buf, long bufSize);
+
+  int llama_adapter_meta_count(Pointer adapter);
+
+  int llama_adapter_meta_key_by_index(Pointer adapter, int i, byte[] buf, long bufSize);
+
+  int llama_adapter_meta_val_str_by_index(Pointer adapter, int i, byte[] buf, long bufSize);
+
+  long llama_adapter_get_alora_n_invocation_tokens(Pointer adapter);
+
+  Pointer llama_adapter_get_alora_invocation_tokens(Pointer adapter);
+
+  int llama_set_adapter_cvec(
+      Pointer context, float[] data, long len, int nEmbd, int ilStart, int ilEnd);
+
+  void llama_memory_seq_div(Pointer memory, int seqId, int p0, int p1, int d);
+
+  int llama_memory_seq_pos_min(Pointer memory, int seqId);
+
+  byte llama_memory_can_shift(Pointer memory);
+
+  long llama_get_state_size(Pointer context);
+
+  long llama_copy_state_data(Pointer context, byte[] destination);
+
+  long llama_set_state_data(Pointer context, byte[] source);
+
+  byte llama_state_load_file(
+      Pointer context,
+      String pathSession,
+      int[] tokensOut,
+      long nTokenCapacity,
+      long[] nTokenCountOut);
+
+  byte llama_load_session_file(
+      Pointer context,
+      String pathSession,
+      int[] tokensOut,
+      long nTokenCapacity,
+      long[] nTokenCountOut);
+
+  byte llama_state_save_file(Pointer context, String pathSession, int[] tokens, long nTokenCount);
+
+  byte llama_save_session_file(Pointer context, String pathSession, int[] tokens, long nTokenCount);
+
+  long llama_state_seq_get_size(Pointer context, int seqId);
+
+  long llama_state_seq_get_data(Pointer context, byte[] destination, long size, int seqId);
+
+  long llama_state_seq_set_data(Pointer context, byte[] source, long size, int destSeqId);
+
+  long llama_state_seq_save_file(
+      Pointer context, String filepath, int seqId, int[] tokens, long nTokenCount);
+
+  long llama_state_seq_load_file(
+      Pointer context,
+      String filepath,
+      int destSeqId,
+      int[] tokensOut,
+      long nTokenCapacity,
+      long[] nTokenCountOut);
+
+  long llama_state_seq_get_size_ext(Pointer context, int seqId, int flags);
+
+  long llama_state_seq_get_data_ext(
+      Pointer context, byte[] destination, long size, int seqId, int flags);
+
+  long llama_state_seq_set_data_ext(
+      Pointer context, byte[] source, long size, int destSeqId, int flags);
+
+  LlamaBatch llama_batch_get_one(int[] tokens, int nTokens);
+
+  int llama_batch_ext_add(Pointer batch, int seqId);
+
+  int llama_batch_ext_add_embd(Pointer batch, int seqId, LlamaEmbd.ByValue embd);
+
+  byte llama_batch_ext_add_seq(Pointer batch, int idx, int seqId);
+
+  byte llama_batch_ext_set_embd_token(Pointer batch, int idx, LlamaEmbd.ByValue embd);
+
+  byte llama_batch_ext_set_embd_state(Pointer batch, int idx, LlamaEmbd.ByValue embd);
+
+  byte llama_batch_ext_set_output_embd(Pointer batch, int idx, byte value);
+
+  int llama_n_threads(Pointer context);
+
+  int llama_n_threads_batch(Pointer context);
+
+  void llama_set_embeddings(Pointer context, byte embeddings);
+
+  void llama_set_causal_attn(Pointer context, byte causalAttn);
+
+  byte llama_get_causal_attn(Pointer context);
+
+  void llama_set_warmup(Pointer context, byte warmup);
+
+  void llama_set_abort_callback(
+      Pointer context, AbortCallback abortCallback, Pointer abortCallbackData);
+
+  void llama_synchronize(Pointer context);
+
+  int llama_get_sampled_token_ith(Pointer context, int i);
+
+  Pointer llama_get_sampled_probs_ith(Pointer context, int i);
+
+  int llama_get_sampled_probs_count_ith(Pointer context, int i);
 }

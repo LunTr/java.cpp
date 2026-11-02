@@ -572,7 +572,7 @@ public final class PythonNativeInternals implements PythonInternalsPort {
   }
 
   /** llama_sampler_i with the callback fields used by CustomSampler; optional slots stay NULL. */
-  public static final class NativeSamplerI extends com.sun.jna.Structure {
+  private static final class NativeSamplerI extends com.sun.jna.Structure {
     public Pointer name;
     public Pointer accept;
     public com.sun.jna.Callback apply;
@@ -599,7 +599,7 @@ public final class PythonNativeInternals implements PythonInternalsPort {
   }
 
   /** llama_sampler { iface, ctx }. */
-  public static final class NativeLlamaSampler extends com.sun.jna.Structure {
+  private static final class NativeLlamaSampler extends com.sun.jna.Structure {
     public Pointer iface;
     public Pointer ctx;
 

@@ -34,7 +34,8 @@ class PythonChatFullContractTest {
                       String actual = Base64.getEncoder().encodeToString(out.toByteArray());
                       if (!parts[2].equals(actual)) {
                         java.nio.file.Files.write(
-                            java.nio.file.Path.of(".verify/actual-" + i + ".b64"), actual.getBytes());
+                            java.nio.file.Path.of(".verify/actual-" + i + ".b64"),
+                            actual.getBytes());
                         fail("case " + i + " differs");
                       }
                     }));
@@ -135,7 +136,8 @@ class PythonChatFullContractTest {
     }
 
     public Object initFromFile(byte[] p, Object m, Object par) {
-      trace.add(List.of("mtmd_init_from_file", "hex:" + HexFormat.of().formatHex(p), "model", "params"));
+      trace.add(
+          List.of("mtmd_init_from_file", "hex:" + HexFormat.of().formatHex(p), "model", "params"));
       return new Handle("mtmd_init_from_file");
     }
 
@@ -154,8 +156,7 @@ class PythonChatFullContractTest {
 
     public Object bitmapInitFromBuf(Object c, byte[] d, int n, boolean s) {
       throw io.github.yaulun.javacpp.python.PythonValues.error(
-          PythonErrorType.TYPE_ERROR,
-          "unsupported operand type(s) for *: 'function' and 'int'");
+          PythonErrorType.TYPE_ERROR, "unsupported operand type(s) for *: 'function' and 'int'");
     }
 
     public Object inputText() {
@@ -168,7 +169,14 @@ class PythonChatFullContractTest {
     }
 
     public int mtmdTokenize(Object c, Object ch, Object t, Object b, int n) {
-      trace.add(List.of("mtmd_tokenize", ((Handle) c).name(), ((Handle) ch).name(), "input_text", "bmap_arr", n));
+      trace.add(
+          List.of(
+              "mtmd_tokenize",
+              ((Handle) c).name(),
+              ((Handle) ch).name(),
+              "input_text",
+              "bmap_arr",
+              n));
       return 0;
     }
 
@@ -205,7 +213,8 @@ class PythonChatFullContractTest {
       return 0;
     }
 
-    public int evalChunkSingle(Object a, Object b, Object c, int p, int s, int n, boolean l, Object o) {
+    public int evalChunkSingle(
+        Object a, Object b, Object c, int p, int s, int n, boolean l, Object o) {
       return 0;
     }
 
@@ -246,7 +255,9 @@ class PythonChatFullContractTest {
     }
 
     private static byte[] bytes(Object v) {
-      return v == null ? "TXT".getBytes(StandardCharsets.UTF_8) : HexFormat.of().parseHex((String) v);
+      return v == null
+          ? "TXT".getBytes(StandardCharsets.UTF_8)
+          : HexFormat.of().parseHex((String) v);
     }
 
     public Object tokenEos() {
@@ -329,7 +340,8 @@ class PythonChatFullContractTest {
     public Object fromJsonSchema(String s, boolean v) {
       trace.add(List.of("from_json_schema", s, Map.of("verbose", v)));
       if ((boolean) kase.getOrDefault("schemaFail", false))
-        throw io.github.yaulun.javacpp.python.PythonValues.error(PythonErrorType.VALUE_ERROR, "bad schema");
+        throw io.github.yaulun.javacpp.python.PythonValues.error(
+            PythonErrorType.VALUE_ERROR, "bad schema");
       return new Handle("schema_grammar");
     }
 
@@ -367,62 +379,95 @@ class PythonChatFullContractTest {
     try {
       return a.call();
     } catch (PythonException e) {
-      return dict("error", e.type().pythonName(), "message", e.getMessage() == null ? "" : e.getMessage());
+      return dict(
+          "error", e.type().pythonName(), "message", e.getMessage() == null ? "" : e.getMessage());
     } catch (Exception e) {
-      return dict("error", e.getClass().getSimpleName(), "message", e.getMessage() == null ? "" : e.getMessage());
+      return dict(
+          "error",
+          e.getClass().getSimpleName(),
+          "message",
+          e.getMessage() == null ? "" : e.getMessage());
     }
   }
 
   @SuppressWarnings("unchecked")
-  private static Object run(Map<String, Object> kase, List<Object> step, Map<String, Object> box,
-      Stubs stubs, List<Object> trace) {
+  private static Object run(
+      Map<String, Object> kase,
+      List<Object> step,
+      Map<String, Object> box,
+      Stubs stubs,
+      List<Object> trace) {
     String name = (String) step.get(0);
     try {
       switch (name) {
         case "j2parse" -> {
           List<Object> t = trace;
-          var p = new PythonChatHandlersFull.JinjaParser() {
-            public void skip(int n) { t.add(List.of("skip", n)); }
-            public Object parseStatements(Object e, boolean d) {
-              t.add(List.of("parse_statements", e, d));
-              return "nodes";
-            }
-          };
+          var p =
+              new PythonChatHandlersFull.JinjaParser() {
+                public void skip(int n) {
+                  t.add(List.of("skip", n));
+                }
+
+                public Object parseStatements(Object e, boolean d) {
+                  t.add(List.of("parse_statements", e, d));
+                  return "nodes";
+                }
+              };
           return PythonChatHandlersFull.ignoreGenerationTagsParse(p);
         }
         case "j2init" -> {
-          box.put("fmt", new PythonChatHandlersFull.Jinja2ChatFormatter(
-              stubs, (String) step.get(1), "EOS", "BOS", (boolean) step.get(2), list(step.get(3))));
+          box.put(
+              "fmt",
+              new PythonChatHandlersFull.Jinja2ChatFormatter(
+                  stubs,
+                  (String) step.get(1),
+                  "EOS",
+                  "BOS",
+                  (boolean) step.get(2),
+                  list(step.get(3))));
           return "ok";
         }
         case "j2call" -> {
-          var r = ((PythonChatHandlersFull.Jinja2ChatFormatter) box.get("fmt")).call(map(step.get(1)));
+          var r =
+              ((PythonChatHandlersFull.Jinja2ChatFormatter) box.get("fmt")).call(map(step.get(1)));
           return show(r);
         }
         case "j2handler" -> {
           return ((PythonChatHandlersFull.Jinja2ChatFormatter) box.get("fmt")).toChatHandler();
         }
         case "fnV1" -> {
-          return show(PythonChatHandlersFull.functionaryChatHandler(stubs, stubs, stubs, map(step.get(1))));
+          return show(
+              PythonChatHandlersFull.functionaryChatHandler(stubs, stubs, stubs, map(step.get(1))));
         }
         case "fnV2" -> {
-          PythonChatHandlersFull.FunctionaryV2 v2 = (PythonChatHandlersFull.FunctionaryV2)
-              box.computeIfAbsent("v2", k -> new PythonChatHandlersFull.FunctionaryV2(
-                  "v2", stubs, stubs, stubs, new Handle("tokenizer")));
+          PythonChatHandlersFull.FunctionaryV2 v2 =
+              (PythonChatHandlersFull.FunctionaryV2)
+                  box.computeIfAbsent(
+                      "v2",
+                      k ->
+                          new PythonChatHandlersFull.FunctionaryV2(
+                              "v2", stubs, stubs, stubs, new Handle("tokenizer")));
           return show(v2.handle(map(step.get(1))));
         }
         case "lvinit", "mtinit" -> {
           boolean lv = name.equals("lvinit");
           PythonChatHandlersFull.MediaHandler h = new PythonChatHandlersFull.MediaHandler();
-          PythonChatHandlersFull.mediaInit(h, (String) step.get(1), (boolean) step.get(2),
-              lv ? null : (Boolean) step.get(3), (boolean) kase.getOrDefault("exists", true));
+          PythonChatHandlersFull.mediaInit(
+              h,
+              (String) step.get(1),
+              (boolean) step.get(2),
+              lv ? null : (Boolean) step.get(3),
+              (boolean) kase.getOrDefault("exists", true));
           box.put("h", h);
           box.put("lv", lv);
           return "ok";
         }
         case "initCtx" -> {
-          PythonChatHandlersFull.initMtmdContext(stubs, stubs,
-              (PythonChatHandlersFull.MediaHandler) box.get("h"), (boolean) box.get("lv"));
+          PythonChatHandlersFull.initMtmdContext(
+              stubs,
+              stubs,
+              (PythonChatHandlersFull.MediaHandler) box.get("h"),
+              (boolean) box.get("lv"));
           return "ok";
         }
         case "mtmdFree" -> {
@@ -436,45 +481,68 @@ class PythonChatFullContractTest {
           return show(PythonChatHandlersFull.loadImageStatic((String) step.get(1)));
         }
         case "bitmap" -> {
-          return show(PythonChatHandlersFull.createBitmapFromBytes(stubs,
-              (PythonChatHandlersFull.MediaHandler) box.get("h"),
-              HexFormat.of().parseHex((String) step.get(1))));
+          return show(
+              PythonChatHandlersFull.createBitmapFromBytes(
+                  stubs,
+                  (PythonChatHandlersFull.MediaHandler) box.get("h"),
+                  HexFormat.of().parseHex((String) step.get(1))));
         }
         case "getTmpl" -> {
           return PythonChatHandlersFull.getChatTemplate(stubs, "MTMDChatHandler");
         }
         case "lvCall" -> {
-          return show(PythonChatHandlersFull.mediaCall(stubs, stubs, stubs,
-              (PythonChatHandlersFull.MediaHandler) box.get("h"), "llava", "TPL",
-              "A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions.",
-              map(step.get(1))));
+          return show(
+              PythonChatHandlersFull.mediaCall(
+                  stubs,
+                  stubs,
+                  stubs,
+                  (PythonChatHandlersFull.MediaHandler) box.get("h"),
+                  "llava",
+                  "TPL",
+                  "A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions.",
+                  map(step.get(1))));
         }
         case "mtCall" -> {
-          return show(PythonChatHandlersFull.mediaCall(stubs, stubs, stubs,
-              (PythonChatHandlersFull.MediaHandler) box.get("h"), "mtmd", null, null, map(step.get(1))));
+          return show(
+              PythonChatHandlersFull.mediaCall(
+                  stubs,
+                  stubs,
+                  stubs,
+                  (PythonChatHandlersFull.MediaHandler) box.get("h"),
+                  "mtmd",
+                  null,
+                  null,
+                  map(step.get(1))));
         }
         case "chatml" -> {
-          return show(PythonChatHandlersFull.chatmlFunctionCalling(stubs, stubs, stubs, "TPL", map(step.get(1))));
+          return show(
+              PythonChatHandlersFull.chatmlFunctionCalling(
+                  stubs, stubs, stubs, "TPL", map(step.get(1))));
         }
         case "fromPre" -> {
-          var hub = new PythonChatHandlersFull.HfHub() {
-            public void validateRepoId(String r) {
-              trace.add(List.of("validate", r));
-            }
+          var hub =
+              new PythonChatHandlersFull.HfHub() {
+                public void validateRepoId(String r) {
+                  trace.add(List.of("validate", r));
+                }
 
-            public List<Object> ls(String r) {
-              trace.add(List.of("ls", r));
-              return list(kase.getOrDefault("files", List.of()));
-            }
+                public List<Object> ls(String r) {
+                  trace.add(List.of("ls", r));
+                  return list(kase.getOrDefault("files", List.of()));
+                }
 
-            public String download(Map<String, Object> kw) {
-              trace.add(List.of("hf_hub_download", show(kw)));
-              return (String) kase.getOrDefault("dl", "/dl/f");
-            }
-          };
-          PythonChatHandlersFull.fromPretrained(hub, (String) step.get(1),
-              (String) kase.get("pat"), step.size() > 3 ? step.get(3) : null,
-              step.size() > 4 ? step.get(4) : "auto", step.size() > 5 ? step.get(5) : null,
+                public String download(Map<String, Object> kw) {
+                  trace.add(List.of("hf_hub_download", show(kw)));
+                  return (String) kase.getOrDefault("dl", "/dl/f");
+                }
+              };
+          PythonChatHandlersFull.fromPretrained(
+              hub,
+              (String) step.get(1),
+              (String) kase.get("pat"),
+              step.size() > 3 ? step.get(3) : null,
+              step.size() > 4 ? step.get(4) : "auto",
+              step.size() > 5 ? step.get(5) : null,
               Map.of());
           return "fn";
         }
@@ -483,9 +551,9 @@ class PythonChatFullContractTest {
     } catch (PythonException e) {
       return dict("error", e.type().pythonName(), "message", e.getMessage());
     } catch (RuntimeException e) {
-      String ename = e instanceof IndexOutOfBoundsException ? "IndexError" : e.getClass().getSimpleName();
-      return dict("error", ename,
-          "message", e.getMessage() == null ? "" : e.getMessage());
+      String ename =
+          e instanceof IndexOutOfBoundsException ? "IndexError" : e.getClass().getSimpleName();
+      return dict("error", ename, "message", e.getMessage() == null ? "" : e.getMessage());
     }
   }
 

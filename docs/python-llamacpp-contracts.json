@@ -1,0 +1,22 @@
+{
+  "source": "llama_cpp/llama_cpp.py",
+  "cases": 23,
+  "functions": [
+    "llama_load_model_from_file",
+    "llama_free_model",
+    "llama_new_context_with_model",
+    "llama_n_ctx_train",
+    "llama_n_embd",
+    "llama_n_layer",
+    "llama_n_head",
+    "llama_n_vocab",
+    "llama_get_state_size",
+    "llama_copy_state_data",
+    "llama_set_state_data",
+    "llama_load_session_file",
+    "llama_save_session_file",
+    "llama_set_adapter_lora",
+    "llama_apply_adapter_cvec"
+  ],
+  "note": "ctypes binding declarations are bound via internal.LlamaLibrary JNA; this contract covers the real-bodied deprecation wrappers that emit DeprecationWarning before delegating to the same-named raw binding or the renamed replacement entry."
+}

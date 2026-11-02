@@ -3,7 +3,6 @@ package io.github.yaulun.javacpp.compat.python;
 import static io.github.yaulun.javacpp.python.PythonValues.dict;
 import static org.junit.jupiter.api.Assertions.*;
 
-import io.github.yaulun.javacpp.python.PythonErrorType;
 import io.github.yaulun.javacpp.python.PythonException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -128,10 +127,15 @@ class PythonGrammarContractTest {
                   }
                   case "notlit" -> {
                     var conv = conv(Map.of(), false, false, false);
-                    return conv.notLiteral((String) step.get(1), step.size() > 2 && b(step.get(2)), step.size() > 3 && b(step.get(3)));
+                    return conv.notLiteral(
+                        (String) step.get(1),
+                        step.size() > 2 && b(step.get(2)),
+                        step.size() > 3 && b(step.get(3)));
                   }
                   case "scinit" -> {
-                    box.put("conv", conv(map(step.get(1)), b(step.get(2)), b(step.get(3)), b(step.get(4))));
+                    box.put(
+                        "conv",
+                        conv(map(step.get(1)), b(step.get(2)), b(step.get(3)), b(step.get(4))));
                     return "ok";
                   }
                   case "visit" -> {

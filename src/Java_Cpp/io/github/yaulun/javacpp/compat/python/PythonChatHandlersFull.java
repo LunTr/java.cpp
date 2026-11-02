@@ -7,9 +7,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
- * The remaining llama_chat_format.py bodies: Jinja2ChatFormatter, the functionary
- * outer handlers, the llava/mtmd media handlers and chatml_function_calling.
- * Native/template/network surfaces are injectable ports.
+ * The remaining llama_chat_format.py bodies: Jinja2ChatFormatter, the functionary outer handlers,
+ * the llava/mtmd media handlers and chatml_function_calling. Native/template/network surfaces are
+ * injectable ports.
  */
 public final class PythonChatHandlersFull {
 
@@ -99,7 +99,8 @@ public final class PythonChatHandlersFull {
       context.put("tools", args.get("tools"));
       context.put("tool_choice", args.get("tool_choice"));
       context.put("strftime_now", "strftime_now");
-      Set<String> known = Set.of("messages", "functions", "function_call", "tools", "tool_choice", "kwargs");
+      Set<String> known =
+          Set.of("messages", "functions", "function_call", "tools", "tool_choice", "kwargs");
       @SuppressWarnings("unchecked")
       Map<String, Object> kwargs = (Map<String, Object>) args.get("kwargs");
       if (kwargs != null) context.putAll(kwargs);
@@ -197,8 +198,7 @@ public final class PythonChatHandlersFull {
     }
 
     String newPrompt;
-    if (functionCall == null
-        || (functionCall instanceof String && "auto".equals(functionCall))) {
+    if (functionCall == null || (functionCall instanceof String && "auto".equals(functionCall))) {
       Map<String, Object> probeArgs = new LinkedHashMap<>();
       probeArgs.put("prompt", prompt);
       probeArgs.put("stop", "\n");
@@ -241,8 +241,9 @@ public final class PythonChatHandlersFull {
       try {
         grammar.suppress(verbose);
         Object grammarText = grammar.jsonSchemaToGbnf(PythonJson.dumps(functionBody));
-        grammarObj = grammar.fromString(
-            (String) grammar.jsonSchemaToGbnf(PythonJson.dumps(functionBody)), verbose);
+        grammarObj =
+            grammar.fromString(
+                (String) grammar.jsonSchemaToGbnf(PythonJson.dumps(functionBody)), verbose);
         grammar.printOut(grammarText);
       } catch (RuntimeException failure) {
         if (verbose) {
@@ -303,7 +304,8 @@ public final class PythonChatHandlersFull {
     Map<String, Object> choice = new LinkedHashMap<>();
     choice.put("index", 0);
     choice.put("message", message);
-    choice.put("logprobs",
+    choice.put(
+        "logprobs",
         PythonChatCompletions.convertTextCompletionLogprobsToChat(first.get("logprobs")));
     choice.put("finish_reason", "tool_calls");
     Map<String, Object> result = new LinkedHashMap<>();
@@ -319,14 +321,24 @@ public final class PythonChatHandlersFull {
   // ---------------------------------------------------------------------------
   // functionary_v1_v2 outer handler + create_completion + generate_streaming
 
-  public static final String LLAVA_CHAT_FORMAT = "{% for message in messages %}{% if message.role == 'system' %}{{ message.content }}{% endif %}{% if message.role == 'user' %}{% if message.content is string %}\nUSER: {{ message.content }}{% endif %}{% if message.content is iterable %}\nUSER: {% for content in message.content %}{% if content.type == 'image_url' and content.image_url is string %}{{ content.image_url }}{% endif %}{% if content.type == 'image_url' and content.image_url is mapping %}{{ content.image_url.url }}{% endif %}{% endfor %}{% for content in message.content %}{% if content.type == 'text' %}{{ content.text }}{% endif %}{% endfor %}{% endif %}{% endif %}{% if message.role == 'assistant' and message.content is not none %}\nASSISTANT: {{ message.content }}{% endif %}{% endfor %}{% if add_generation_prompt %}\nASSISTANT: {% endif %}";
+  public static final String LLAVA_CHAT_FORMAT =
+      "{% for message in messages %}{% if message.role == 'system' %}{{ message.content }}{% endif %}{% if message.role == 'user' %}{% if message.content is string %}\nUSER: {{ message.content }}{% endif %}{% if message.content is iterable %}\nUSER: {% for content in message.content %}{% if content.type == 'image_url' and content.image_url is string %}{{ content.image_url }}{% endif %}{% if content.type == 'image_url' and content.image_url is mapping %}{{ content.image_url.url }}{% endif %}{% endfor %}{% for content in message.content %}{% if content.type == 'text' %}{{ content.text }}{% endif %}{% endfor %}{% endif %}{% endif %}{% if message.role == 'assistant' and message.content is not none %}\nASSISTANT: {{ message.content }}{% endif %}{% endfor %}{% if add_generation_prompt %}\nASSISTANT: {% endif %}";
 
-  public static final String CHATML_TEMPLATE = "{% for message in messages %}<|im_start|>{{ message.role }}\n{% if message.role == 'system' %}{{ message.content }}{% if tool_calls %}\n\nYou have access to the following functions:\n{% for tool in tools %}\nfunctions.{{ tool.function.name }}:\n{{ tool.function.parameters | tojson }}\n{% endfor %}\n\nYou can respond to users messages with either a single message or one or more function calls.\n\nTo respond with a message begin the message with 'message:', use the following format:\n\nmessage:\n<message>\n\nTo respond with one or more function calls begin the message with 'functions.<function_name>:', use the following format:\n\nfunctions.<function_name>:\n{ \"arg1\": \"value1\", \"arg2\": \"value2\" }\nfunctions.<function_name>:\n{ \"arg1\": \"value1\", \"arg2\": \"value2\" }{% endif %}<|im_end|>\n{% endif %}{% if message.role == 'user' %}{{ message.content }}<|im_end|>\n{% endif %}{% if message.role == 'assistant' %}{% if message.content and message.content | length > 0 %}{% if tool_calls %}message:\n{% endif %}{{ message.content }}<|im_end|>\n{% endif %}{% if 'tool_calls' in message %}{% for tool_call in message.tool_calls %}functions.{{ tool_call.function.name }}:\n{{ tool_call.function.arguments }}{% endfor %}<|im_end|>\n{% endif %}{% endif %}{% endfor %}{% if add_generation_prompt %}<|im_start|>assistant\n{% endif %}";
+  public static final String CHATML_TEMPLATE =
+      "{% for message in messages %}<|im_start|>{{ message.role }}\n{% if message.role == 'system' %}{{ message.content }}{% if tool_calls %}\n\nYou have access to the following functions:\n{% for tool in tools %}\nfunctions.{{ tool.function.name }}:\n{{ tool.function.parameters | tojson }}\n{% endfor %}\n\nYou can respond to users messages with either a single message or one or more function calls.\n\nTo respond with a message begin the message with 'message:', use the following format:\n\nmessage:\n<message>\n\nTo respond with one or more function calls begin the message with 'functions.<function_name>:', use the following format:\n\nfunctions.<function_name>:\n{ \"arg1\": \"value1\", \"arg2\": \"value2\" }\nfunctions.<function_name>:\n{ \"arg1\": \"value1\", \"arg2\": \"value2\" }{% endif %}<|im_end|>\n{% endif %}{% if message.role == 'user' %}{{ message.content }}<|im_end|>\n{% endif %}{% if message.role == 'assistant' %}{% if message.content and message.content | length > 0 %}{% if tool_calls %}message:\n{% endif %}{{ message.content }}<|im_end|>\n{% endif %}{% if 'tool_calls' in message %}{% for tool_call in message.tool_calls %}functions.{{ tool_call.function.name }}:\n{{ tool_call.function.arguments }}{% endfor %}<|im_end|>\n{% endif %}{% endif %}{% endfor %}{% if add_generation_prompt %}<|im_start|>assistant\n{% endif %}";
 
   public static final class FunctionaryV2 {
     public final String version;
-    public final String endSystem, endUser, endAssistant, endFunctionResult,
-        startFunctionCall, endFunctionCall, recipientToken, fromToken, stopToken, contentToken;
+    public final String endSystem,
+        endUser,
+        endAssistant,
+        endFunctionResult,
+        startFunctionCall,
+        endFunctionCall,
+        recipientToken,
+        fromToken,
+        stopToken,
+        contentToken;
     private final LlamaPort llama;
     private final PythonChatFormatHandlers.GrammarPort grammar;
     private final PythonChatFormatHandlers.TokenizerPort tokenizerPort;
@@ -356,14 +368,14 @@ public final class PythonChatHandlersFull {
         fromToken = "<|from|>";
         stopToken = "<|stop|>";
         contentToken = "<|content|>";
-        endSystem = endUser = endAssistant = endFunctionResult = startFunctionCall =
-            endFunctionCall = null;
+        endSystem =
+            endUser = endAssistant = endFunctionResult = startFunctionCall = endFunctionCall = null;
       }
     }
 
     /** create_completion(prompt, stop, grammar): the kwargs passthrough. */
-    public Object createCompletion(String prompt, Object stop, Object grammarObj,
-        Map<String, Object> kw) {
+    public Object createCompletion(
+        String prompt, Object stop, Object grammarObj, Map<String, Object> kw) {
       Map<String, Object> args = new LinkedHashMap<>();
       args.put("prompt", prompt);
       args.put("temperature", kw.get("temperature"));
@@ -405,14 +417,14 @@ public final class PythonChatHandlersFull {
         }
       }
       if (toolChoice != null) {
-        functionCall =
-            toolChoice instanceof String ? toolChoice : map(toolChoice).get("function");
+        functionCall = toolChoice instanceof String ? toolChoice : map(toolChoice).get("function");
       } else if (functionCall == null) {
         functionCall = "auto";
       }
 
-      String prompt = PythonChatFormatHandlers.prepareMessagesForInferenceV2(
-          tokenizerPort, tokenizer, messages, version, functions, tools, functionCall);
+      String prompt =
+          PythonChatFormatHandlers.prepareMessagesForInferenceV2(
+              tokenizerPort, tokenizer, messages, version, functions, tools, functionCall);
 
       if ("none".equals(functionCall) || functions == null || functions.isEmpty()) {
         Object stop;
@@ -435,20 +447,24 @@ public final class PythonChatHandlersFull {
       if (stream) {
         return generateStreaming(tools, functions, functionCall, prompt, kw);
       }
-      Object grammarObj = PythonChatFormatHandlers.functionaryGetGrammar(
-          grammar, functionCall, functions, tools, llama.verbose());
+      Object grammarObj =
+          PythonChatFormatHandlers.functionaryGetGrammar(
+              grammar, functionCall, functions, tools, llama.verbose());
       Object stops = functionCall instanceof Map ? List.of(stopToken, fromToken) : null;
       if (functionCall instanceof Map) {
         prompt += map(functionCall).get("name") + "\n" + contentToken;
       }
-      Object completion = createCompletion(prompt, stops == null ? kw.get("stop") : stops,
-          grammarObj, kw);
+      Object completion =
+          createCompletion(prompt, stops == null ? kw.get("stop") : stops, grammarObj, kw);
       return PythonChatCompletions.convertCompletionToChat(completion, stream);
     }
 
     /** generate_streaming materialized to a list of chunks. */
     public List<Object> generateStreaming(
-        List<Object> tools, List<Object> functions, Object functionCall, String prompt,
+        List<Object> tools,
+        List<Object> functions,
+        Object functionCall,
+        String prompt,
         Map<String, Object> kw) {
       if (!"v2".equals(version)) {
         throw error(PythonErrorType.ASSERTION_ERROR, "Streaming for v1 is not supported");
@@ -456,15 +472,17 @@ public final class PythonChatHandlersFull {
       List<Object> out = new ArrayList<>();
       String chunkId = null;
       Object chunkCreated = null;
-      java.util.function.Supplier<String> toolId = kw.containsKey("tool_id_factory")
-          ? (java.util.function.Supplier<String>) kw.get("tool_id_factory") : null;
+      java.util.function.Supplier<String> toolId =
+          kw.containsKey("tool_id_factory")
+              ? (java.util.function.Supplier<String>) kw.get("tool_id_factory")
+              : null;
       if (functionCall instanceof Map) {
         String name = (String) map(functionCall).get("name");
         prompt += name + "\n" + contentToken;
-        Object grammarObj = PythonChatFormatHandlers.functionaryGetGrammar(
-            grammar, name, functions, tools, llama.verbose());
-        Object completion = createCompletion(
-            prompt, List.of(stopToken, fromToken), grammarObj, kw);
+        Object grammarObj =
+            PythonChatFormatHandlers.functionaryGetGrammar(
+                grammar, name, functions, tools, llama.verbose());
+        Object completion = createCompletion(prompt, List.of(stopToken, fromToken), grammarObj, kw);
         String id = toolId != null ? toolId.get() : "TOOLID";
         boolean first = true;
         Map<String, Object> lastChunk = null;
@@ -486,15 +504,19 @@ public final class PythonChatHandlersFull {
             Map<String, Object> db = new LinkedHashMap<>();
             db.put("role", null);
             db.put("content", null);
-            out.add(chunk(chunk, db, d,
-                PythonChatCompletions.convertTextCompletionLogprobsToChat(
-                    map(list(chunk.get("choices")).get(0)).get("logprobs")),
-                null));
+            out.add(
+                chunk(
+                    chunk,
+                    db,
+                    d,
+                    PythonChatCompletions.convertTextCompletionLogprobsToChat(
+                        map(list(chunk.get("choices")).get(0)).get("logprobs")),
+                    null));
           }
         }
-        out.add(chunk(lastChunk,
-            deltaEnd(), null, null,
-            tools != null ? "tool_calls" : "function_call"));
+        out.add(
+            chunk(
+                lastChunk, deltaEnd(), null, null, tools != null ? "tool_calls" : "function_call"));
       } else if (functionCall instanceof String && "auto".equals(functionCall)) {
         int toolIndex = 0;
         while (true) {
@@ -529,9 +551,12 @@ public final class PythonChatHandlersFull {
                 } else {
                   buffer.remove(buffer.size() - 1);
                   while (!buffer.isEmpty()) {
-                    out.add(contentChunk(chunk, buffer.remove(0),
-                        PythonChatCompletions.convertTextCompletionLogprobsToChat(
-                            map(list(chunk.get("choices")).get(0)).get("logprobs"))));
+                    out.add(
+                        contentChunk(
+                            chunk,
+                            buffer.remove(0),
+                            PythonChatCompletions.convertTextCompletionLogprobsToChat(
+                                map(list(chunk.get("choices")).get(0)).get("logprobs"))));
                   }
                   isEnd = false;
                 }
@@ -541,10 +566,12 @@ public final class PythonChatHandlersFull {
                 continue;
               }
               if (buffer.isEmpty() && chunkText.length() > 0) {
-                out.add(contentChunk(chunk,
-                    i > 0 ? chunkText : chunkText.stripLeading(),
-                    PythonChatCompletions.convertTextCompletionLogprobsToChat(
-                        map(list(chunk.get("choices")).get(0)).get("logprobs"))));
+                out.add(
+                    contentChunk(
+                        chunk,
+                        i > 0 ? chunkText : chunkText.stripLeading(),
+                        PythonChatCompletions.convertTextCompletionLogprobsToChat(
+                            map(list(chunk.get("choices")).get(0)).get("logprobs"))));
               }
               i++;
             }
@@ -552,11 +579,15 @@ public final class PythonChatHandlersFull {
                 || completionText.toString().contains("<|from|>assistant")) {
               String cleaned;
               if (completionText.toString().endsWith("\n<|from|>assistant\n")) {
-                cleaned = completionText.substring(0,
-                    completionText.length() - "\n<|from|>assistant\n".length()).strip();
+                cleaned =
+                    completionText
+                        .substring(0, completionText.length() - "\n<|from|>assistant\n".length())
+                        .strip();
               } else if (completionText.toString().endsWith("\n<|from|> assistant\n")) {
-                cleaned = completionText.substring(0,
-                    completionText.length() - "\n<|from|> assistant\n".length()).strip();
+                cleaned =
+                    completionText
+                        .substring(0, completionText.length() - "\n<|from|> assistant\n".length())
+                        .strip();
               } else {
                 cleaned = completionText.toString().strip();
               }
@@ -567,15 +598,22 @@ public final class PythonChatHandlersFull {
             }
           } else {
             prompt += functionName + "\n<|content|>";
-            Object grammarObj = PythonChatFormatHandlers.functionaryGetGrammar(
-                grammar, functionName, functions, tools, llama.verbose());
+            Object grammarObj =
+                PythonChatFormatHandlers.functionaryGetGrammar(
+                    grammar, functionName, functions, tools, llama.verbose());
             String id = toolId != null ? toolId.get() : "TOOLID";
             Map<String, Object> d1 = new LinkedHashMap<>();
             d1.put("role", null);
             d1.put("content", null);
-            out.add(chunk(lastChunk, d1,
-                funcCallDict(tools, toolIndex, id, functionName, ""), null, null));
-            completion = createCompletion(prompt, List.of(recipientToken, stopToken), grammarObj, kw);
+            out.add(
+                chunk(
+                    lastChunk,
+                    d1,
+                    funcCallDict(tools, toolIndex, id, functionName, ""),
+                    null,
+                    null));
+            completion =
+                createCompletion(prompt, List.of(recipientToken, stopToken), grammarObj, kw);
             StringBuilder completionText = new StringBuilder();
             for (Object chunkObj : list(completion)) {
               Map<String, Object> chunk = map(chunkObj);
@@ -587,31 +625,48 @@ public final class PythonChatHandlersFull {
                 Map<String, Object> d2 = new LinkedHashMap<>();
                 d2.put("role", null);
                 d2.put("content", null);
-                out.add(chunk(chunk, d2,
-                    funcCallDict(tools, toolIndex, id, null, stripped),
-                    PythonChatCompletions.convertTextCompletionLogprobsToChat(
-                        map(list(chunk.get("choices")).get(0)).get("logprobs")),
-                    null));
+                out.add(
+                    chunk(
+                        chunk,
+                        d2,
+                        funcCallDict(tools, toolIndex, id, null, stripped),
+                        PythonChatCompletions.convertTextCompletionLogprobsToChat(
+                            map(list(chunk.get("choices")).get(0)).get("logprobs")),
+                        null));
               }
             }
             if (completionText.toString().contains("<|from|> assistant")
                 || completionText.toString().contains("<|from|>assistant")) {
               String cleaned;
               if (completionText.toString().endsWith("\n<|from|>assistant\n")) {
-                cleaned = completionText.substring(0,
-                    completionText.length() - "\n<|from|>assistant\n".length()).strip();
+                cleaned =
+                    completionText
+                        .substring(0, completionText.length() - "\n<|from|>assistant\n".length())
+                        .strip();
               } else if (completionText.toString().endsWith("\n<|from|> assistant\n")) {
-                cleaned = completionText.substring(0,
-                    completionText.length() - "\n<|from|> assistant\n".length()).strip();
+                cleaned =
+                    completionText
+                        .substring(0, completionText.length() - "\n<|from|> assistant\n".length())
+                        .strip();
               } else {
                 cleaned = completionText.toString().strip();
               }
               prompt += cleaned + "\n<|from|>assistant\n<|recipient|>";
-              out.add(chunk(lastChunk, deltaEnd(), null, null,
-                  tools != null ? "tool_calls" : "function_call"));
+              out.add(
+                  chunk(
+                      lastChunk,
+                      deltaEnd(),
+                      null,
+                      null,
+                      tools != null ? "tool_calls" : "function_call"));
             } else {
-              out.add(chunk(lastChunk, deltaEnd(), null, null,
-                  tools != null ? "tool_calls" : "function_call"));
+              out.add(
+                  chunk(
+                      lastChunk,
+                      deltaEnd(),
+                      null,
+                      null,
+                      tools != null ? "tool_calls" : "function_call"));
               break;
             }
           }
@@ -651,8 +706,11 @@ public final class PythonChatHandlersFull {
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> chunk(
-        Map<String, Object> src, Map<String, Object> deltaBase, Object funcCallDict,
-        Object logprobs, String finish) {
+        Map<String, Object> src,
+        Map<String, Object> deltaBase,
+        Object funcCallDict,
+        Object logprobs,
+        String finish) {
       Map<String, Object> delta = new LinkedHashMap<>(deltaBase);
       if (funcCallDict instanceof Map) delta.putAll((Map<String, Object>) funcCallDict);
       Map<String, Object> choice = new LinkedHashMap<>();
@@ -755,8 +813,15 @@ public final class PythonChatHandlersFull {
 
     int chunkNTokens(Object chunk);
 
-    int evalChunkSingle(Object ctx, Object llamaCtx, Object chunk, int nPast, int seqId,
-        int nBatch, boolean logitsLast, Object nPastOut);
+    int evalChunkSingle(
+        Object ctx,
+        Object llamaCtx,
+        Object chunk,
+        int nPast,
+        int seqId,
+        int nBatch,
+        boolean logitsLast,
+        Object nPastOut);
 
     void chunksFree(Object chunks);
 
@@ -812,15 +877,17 @@ public final class PythonChatHandlersFull {
 
   /** Shared init for Llava15/MTMD __init__ bodies. */
   public static void mediaInit(
-      MediaHandler handler, String clipModelPath, boolean verbose, Boolean useGpu,
+      MediaHandler handler,
+      String clipModelPath,
+      boolean verbose,
+      Boolean useGpu,
       boolean pathExists) {
     handler.clipModelPath = clipModelPath;
     handler.verbose = verbose;
     handler.useGpu = useGpu;
     handler.mtmdCtx = null;
     if (!pathExists) {
-      throw error(
-          PythonErrorType.VALUE_ERROR, "Clip model path does not exist: " + clipModelPath);
+      throw error(PythonErrorType.VALUE_ERROR, "Clip model path does not exist: " + clipModelPath);
     }
   }
 
@@ -852,8 +919,8 @@ public final class PythonChatHandlersFull {
             ? mtmd.flashAttnEnabled()
             : mtmd.flashAttnDisabled());
     handler.mtmdCtx =
-        mtmd.initFromFile(handler.clipModelPath.getBytes(StandardCharsets.UTF_8),
-            llama.model(), params);
+        mtmd.initFromFile(
+            handler.clipModelPath.getBytes(StandardCharsets.UTF_8), llama.model(), params);
     if (handler.mtmdCtx == null) {
       throw error(
           PythonErrorType.VALUE_ERROR,
@@ -890,8 +957,7 @@ public final class PythonChatHandlersFull {
       throw error(PythonErrorType.VALUE_ERROR, "mtmd context not initialized");
     }
     mtmd.suppress(handler.verbose);
-    Object bitmap =
-        mtmd.bitmapInitFromBuf(handler.mtmdCtx, imageBytes, imageBytes.length, false);
+    Object bitmap = mtmd.bitmapInitFromBuf(handler.mtmdCtx, imageBytes, imageBytes.length, false);
     if (bitmap == null) {
       throw error(PythonErrorType.VALUE_ERROR, "Failed to create bitmap from image bytes");
     }
@@ -902,8 +968,7 @@ public final class PythonChatHandlersFull {
     Object template = llama.metadata().get("tokenizer.chat_template");
     if (!(template instanceof String) || ((String) template).isEmpty()) {
       throw error(
-          PythonErrorType.VALUE_ERROR,
-          className + " requires tokenizer.chat_template metadata");
+          PythonErrorType.VALUE_ERROR, className + " requires tokenizer.chat_template metadata");
     }
     return (String) template;
   }
@@ -922,8 +987,7 @@ public final class PythonChatHandlersFull {
     List<String> fileList = new ArrayList<>();
     for (Object fileObj : files) {
       String file = fileObj instanceof Map ? (String) map(fileObj).get("name") : (String) fileObj;
-      String rel =
-          file.startsWith(repoId + "/") ? file.substring(repoId.length() + 1) : file;
+      String rel = file.startsWith(repoId + "/") ? file.substring(repoId.length() + 1) : file;
       fileList.add(rel);
     }
     List<String> matching = new ArrayList<>();
@@ -933,14 +997,22 @@ public final class PythonChatHandlersFull {
     if (matching.isEmpty()) {
       throw error(
           PythonErrorType.VALUE_ERROR,
-          "No file found in " + repoId + " that match " + filename + "\n\nAvailable Files:\n"
+          "No file found in "
+              + repoId
+              + " that match "
+              + filename
+              + "\n\nAvailable Files:\n"
               + PythonJson.dumps(fileList));
     }
     if (matching.size() > 1) {
       throw error(
           PythonErrorType.VALUE_ERROR,
-          "Multiple files found in " + repoId + " matching " + filename
-              + "\n\nAvailable Files:\n" + PythonJson.dumps(files));
+          "Multiple files found in "
+              + repoId
+              + " matching "
+              + filename
+              + "\n\nAvailable Files:\n"
+              + PythonJson.dumps(files));
     }
     String matchingFile = matching.get(0);
     String subfolder;
@@ -978,8 +1050,10 @@ public final class PythonChatHandlersFull {
   // ---------------------------------------------------------------------------
   // Llava15/MTMD __call__ bodies
 
-  /** Shared media __call__ pipeline. mode: "llava" uses CHAT_FORMAT render+marker replace;
-   *  "mtmd" uses metadata template + _get_template_messages + postprocess. */
+  /**
+   * Shared media __call__ pipeline. mode: "llava" uses CHAT_FORMAT render+marker replace; "mtmd"
+   * uses metadata template + _get_template_messages + postprocess.
+   */
   public static Object mediaCall(
       MtmdPort mtmd,
       PythonChatFormatHandlers.JinjaPort jinja,
@@ -1012,8 +1086,7 @@ public final class PythonChatHandlersFull {
     }
 
     List<String> imageUrls = PythonChatFormatHandlers.getImageUrls(messages);
-    String mediaMarker =
-        new String((byte[]) mtmd.defaultMarker(), StandardCharsets.UTF_8);
+    String mediaMarker = new String((byte[]) mtmd.defaultMarker(), StandardCharsets.UTF_8);
 
     String text;
     if ("llava".equals(mode)) {
@@ -1064,8 +1137,7 @@ public final class PythonChatHandlersFull {
         throw error(PythonErrorType.VALUE_ERROR, "Failed to create input chunks");
       }
       try {
-        int result =
-            mtmd.mtmdTokenize(handler.mtmdCtx, chunks, inputText, bitmaps, bitmaps.size());
+        int result = mtmd.mtmdTokenize(handler.mtmdCtx, chunks, inputText, bitmaps, bitmaps.size());
         if (result != 0) {
           throw error(
               PythonErrorType.VALUE_ERROR, "Failed to tokenize input: error code " + result);
@@ -1083,29 +1155,36 @@ public final class PythonChatHandlersFull {
               if (llama.nTokens() + tokens.size() > llama.nCtx()) {
                 throw error(
                     PythonErrorType.VALUE_ERROR,
-                    "Prompt exceeds n_ctx: " + (llama.nTokens() + tokens.size())
-                        + " > " + llama.nCtx());
+                    "Prompt exceeds n_ctx: "
+                        + (llama.nTokens() + tokens.size())
+                        + " > "
+                        + llama.nCtx());
               }
               llama.eval(tokens);
             }
-          } else if (chunkType == mtmd.imageChunkType()
-              || chunkType == mtmd.audioChunkType()) {
+          } else if (chunkType == mtmd.imageChunkType() || chunkType == mtmd.audioChunkType()) {
             int chunkNTokens = mtmd.chunkNTokens(chunk);
             if (llama.nTokens() + chunkNTokens > llama.nCtx()) {
               throw error(
                   PythonErrorType.VALUE_ERROR,
-                  "Prompt exceeds n_ctx: " + (llama.nTokens() + chunkNTokens)
-                      + " > " + llama.nCtx());
+                  "Prompt exceeds n_ctx: "
+                      + (llama.nTokens() + chunkNTokens)
+                      + " > "
+                      + llama.nCtx());
             }
             Object nPastOut = new Object();
             int r =
                 mtmd.evalChunkSingle(
-                    handler.mtmdCtx, llama.ctx(), chunk, llama.nTokens(), 0,
-                    llama.nBatch(), false, nPastOut);
+                    handler.mtmdCtx,
+                    llama.ctx(),
+                    chunk,
+                    llama.nTokens(),
+                    0,
+                    llama.nBatch(),
+                    false,
+                    nPastOut);
             if (r != 0) {
-              throw error(
-                  PythonErrorType.VALUE_ERROR,
-                  "Failed to evaluate chunk: error code " + r);
+              throw error(PythonErrorType.VALUE_ERROR, "Failed to evaluate chunk: error code " + r);
             }
             llama.setNTokens(((int[]) nPastOut)[0]);
           }
@@ -1120,8 +1199,18 @@ public final class PythonChatHandlersFull {
         mtmd.bitmapFree(bitmap);
       }
     }
-    return finishMediaCall(grammar, mtmd, llama, kw, tools, toolChoice, functionCall,
-        functions, responseFormat, stream, stop);
+    return finishMediaCall(
+        grammar,
+        mtmd,
+        llama,
+        kw,
+        tools,
+        toolChoice,
+        functionCall,
+        functions,
+        responseFormat,
+        stream,
+        stop);
   }
 
   private static Object decode(Object v) {
@@ -1151,8 +1240,7 @@ public final class PythonChatHandlersFull {
       Object responseFormat,
       boolean stream,
       Object stop) {
-    if (responseFormat instanceof Map
-        && "json_object".equals(map(responseFormat).get("type"))) {
+    if (responseFormat instanceof Map && "json_object".equals(map(responseFormat).get("type"))) {
       grammar = kw.get("_grammar_from_response_format");
     }
     if (functions != null) {
@@ -1181,8 +1269,10 @@ public final class PythonChatHandlersFull {
     }
     Object tool = null;
     if (toolChoice instanceof Map && tools != null) {
-      Object name = map(toolChoice).containsKey("function")
-          ? map(map(toolChoice).get("function")).get("name") : null;
+      Object name =
+          map(toolChoice).containsKey("function")
+              ? map(map(toolChoice).get("function")).get("name")
+              : null;
       for (Object t : tools) {
         if (name != null && name.equals(map(map(t).get("function")).get("name"))) {
           tool = t;
@@ -1190,8 +1280,7 @@ public final class PythonChatHandlersFull {
         }
       }
       if (tool == null && name != null) {
-        throw error(
-            PythonErrorType.VALUE_ERROR, "Tool choice '" + name + "' not found in tools.");
+        throw error(PythonErrorType.VALUE_ERROR, "Tool choice '" + name + "' not found in tools.");
       }
       if (tool != null) {
         Object schema = map(map(tool).get("function")).get("parameters");
@@ -1296,8 +1385,7 @@ public final class PythonChatHandlersFull {
       ctx.put("add_generation_prompt", true);
       String prompt = jinja.render(ctx);
       Object grammarObj = kw.get("grammar");
-      if (responseFormat instanceof Map
-          && "json_object".equals(map(responseFormat).get("type"))) {
+      if (responseFormat instanceof Map && "json_object".equals(map(responseFormat).get("type"))) {
         grammarObj = kw.get("_grammar_from_response_format");
       }
       Map<String, Object> args = new LinkedHashMap<>();
@@ -1321,8 +1409,7 @@ public final class PythonChatHandlersFull {
       args.put("logits_processor", kw.get("logits_processor"));
       args.put("grammar", grammarObj);
       args.put("logprobs", Boolean.TRUE.equals(kw.get("logprobs")) ? kw.get("top_logprobs") : null);
-      return PythonChatCompletions.convertCompletionToChat(
-          llama.createCompletion(args), stream);
+      return PythonChatCompletions.convertCompletionToChat(llama.createCompletion(args), stream);
     }
 
     // Case 2
@@ -1337,8 +1424,7 @@ public final class PythonChatHandlersFull {
       }
       if (tool == null) {
         throw error(
-            PythonErrorType.VALUE_ERROR,
-            "Tool with name '" + toolName + "' not found in tools");
+            PythonErrorType.VALUE_ERROR, "Tool with name '" + toolName + "' not found in tools");
       }
       Map<String, Object> ctx = new LinkedHashMap<>();
       ctx.put("messages", messages);
@@ -1384,14 +1470,13 @@ public final class PythonChatHandlersFull {
     StringBuilder names = new StringBuilder();
     for (int i = 0; i < tools.size(); i++) {
       if (i > 0) names.append(" | ");
-      names.append("\"functions.")
+      names
+          .append("\"functions.")
           .append(map(map(tools.get(i)).get("function")).get("name"))
           .append(":\"");
     }
-    String initialGbnf =
-        "root   ::= functions | \"message:\"\nfunctions ::= " + names + "\n";
-    String followGbnf =
-        "root   ::= functions | \"<|im_end|>\"\nfunctions ::= " + names + "\n";
+    String initialGbnf = "root   ::= functions | \"message:\"\nfunctions ::= " + names + "\n";
+    String followGbnf = "root   ::= functions | \"<|im_end|>\"\nfunctions ::= " + names + "\n";
     Map<String, Object> ctx = new LinkedHashMap<>();
     ctx.put("messages", messages);
     ctx.put("tools", tools);
@@ -1430,7 +1515,8 @@ public final class PythonChatHandlersFull {
       args2.put("typical_p", kw.get("typical_p"));
       args2.put("stream", stream);
       args2.put("stop", List.of("<|im_end|>"));
-      args2.put("logprobs", Boolean.TRUE.equals(kw.get("logprobs")) ? kw.get("top_logprobs") : null);
+      args2.put(
+          "logprobs", Boolean.TRUE.equals(kw.get("logprobs")) ? kw.get("top_logprobs") : null);
       args2.put("max_tokens", null);
       args2.put("presence_penalty", kw.get("presence_penalty"));
       args2.put("frequency_penalty", kw.get("frequency_penalty"));
@@ -1442,8 +1528,7 @@ public final class PythonChatHandlersFull {
       args2.put("model", kw.get("model"));
       args2.put("logits_processor", kw.get("logits_processor"));
       args2.put("grammar", grammar.fromString(followGbnf, llama.verbose()));
-      return PythonChatCompletions.convertCompletionToChat(
-          llama.createCompletion(args2), stream);
+      return PythonChatCompletions.convertCompletionToChat(llama.createCompletion(args2), stream);
     }
     String toolName =
         text.length() >= "functions.".length() ? text.substring("functions.".length()) : "";
@@ -1510,8 +1595,7 @@ public final class PythonChatHandlersFull {
       if (completions.size() == 1) {
         Map<String, Object> fc = new LinkedHashMap<>();
         fc.put("name", toolName);
-        fc.put("arguments",
-            map(list(map(completions.get(0)).get("choices")).get(0)).get("text"));
+        fc.put("arguments", map(list(map(completions.get(0)).get("choices")).get(0)).get("text"));
         functionCallDict.put("function_call", fc);
       }
       List<Object> toolCalls = new ArrayList<>();
@@ -1536,7 +1620,8 @@ public final class PythonChatHandlersFull {
       Map<String, Object> choice = new LinkedHashMap<>();
       choice.put("finish_reason", "tool_calls");
       choice.put("index", 0);
-      choice.put("logprobs",
+      choice.put(
+          "logprobs",
           PythonChatCompletions.convertTextCompletionLogprobsToChat(first.get("logprobs")));
       choice.put("message", message);
       Map<String, Object> usage = new LinkedHashMap<>();
@@ -1552,8 +1637,7 @@ public final class PythonChatHandlersFull {
       result.put("usage", usage);
       return result;
     }
-    throw error(
-        PythonErrorType.VALUE_ERROR, "Automatic streaming tool choice is not supported");
+    throw error(PythonErrorType.VALUE_ERROR, "Automatic streaming tool choice is not supported");
   }
 
   private static List<Object> concat(List<Object> items, Object extra) {

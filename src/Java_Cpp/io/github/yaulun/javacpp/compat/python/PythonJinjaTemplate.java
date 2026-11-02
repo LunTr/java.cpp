@@ -87,7 +87,7 @@ public final class PythonJinjaTemplate {
           }
 
           public Object filter(Object value, JinjavaInterpreter interpreter, String... args) {
-            return new PythonJson(false, null, null, false).write(value);
+            return PythonJson.dumps(value, false, null, null, false);
           }
 
           public Object filter(
@@ -95,12 +95,12 @@ public final class PythonJinjaTemplate {
               JinjavaInterpreter interpreter,
               Object[] args,
               Map<String, Object> kwargs) {
-            return new PythonJson(
-                    truth(kwargs.getOrDefault("ensure_ascii", false)),
-                    kwargs.get("indent"),
-                    kwargs.get("separators"),
-                    truth(kwargs.getOrDefault("sort_keys", false)))
-                .write(value);
+            return PythonJson.dumps(
+                value,
+                truth(kwargs.getOrDefault("ensure_ascii", false)),
+                kwargs.get("indent") == null ? null : ((Number) kwargs.get("indent")).intValue(),
+                (List<String>) kwargs.get("separators"),
+                truth(kwargs.getOrDefault("sort_keys", false)));
           }
         });
     for (String method : PythonStrings.NAMES) {

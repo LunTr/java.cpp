@@ -668,6 +668,36 @@ for row in audit["functions"]:
         pass  # covered by docs/python-lowlevel-contracts.json above
     elif name in {"Llama.sample", "Llama.generate"}:
         row["reason"] = "完整采样参数入口和状态机已接入；原版执行对照及原生测试已通过；动态类型和回调共享视图语义继续核实"
+llamacppDeprecated = {
+    "llama_load_model_from_file": "loadModelFromFile",
+    "llama_free_model": "freeModel",
+    "llama_new_context_with_model": "newContextWithModel",
+    "llama_n_ctx_train": "nCtxTrain",
+    "llama_n_embd": "nEmbd",
+    "llama_n_layer": "nLayer",
+    "llama_n_head": "nHead",
+    "llama_n_vocab": "nVocab",
+    "llama_get_state_size": "getStateSize",
+    "llama_copy_state_data": "copyStateData",
+    "llama_set_state_data": "setStateData",
+    "llama_load_session_file": "loadSessionFile",
+    "llama_save_session_file": "saveSessionFile",
+}
+llamacppPyOnly = {
+    "llama_set_adapter_lora": "setAdapterLora",
+    "llama_apply_adapter_cvec": "applyAdapterCvec",
+}
+for row in audit["functions"]:
+    if row["file"] == "llama_cpp/llama_cpp.py" and row["qualname"] in llamacppDeprecated and row["status"] == "missing":
+        row.update(status="covered", checked=True,
+                   java="compat.python.PythonLlamaCpp." + llamacppDeprecated[row["qualname"]],
+                   reason="已逐句移植固定原版弃用包装：DeprecationWarning 原文经 _warn_deprecated 发出后委托同名原生绑定；告警/委托时序与 error/ignore 过滤器分支经原版对照",
+                   pythonExactParity="not-certified", contractEvidence="docs/python-llamacpp-contracts.json")
+    elif row["file"] == "llama_cpp/llama_cpp.py" and row["qualname"] in llamacppPyOnly and row["status"] == "missing":
+        row.update(status="covered", checked=True,
+                   java="compat.python.PythonLlamaCpp." + llamacppPyOnly[row["qualname"]],
+                   reason="已逐句移植固定原版 Python 端弃用包装（无同名 C 符号）：inline warnings.warn 原文后委托改名入口，set_adapter_lora 按原版构造单元素 ctypes 数组传 adapters/scales；告警/委托时序经原版对照",
+                   pythonExactParity="not-certified", contractEvidence="docs/python-llamacpp-contracts.json")
 declared = {line.split("(")[0].split()[-1] for line in (root / "src/Java_Cpp/io/github/yaulun/javacpp/internal/LlamaLibrary.java").read_text(encoding="utf-8").splitlines() if " llama_" in line and "(" in line}
 for row in audit["functions"]:
     if row["file"] == "llama_cpp/llama_cpp.py" and row["qualname"] in declared and row["status"] == "missing":

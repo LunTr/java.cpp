@@ -70,7 +70,8 @@ public final class PythonLlamaGrammar {
       grammar = port.readAll(file);
     } catch (Exception err) {
       throw error(
-          PythonErrorType.BASE_EXCEPTION, "from_file: error reading grammar file: " + err.getMessage());
+          PythonErrorType.BASE_EXCEPTION,
+          "from_file: error reading grammar file: " + err.getMessage());
     }
     if (grammar != null && !grammar.isEmpty()) {
       return grammarFromString(grammar, verbose);
@@ -120,8 +121,7 @@ public final class PythonLlamaGrammar {
       result.append(" ");
     }
     if (maxItems != null) {
-      result.append(
-          optRepetitions(itemRule, separatorRule, maxItems - minItems, minItems > 0));
+      result.append(optRepetitions(itemRule, separatorRule, maxItems - minItems, minItems > 0));
     } else {
       String itemOperator =
           "(" + (separatorRule != null ? separatorRule + " " : "") + itemRule + ")";
@@ -146,8 +146,7 @@ public final class PythonLlamaGrammar {
     } else if (upToN == 1) {
       return "(" + content + ")?";
     } else if (separatorRule != null && !prefixWithSep) {
-      return "(" + content + " " + optRepetitions(itemRule, separatorRule, upToN - 1, true)
-          + ")?";
+      return "(" + content + " " + optRepetitions(itemRule, separatorRule, upToN - 1, true) + ")?";
     } else {
       StringBuilder b = new StringBuilder();
       for (int k = 0; k < upToN; k++) b.append("(").append(content).append(" ");
@@ -192,9 +191,7 @@ public final class PythonLlamaGrammar {
         new BuiltinRule(
             "(\"-\"? integral-part) (\".\" decimal-part)? ([eE] [-+]? integral-part)? space",
             List.of("integral-part", "decimal-part")));
-    p.put(
-        "integer",
-        new BuiltinRule("(\"-\"? integral-part) space", List.of("integral-part")));
+    p.put("integer", new BuiltinRule("(\"-\"? integral-part) space", List.of("integral-part")));
     p.put(
         "value",
         new BuiltinRule(
@@ -240,13 +237,19 @@ public final class PythonLlamaGrammar {
     sf.put("date-time", new BuiltinRule("date \"T\" time", List.of("date", "time")));
     sf.put(
         "date-string",
-        new BuiltinRule('"' + "\\" + '"' + '"' + " date " + '"' + "\\" + '"' + '"' + " space", List.of("date")));
+        new BuiltinRule(
+            '"' + "\\" + '"' + '"' + " date " + '"' + "\\" + '"' + '"' + " space",
+            List.of("date")));
     sf.put(
         "time-string",
-        new BuiltinRule('"' + "\\" + '"' + '"' + " time " + '"' + "\\" + '"' + '"' + " space", List.of("time")));
+        new BuiltinRule(
+            '"' + "\\" + '"' + '"' + " time " + '"' + "\\" + '"' + '"' + " space",
+            List.of("time")));
     sf.put(
         "date-time-string",
-        new BuiltinRule('"' + "\\" + '"' + '"' + " date-time " + '"' + "\\" + '"' + '"' + " space", List.of("date-time")));
+        new BuiltinRule(
+            '"' + "\\" + '"' + '"' + " date-time " + '"' + "\\" + '"' + '"' + " space",
+            List.of("date-time")));
     STRING_FORMAT_RULES = sf;
 
     Set<String> r = new LinkedHashSet<>();
@@ -288,12 +291,7 @@ public final class PythonLlamaGrammar {
     }
 
     String formatLiteral(String literal) {
-      return "\""
-          + literal
-              .replace("\r", "\\r")
-              .replace("\n", "\\n")
-              .replace("\"", "\\\"")
-          + "\"";
+      return "\"" + literal.replace("\r", "\\r").replace("\n", "\\n").replace("\"", "\\\"") + "\"";
     }
 
     public String notLiteral(String literal, boolean dotall, boolean maybeEscapedUnderscores) {
@@ -399,8 +397,7 @@ public final class PythonLlamaGrammar {
     String generateUnionRule(String name, List<Object> altSchemas) {
       List<String> parts = new ArrayList<>();
       for (int i = 0; i < altSchemas.size(); i++) {
-        parts.add(
-            visit(altSchemas.get(i), name + (name.isEmpty() ? "alternative-" : "-") + i));
+        parts.add(visit(altSchemas.get(i), name + (name.isEmpty() ? "alternative-" : "-") + i));
       }
       return String.join(" | ", parts);
     }
@@ -452,8 +449,7 @@ public final class PythonLlamaGrammar {
               || (schema.containsKey("additionalProperties")
                   && !Boolean.TRUE.equals(schema.get("additionalProperties"))))) {
         Set<String> required = new LinkedHashSet<>();
-        for (Object r : list(schema.getOrDefault("required", List.of())))
-          required.add(str(r));
+        for (Object r : list(schema.getOrDefault("required", List.of()))) required.add(str(r));
         List<Object[]> properties = new ArrayList<>();
         for (var e : map(schema.getOrDefault("properties", Map.of())).entrySet())
           properties.add(new Object[] {e.getKey(), e.getValue()});
@@ -480,12 +476,10 @@ public final class PythonLlamaGrammar {
         if (items instanceof List) {
           List<String> parts = new ArrayList<>();
           for (int i = 0; i < list(items).size(); i++) {
-            parts.add(
-                visit(list(items).get(i), name + (name.isEmpty() ? "" : "-") + "tuple-" + i));
+            parts.add(visit(list(items).get(i), name + (name.isEmpty() ? "" : "-") + "tuple-" + i));
           }
           return addRule(
-              ruleName,
-              "\"[\" space " + String.join(" \",\" space ", parts) + " \"]\" space");
+              ruleName, "\"[\" space " + String.join(" \",\" space ", parts) + " \"]\" space");
         } else {
           String itemRuleName = visit(items, name + (name.isEmpty() ? "" : "-") + "item");
           long minItems = schema.get("minItems") instanceof Number mn ? mn.longValue() : 0;
@@ -521,11 +515,11 @@ public final class PythonLlamaGrammar {
         return addRule(ruleName, addPrimitive("object", PRIMITIVE_RULES.get("object")));
       } else {
         if (!(schemaType instanceof String) || !PRIMITIVE_RULES.containsKey(schemaType)) {
-          throw error(PythonErrorType.ASSERTION_ERROR, "Unrecognized schema: " + pythonRepr(schema));
+          throw error(
+              PythonErrorType.ASSERTION_ERROR, "Unrecognized schema: " + pythonRepr(schema));
         }
         return addPrimitive(
-            "root".equals(ruleName) ? "root" : str(schemaType),
-            PRIMITIVE_RULES.get(schemaType));
+            "root".equals(ruleName) ? "root" : str(schemaType), PRIMITIVE_RULES.get(schemaType));
       }
     }
 
@@ -558,10 +552,7 @@ public final class PythonLlamaGrammar {
     }
 
     String buildObjectRule(
-        List<Object[]> properties,
-        Set<String> required,
-        String name,
-        Object additionalProperties) {
+        List<Object[]> properties, Set<String> required, String name, Object additionalProperties) {
       Map<String, Integer> order = propOrder;
       List<int[]> idx = new ArrayList<>();
       for (int i = 0; i < properties.size(); i++) idx.add(new int[] {i});
@@ -580,9 +571,7 @@ public final class PythonLlamaGrammar {
             propName,
             addRule(
                 name + (name.isEmpty() ? "" : "-") + propName + "-kv",
-                formatLiteral(PythonJson.dumps(propName))
-                    + " space \":\" space "
-                    + propRuleName));
+                formatLiteral(PythonJson.dumps(propName)) + " space \":\" space " + propRuleName));
       }
       List<String> requiredProps = new ArrayList<>();
       List<String> optionalProps = new ArrayList<>();
@@ -626,10 +615,7 @@ public final class PythonLlamaGrammar {
     }
 
     private String recursiveRefs(
-        List<String> ks,
-        boolean firstIsOptional,
-        Map<String, String> kvRuleNames,
-        String name) {
+        List<String> ks, boolean firstIsOptional, Map<String, String> kvRuleNames, String name) {
       String k = ks.get(0);
       List<String> rest = ks.subList(1, ks.size());
       String kvRuleName = kvRuleNames.get(k);
@@ -814,11 +800,7 @@ public final class PythonLlamaGrammar {
               seq.size() - 1,
               new Object[] {
                 buildRepetition(
-                    subIsLiteral ? "\"" + sub + "\"" : sub,
-                    minTimes,
-                    maxTimes,
-                    null,
-                    subIsLiteral),
+                    subIsLiteral ? "\"" + sub + "\"" : sub, minTimes, maxTimes, null, subIsLiteral),
                 false
               });
         } else {
