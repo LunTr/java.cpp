@@ -493,4 +493,120 @@ public interface LlamaLibrary extends Library {
   Pointer llama_get_sampled_probs_ith(Pointer context, int i);
 
   int llama_get_sampled_probs_count_ith(Pointer context, int i);
+
+  Pointer llama_get_sampled_logits_ith(Pointer context, int i);
+
+  int llama_get_sampled_logits_count_ith(Pointer context, int i);
+
+  Pointer llama_get_sampled_candidates_ith(Pointer context, int i);
+
+  int llama_get_sampled_candidates_count_ith(Pointer context, int i);
+
+  byte llama_vocab_is_control(Pointer vocab, int token);
+
+  int llama_vocab_pad(Pointer vocab);
+
+  int llama_vocab_mask(Pointer vocab);
+
+  byte llama_vocab_get_add_sep(Pointer vocab);
+
+  Pointer llama_vocab_get_suppress_tokens(Pointer vocab, int[] nSuppressTokens);
+
+  int llama_vocab_fim_pad(Pointer vocab);
+
+  int llama_vocab_fim_rep(Pointer vocab);
+
+  int llama_vocab_fim_sep(Pointer vocab);
+
+  String llama_token_get_text(Pointer vocab, int token);
+
+  float llama_token_get_score(Pointer vocab, int token);
+
+  int llama_token_get_attr(Pointer vocab, int token);
+
+  byte llama_token_is_eog(Pointer vocab, int token);
+
+  byte llama_token_is_control(Pointer vocab, int token);
+
+  int llama_token_bos(Pointer vocab);
+
+  int llama_token_eos(Pointer vocab);
+
+  int llama_token_eot(Pointer vocab);
+
+  int llama_token_cls(Pointer vocab);
+
+  int llama_token_sep(Pointer vocab);
+
+  int llama_token_nl(Pointer vocab);
+
+  int llama_token_pad(Pointer vocab);
+
+  byte llama_add_bos_token(Pointer vocab);
+
+  byte llama_add_eos_token(Pointer vocab);
+
+  int llama_token_fim_pre(Pointer vocab);
+
+  int llama_token_fim_suf(Pointer vocab);
+
+  int llama_token_fim_mid(Pointer vocab);
+
+  int llama_token_fim_pad(Pointer vocab);
+
+  int llama_token_fim_rep(Pointer vocab);
+
+  int llama_token_fim_sep(Pointer vocab);
+
+  int llama_chat_builtin_templates(Pointer[] output, long len);
+
+  byte llama_set_sampler(Pointer context, int seqId, Pointer sampler);
+
+  Pointer llama_sampler_init(LlamaSamplerI iface, Pointer ctx);
+
+  String llama_sampler_name(Pointer sampler);
+
+  void llama_sampler_copy(Pointer src, Pointer dst);
+
+  Pointer llama_sampler_chain_get(Pointer chain, int i);
+
+  Pointer llama_sampler_init_grammar_lazy(
+      Pointer vocab,
+      String grammar,
+      String root,
+      String[] triggerWords,
+      long numTriggerWords,
+      int[] triggerTokens,
+      long numTriggerTokens);
+
+  Pointer llama_sampler_init_adaptive_p(float target, float decay, int seed);
+
+  int llama_split_path(
+      byte[] splitPath, long maxlen, String pathPrefix, int splitNo, int splitCount);
+
+  int llama_split_prefix(
+      byte[] splitPrefix, long maxlen, String splitPath, int splitNo, int splitCount);
+
+  void llama_log_get(Pointer[] logCallback, Pointer[] userData);
+
+  LlamaPerfContextData.ByValue llama_perf_context(Pointer context);
+
+  LlamaPerfSamplerData.ByValue llama_perf_sampler(Pointer chain);
+
+  void llama_perf_sampler_print(Pointer chain);
+
+  void llama_perf_sampler_reset(Pointer chain);
+
+  byte llama_opt_param_filter_all(Pointer tensor, Pointer userdata);
+
+  void llama_opt_init(Pointer context, Pointer model, LlamaOptParams.ByValue params);
+
+  void llama_opt_epoch(
+      Pointer context,
+      Pointer dataset,
+      Pointer resultTrain,
+      Pointer resultEval,
+      long idataSplit,
+      Pointer callbackTrain,
+      Pointer callbackEval);
 }

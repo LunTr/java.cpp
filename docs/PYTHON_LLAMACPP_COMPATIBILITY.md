@@ -82,6 +82,34 @@ llamacpp 对照增至 19 组：新增 state 三包装的正常委托、`set_adap
 
 llamacpp 对照增至 23 组：新增 session 读写两包装的正常委托、委托抛错与 error 过滤器分支。PythonLlamaCppContractTest 23/23 通过。
 
+
+## 第四批覆盖（50 项，llama_cpp.py 清零）
+
+### JNA 绑定（29 项 → internal.LlamaLibrary）
+
+- 采样输出指针：llama_get_sampled_logits_ith（float*→Pointer）、llama_get_sampled_logits_count_ith、llama_get_sampled_candidates_ith（llama_token*→Pointer）、llama_get_sampled_candidates_count_ith（uint32→int）
+- 词表：llama_vocab_is_control、llama_vocab_pad/mask、llama_vocab_get_add_sep（bool→byte）、llama_vocab_get_suppress_tokens（int32* 出参→int[]，llama_token*→Pointer）、llama_vocab_fim_pad/rep/sep
+- 聊天模板：llama_chat_builtin_templates（const char** 出参→Pointer[]，size_t→long，int32→int）
+- 采样器：llama_set_sampler（bool→byte）、llama_sampler_init（llama_sampler_i*→新增 96 字节 LlamaSamplerI 按引用，llama_sampler_context_t→Pointer）、llama_sampler_name、llama_sampler_copy、llama_sampler_chain_get、llama_sampler_init_adaptive_p
+- 分卷路径：llama_split_path/llama_split_prefix（char* 出参→byte[]，const char*→String）
+- 日志：llama_log_get（ggml_log_callback* 与 void** 出参→Pointer[]）
+- 性能：llama_perf_context（按值返回→新增 48 字节 LlamaPerfContextData.ByValue）、llama_perf_sampler（→16 字节 LlamaPerfSamplerData.ByValue）、llama_perf_sampler_print/reset
+- 训练：llama_opt_param_filter_all（bool→byte）、llama_opt_init（llama_opt_params 按值→新增 40 字节 LlamaOptParams.ByValue，镜像 Python ctypes 布局；C 头多出的 optimizer_type 字段按原版省略）、llama_opt_epoch（int64→long，回调/数据集→Pointer）
+- 弃用 C 符号（同名绑定供包装委托）：llama_token_get_text/get_score/get_attr/is_eog/is_control/bos/eos/eot/cls/sep/nl/pad、llama_add_bos_token/add_eos_token、llama_token_fim_pre/suf/mid/pad/rep/sep、llama_sampler_init_grammar_lazy（POINTER(c_char_p)→String[]，POINTER(llama_token)→int[]）
+
+### 实体函数（21 项 → compat.python.PythonLlamaCpp）
+
+- 20 个 token_* 弃用包装：`_warn_deprecated` 原文（use llama_vocab_* / llama_vocab_get_add_* instead）后委托 `_llama_*` 同名原生绑定
+- `samplerInitGrammarLazy`：`_warn_deprecated` 原文（use llama_sampler_init_grammar_lazy_patterns instead）后 7 参透传委托 `_llama_sampler_init_grammar_lazy`
+
+### 契约
+
+llamacpp 对照增至 46 组：新增 21 个包装的正常委托分支、token_pad 的 error 过滤器分支、grammar_lazy 的委托抛错分支。PythonLlamaCppContractTest 46/46 通过。
+
+### 原生验证
+
+NativeLoader 全量符号解析通过（50 个新符号全在 b11669 dll）；StructSelfTest 新增 sampler_i=96、perf_context_data=48、perf_sampler_data=16、opt_params=40、embd=24 全部通过；llama_split_path 输出与头文件示例一致，llama_chat_builtin_templates 返回 54 项模板，llama_opt_param_filter_all 返回真。
+
 ## 再生成
 
 ```

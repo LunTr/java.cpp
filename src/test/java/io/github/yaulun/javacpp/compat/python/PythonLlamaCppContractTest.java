@@ -155,6 +155,107 @@ class PythonLlamaCppContractTest {
             return delegate(
                 trace, c, "_llama_save_session_file", ctx, pathSession, tokens, nTokenCount);
           }
+
+          public Object tokenGetText(Object vocab, Object token) {
+            return delegate(trace, c, "_llama_token_get_text", vocab, token);
+          }
+
+          public Object tokenGetScore(Object vocab, Object token) {
+            return delegate(trace, c, "_llama_token_get_score", vocab, token);
+          }
+
+          public Object tokenGetAttr(Object vocab, Object token) {
+            return delegate(trace, c, "_llama_token_get_attr", vocab, token);
+          }
+
+          public Object tokenIsEog(Object vocab, Object token) {
+            return delegate(trace, c, "_llama_token_is_eog", vocab, token);
+          }
+
+          public Object tokenIsControl(Object vocab, Object token) {
+            return delegate(trace, c, "_llama_token_is_control", vocab, token);
+          }
+
+          public Object tokenBos(Object vocab) {
+            return delegate(trace, c, "_llama_token_bos", vocab);
+          }
+
+          public Object tokenEos(Object vocab) {
+            return delegate(trace, c, "_llama_token_eos", vocab);
+          }
+
+          public Object tokenEot(Object vocab) {
+            return delegate(trace, c, "_llama_token_eot", vocab);
+          }
+
+          public Object tokenCls(Object vocab) {
+            return delegate(trace, c, "_llama_token_cls", vocab);
+          }
+
+          public Object tokenSep(Object vocab) {
+            return delegate(trace, c, "_llama_token_sep", vocab);
+          }
+
+          public Object tokenNl(Object vocab) {
+            return delegate(trace, c, "_llama_token_nl", vocab);
+          }
+
+          public Object tokenPad(Object vocab) {
+            return delegate(trace, c, "_llama_token_pad", vocab);
+          }
+
+          public Object addBosToken(Object vocab) {
+            return delegate(trace, c, "_llama_add_bos_token", vocab);
+          }
+
+          public Object addEosToken(Object vocab) {
+            return delegate(trace, c, "_llama_add_eos_token", vocab);
+          }
+
+          public Object tokenFimPre(Object vocab) {
+            return delegate(trace, c, "_llama_token_fim_pre", vocab);
+          }
+
+          public Object tokenFimSuf(Object vocab) {
+            return delegate(trace, c, "_llama_token_fim_suf", vocab);
+          }
+
+          public Object tokenFimMid(Object vocab) {
+            return delegate(trace, c, "_llama_token_fim_mid", vocab);
+          }
+
+          public Object tokenFimPad(Object vocab) {
+            return delegate(trace, c, "_llama_token_fim_pad", vocab);
+          }
+
+          public Object tokenFimRep(Object vocab) {
+            return delegate(trace, c, "_llama_token_fim_rep", vocab);
+          }
+
+          public Object tokenFimSep(Object vocab) {
+            return delegate(trace, c, "_llama_token_fim_sep", vocab);
+          }
+
+          public Object samplerInitGrammarLazy(
+              Object vocab,
+              Object grammarStr,
+              Object grammarRoot,
+              Object triggerWords,
+              Object numTriggerWords,
+              Object triggerTokens,
+              Object numTriggerTokens) {
+            return delegate(
+                trace,
+                c,
+                "_llama_sampler_init_grammar_lazy",
+                vocab,
+                grammarStr,
+                grammarRoot,
+                triggerWords,
+                numTriggerWords,
+                triggerTokens,
+                numTriggerTokens);
+          }
         };
     PythonLlamaCpp cpp = new PythonLlamaCpp(access, warnings);
     PythonWarningLocation location =
@@ -197,6 +298,40 @@ class PythonLlamaCppContractTest {
                       step.get(0), step.get(1), step.get(2), step.get(3), step.get(4), location);
               case "llama_save_session_file" ->
                   cpp.saveSessionFile(step.get(0), step.get(1), step.get(2), step.get(3), location);
+              case "llama_token_get_text" ->
+                  cpp.tokenGetText(step.get(0), step.get(1), location);
+              case "llama_token_get_score" ->
+                  cpp.tokenGetScore(step.get(0), step.get(1), location);
+              case "llama_token_get_attr" ->
+                  cpp.tokenGetAttr(step.get(0), step.get(1), location);
+              case "llama_token_is_eog" -> cpp.tokenIsEog(step.get(0), step.get(1), location);
+              case "llama_token_is_control" ->
+                  cpp.tokenIsControl(step.get(0), step.get(1), location);
+              case "llama_token_bos" -> cpp.tokenBos(step.get(0), location);
+              case "llama_token_eos" -> cpp.tokenEos(step.get(0), location);
+              case "llama_token_eot" -> cpp.tokenEot(step.get(0), location);
+              case "llama_token_cls" -> cpp.tokenCls(step.get(0), location);
+              case "llama_token_sep" -> cpp.tokenSep(step.get(0), location);
+              case "llama_token_nl" -> cpp.tokenNl(step.get(0), location);
+              case "llama_token_pad" -> cpp.tokenPad(step.get(0), location);
+              case "llama_add_bos_token" -> cpp.addBosToken(step.get(0), location);
+              case "llama_add_eos_token" -> cpp.addEosToken(step.get(0), location);
+              case "llama_token_fim_pre" -> cpp.tokenFimPre(step.get(0), location);
+              case "llama_token_fim_suf" -> cpp.tokenFimSuf(step.get(0), location);
+              case "llama_token_fim_mid" -> cpp.tokenFimMid(step.get(0), location);
+              case "llama_token_fim_pad" -> cpp.tokenFimPad(step.get(0), location);
+              case "llama_token_fim_rep" -> cpp.tokenFimRep(step.get(0), location);
+              case "llama_token_fim_sep" -> cpp.tokenFimSep(step.get(0), location);
+              case "llama_sampler_init_grammar_lazy" ->
+                  cpp.samplerInitGrammarLazy(
+                      step.get(0),
+                      step.get(1),
+                      step.get(2),
+                      step.get(3),
+                      step.get(4),
+                      step.get(5),
+                      step.get(6),
+                      location);
               default -> throw new AssertionError("unknown func " + func);
             });
       } catch (PythonException e) {

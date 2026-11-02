@@ -20,6 +20,11 @@ public final class StructSelfTest {
     check(problems, "quantize size", quantizeLayout.size(), 64);
     check(problems, "quantize imatrix offset", quantizeLayout.offsetOf("imatrix"), 24);
     check(problems, "quantize max_buf_size offset", quantizeLayout.offsetOf("max_buf_size"), 56);
+    check(problems, "embd size", new LlamaEmbd().size(), 24);
+    check(problems, "sampler_i size", new LlamaSamplerI().size(), 96);
+    check(problems, "perf_context_data size", new LlamaPerfContextData().size(), 48);
+    check(problems, "perf_sampler_data size", new LlamaPerfSamplerData().size(), 16);
+    check(problems, "opt_params size", new LlamaOptParams().size(), 40);
     check(problems, "progress_callback offset", modelLayout.offsetOf("progress_callback"), 48);
     check(problems, "vocab_only offset", modelLayout.offsetOf("vocab_only"), 72);
     check(problems, "flash_attn_type offset", contextLayout.offsetOf("flash_attn_type"), 52);

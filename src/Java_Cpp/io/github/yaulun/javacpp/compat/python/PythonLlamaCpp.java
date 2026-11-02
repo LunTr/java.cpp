@@ -42,6 +42,55 @@ public final class PythonLlamaCpp {
         Object nTokenCountOut);
 
     Object saveSessionFile(Object ctx, Object pathSession, Object tokens, Object nTokenCount);
+
+    Object tokenGetText(Object vocab, Object token);
+
+    Object tokenGetScore(Object vocab, Object token);
+
+    Object tokenGetAttr(Object vocab, Object token);
+
+    Object tokenIsEog(Object vocab, Object token);
+
+    Object tokenIsControl(Object vocab, Object token);
+
+    Object tokenBos(Object vocab);
+
+    Object tokenEos(Object vocab);
+
+    Object tokenEot(Object vocab);
+
+    Object tokenCls(Object vocab);
+
+    Object tokenSep(Object vocab);
+
+    Object tokenNl(Object vocab);
+
+    Object tokenPad(Object vocab);
+
+    Object addBosToken(Object vocab);
+
+    Object addEosToken(Object vocab);
+
+    Object tokenFimPre(Object vocab);
+
+    Object tokenFimSuf(Object vocab);
+
+    Object tokenFimMid(Object vocab);
+
+    Object tokenFimPad(Object vocab);
+
+    Object tokenFimRep(Object vocab);
+
+    Object tokenFimSep(Object vocab);
+
+    Object samplerInitGrammarLazy(
+        Object vocab,
+        Object grammarStr,
+        Object grammarRoot,
+        Object triggerWords,
+        Object numTriggerWords,
+        Object triggerTokens,
+        Object numTriggerTokens);
   }
 
   private final LlamaCppAccess access;
@@ -161,5 +210,152 @@ public final class PythonLlamaCpp {
       PythonWarningLocation location) {
     warnings.deprecated("llama_save_session_file", "use llama_state_save_file instead", location);
     return access.saveSessionFile(ctx, pathSession, tokens, nTokenCount);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_get_text. */
+  public Object tokenGetText(Object vocab, Object token, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_get_text", "use llama_vocab_get_text instead", location);
+    return access.tokenGetText(vocab, token);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_get_score. */
+  public Object tokenGetScore(Object vocab, Object token, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_get_score", "use llama_vocab_get_score instead", location);
+    return access.tokenGetScore(vocab, token);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_get_attr. */
+  public Object tokenGetAttr(Object vocab, Object token, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_get_attr", "use llama_vocab_get_attr instead", location);
+    return access.tokenGetAttr(vocab, token);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_is_eog. */
+  public Object tokenIsEog(Object vocab, Object token, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_is_eog", "use llama_vocab_is_eog instead", location);
+    return access.tokenIsEog(vocab, token);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_is_control. */
+  public Object tokenIsControl(Object vocab, Object token, PythonWarningLocation location) {
+    warnings.deprecated(
+        "llama_token_is_control", "use llama_vocab_is_control instead", location);
+    return access.tokenIsControl(vocab, token);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_bos. */
+  public Object tokenBos(Object vocab, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_bos", "use llama_vocab_bos instead", location);
+    return access.tokenBos(vocab);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_eos. */
+  public Object tokenEos(Object vocab, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_eos", "use llama_vocab_eos instead", location);
+    return access.tokenEos(vocab);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_eot. */
+  public Object tokenEot(Object vocab, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_eot", "use llama_vocab_eot instead", location);
+    return access.tokenEot(vocab);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_cls. */
+  public Object tokenCls(Object vocab, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_cls", "use llama_vocab_cls instead", location);
+    return access.tokenCls(vocab);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_sep. */
+  public Object tokenSep(Object vocab, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_sep", "use llama_vocab_sep instead", location);
+    return access.tokenSep(vocab);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_nl. */
+  public Object tokenNl(Object vocab, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_nl", "use llama_vocab_nl instead", location);
+    return access.tokenNl(vocab);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_pad. */
+  public Object tokenPad(Object vocab, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_pad", "use llama_vocab_pad instead", location);
+    return access.tokenPad(vocab);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_get_add_bos. */
+  public Object addBosToken(Object vocab, PythonWarningLocation location) {
+    warnings.deprecated(
+        "llama_add_bos_token", "use llama_vocab_get_add_bos instead", location);
+    return access.addBosToken(vocab);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_get_add_eos. */
+  public Object addEosToken(Object vocab, PythonWarningLocation location) {
+    warnings.deprecated(
+        "llama_add_eos_token", "use llama_vocab_get_add_eos instead", location);
+    return access.addEosToken(vocab);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_fim_pre. */
+  public Object tokenFimPre(Object vocab, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_fim_pre", "use llama_vocab_fim_pre instead", location);
+    return access.tokenFimPre(vocab);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_fim_suf. */
+  public Object tokenFimSuf(Object vocab, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_fim_suf", "use llama_vocab_fim_suf instead", location);
+    return access.tokenFimSuf(vocab);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_fim_mid. */
+  public Object tokenFimMid(Object vocab, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_fim_mid", "use llama_vocab_fim_mid instead", location);
+    return access.tokenFimMid(vocab);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_fim_pad. */
+  public Object tokenFimPad(Object vocab, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_fim_pad", "use llama_vocab_fim_pad instead", location);
+    return access.tokenFimPad(vocab);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_fim_rep. */
+  public Object tokenFimRep(Object vocab, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_fim_rep", "use llama_vocab_fim_rep instead", location);
+    return access.tokenFimRep(vocab);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_vocab_fim_sep. */
+  public Object tokenFimSep(Object vocab, PythonWarningLocation location) {
+    warnings.deprecated("llama_token_fim_sep", "use llama_vocab_fim_sep instead", location);
+    return access.tokenFimSep(vocab);
+  }
+
+  /** Deprecated wrapper renamed upstream to llama_sampler_init_grammar_lazy_patterns. */
+  public Object samplerInitGrammarLazy(
+      Object vocab,
+      Object grammarStr,
+      Object grammarRoot,
+      Object triggerWords,
+      Object numTriggerWords,
+      Object triggerTokens,
+      Object numTriggerTokens,
+      PythonWarningLocation location) {
+    warnings.deprecated(
+        "llama_sampler_init_grammar_lazy",
+        "use llama_sampler_init_grammar_lazy_patterns instead",
+        location);
+    return access.samplerInitGrammarLazy(
+        vocab,
+        grammarStr,
+        grammarRoot,
+        triggerWords,
+        numTriggerWords,
+        triggerTokens,
+        numTriggerTokens);
   }
 }
