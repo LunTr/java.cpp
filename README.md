@@ -39,7 +39,15 @@ gguf/                          本地模型（现有目录）
 .\run-demo.cmd --ngl 0 --interactive
 ```
 
-原来的 `org.example.Main.main` 也可在 IDEA 中直接运行，传入 `--check` 执行检查、传入 `--interactive` 启动对话。交互命令为 `/exit`、`/reset`、`/think on`、`/think off`。参数说明通过 `run-demo.cmd --help` 查看。
+入口类为 `io.github.yaulun.demo.Main`：传入 `--check` 执行检查、传入 `--interactive` 启动对话。也可不经脚本直接用 JAR 启动：
+
+```powershell
+java -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -jar target\demo-all.jar --check
+java -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -jar target\demo-all.jar --interactive
+java -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -jar target\demo-all.jar --model "gguf\Qwen3.5-0.8B-Q8_0.gguf" --greedy --prompt "你好，请介绍一下自己。"
+```
+
+交互命令为 `/exit`、`/reset`、`/think on`、`/think off`。参数说明通过 `run-demo.cmd --help` 查看。
 
 构建产物：
 
@@ -57,7 +65,7 @@ JDK 21 x64 为必要依赖；Maven Wrapper 自动准备 Maven 3.9.16。
 .\setup-natives.ps1 -Backend Cuda
 ```
 
-准备脚本下载官方 b11669 包，校验发布包 SHA-256 后解压。CUDA 模式使用 CUDA 12.4 运行库。默认优先选 `natives/llama-b11669-win-cuda-12.4-x64`，其次为 `natives/b11669-cpu`。原生目录优先级为 `--natives`、`-Djavacpp.natives`、`JAVACPP_NATIVES`、默认目录；模型优先级为 `--model`、模型目录设置、默认 `gguf`。
+准备脚本下载官方 b11669 包，校验发布包 SHA-256 后解压。CUDA 模式使用 CUDA 12.4 运行库。原生目录默认扫描 `natives/` 子目录：优先选择名称含 `cuda` 的目录，否则取名称排序的第一个子目录，无子目录时使用 `natives/` 本身。原生目录优先级为 `--natives`、`-Djavacpp.natives`、`JAVACPP_NATIVES`、默认目录；模型优先级为 `--model`、模型目录设置、默认 `gguf`。
 
 缺少本地模型且未指定 `--model` 时，demo 使用任务文档固定 revision 下载 Q8_0 或 Q4_K_M。下载器支持多源、续传、60 秒停滞超时、文件锁、大小与 SHA-256 校验及完成后改名。已有不同内容的下载目标会保存在 `.invalid-*` 文件中。
 
@@ -85,7 +93,7 @@ try (LlamaModel model = LlamaModel.load(modelPath, ModelParams.defaults());
 
 ```powershell
 .\mvnw.cmd test
-.\mvnw.cmd verify -Pnative "-Djavacpp.natives=E:\JavaKotlin\java.cpp\natives\b11669-cpu" "-Djavacpp.model=E:\JavaKotlin\java.cpp\gguf\Qwen3.5-0.8B-Q8_0.gguf"
+.\mvnw.cmd verify -Pnative "-Djavacpp.natives=.\natives\b11669-cpu" "-Djavacpp.model=.\gguf\Qwen3.5-0.8B-Q8_0.gguf"
 .\mvnw.cmd spotless:apply
 ```
 

@@ -46,16 +46,7 @@ public final class PythonLlamaRamCache extends PythonLlamaCache {
 
   /** Ports _find_longest_prefix_key; ties retain the earliest key in current cache order. */
   public List<Object> findLongestPrefixKey(List<Object> key) {
-    int minimumLength = 0;
-    List<Object> minimumKey = null;
-    for (List<Object> candidate : cacheState.keySet()) {
-      int length = PythonTokens.longestTokenPrefix(candidate, key);
-      if (length > minimumLength) {
-        minimumLength = length;
-        minimumKey = candidate;
-      }
-    }
-    return minimumKey;
+    return longestPrefixKey(cacheState.keySet(), key);
   }
 
   /** Ports __getitem__; a hit moves to the end and a miss raises KeyError('Key not found'). */

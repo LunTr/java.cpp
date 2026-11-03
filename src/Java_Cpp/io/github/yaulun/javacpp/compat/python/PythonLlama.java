@@ -700,7 +700,7 @@ public final class PythonLlama implements AutoCloseable {
         "could not broadcast input array from shape " + source + " into shape " + target);
   }
 
-  private static int sliceIndex(long index, int length) {
+  static int sliceIndex(long index, int length) {
     return (int) Math.max(0, Math.min(length, index < 0 ? length + index : index));
   }
 
@@ -910,7 +910,7 @@ public final class PythonLlama implements AutoCloseable {
   }
 
   private int sliceEnd(int length) {
-    return (int) Math.max(0, Math.min(length, nTokens < 0 ? (long) length + nTokens : nTokens));
+    return sliceIndex(nTokens, length);
   }
 
   private static void checkMaxlen(int maxlen) {

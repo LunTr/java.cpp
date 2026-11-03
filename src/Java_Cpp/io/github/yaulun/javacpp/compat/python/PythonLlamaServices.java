@@ -182,7 +182,7 @@ public final class PythonLlamaServices {
       byte[] bytes = strictUtf8(item);
       int[] tokens = llama.tokenize(bytes);
       if (truth(options.get("truncate")))
-        tokens = Arrays.copyOf(tokens, sliceEnd(batch, tokens.length));
+        tokens = Arrays.copyOf(tokens, PythonLlama.sliceIndex(batch, tokens.length));
       total += tokens.length;
       if (tokens.length > batch)
         throw error(
@@ -259,10 +259,6 @@ public final class PythonLlamaServices {
         options.get("model") == null ? modelPath : options.get("model"),
         "usage",
         dict("prompt_tokens", embedded.get(1), "total_tokens", embedded.get(1)));
-  }
-
-  private static int sliceEnd(int index, int length) {
-    return Math.max(0, Math.min(length, index < 0 ? length + index : index));
   }
 
   public static byte[] strictUtf8(Object value) {

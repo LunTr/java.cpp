@@ -1,8 +1,12 @@
 package io.github.yaulun.demo;
 
+import io.github.yaulun.demo.download.ModelCatalog;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Locale;
 
 record DemoPaths(Path root, Path nativesDir, Path modelsDir) {
   static DemoPaths detect() {
@@ -21,17 +25,35 @@ record DemoPaths(Path root, Path nativesDir, Path modelsDir) {
     if (root == null) {
       root = start;
     }
-    Path cpu = root.resolve("natives/b11669-cpu");
-    Path cuda = root.resolve("natives/llama-b11669-win-cuda-12.4-x64");
-    Path nativeDefault = Files.isDirectory(cuda) ? cuda : cpu;
     return new DemoPaths(
         root,
-        configured("javacpp.natives", "JAVACPP_NATIVES", nativeDefault),
+        configured("javacpp.natives", "JAVACPP_NATIVES", pickNativesDir(root)),
         configured("javacpp.models", "JAVACPP_MODELS", root.resolve("gguf")));
   }
 
+  /**
+   * Prefers a natives subdirectory whose name marks a GPU backend, else the first subdirectory in
+   * name order, else the natives directory itself. Version and platform specific directory names
+   * are intentionally not baked in.
+   */
+  private static Path pickNativesDir(Path root) {
+    Path natives = root.resolve("natives");
+    List<Path> dirs;
+    try (java.util.stream.Stream<Path> stream = Files.list(natives)) {
+      dirs = stream.filter(Files::isDirectory).sorted().toList();
+    } catch (IOException | java.io.UncheckedIOException failure) {
+      return natives;
+    }
+    for (Path dir : dirs) {
+      if (dir.getFileName().toString().toLowerCase(Locale.ROOT).contains("cuda")) {
+        return dir;
+      }
+    }
+    return dirs.isEmpty() ? natives : dirs.get(0);
+  }
+
   Path defaultModel() {
-    return modelsDir.resolve("Qwen3.5-0.8B-Q8_0.gguf");
+    return modelsDir.resolve(ModelCatalog.Q8_0.fileName());
   }
 
   Path reportFile() {

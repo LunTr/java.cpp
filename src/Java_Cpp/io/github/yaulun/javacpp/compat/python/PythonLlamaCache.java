@@ -34,6 +34,24 @@ public class PythonLlamaCache implements PyItemAccess {
     return "BaseLlamaCache";
   }
 
+  /**
+   * Shared _find_longest_prefix_key loop: longest nonempty token prefix wins, ties keep the
+   * earliest candidate in iteration order.
+   */
+  protected static List<Object> longestPrefixKey(
+      Iterable<List<Object>> candidates, List<Object> key) {
+    int minimumLength = 0;
+    List<Object> minimumKey = null;
+    for (List<Object> candidate : candidates) {
+      int length = PythonTokens.longestTokenPrefix(candidate, key);
+      if (length > minimumLength) {
+        minimumLength = length;
+        minimumKey = candidate;
+      }
+    }
+    return minimumKey;
+  }
+
   /** Returns capacity_bytes verbatim; the original attribute accepts any object. */
   public Object capacityBytes() {
     return capacityBytes;

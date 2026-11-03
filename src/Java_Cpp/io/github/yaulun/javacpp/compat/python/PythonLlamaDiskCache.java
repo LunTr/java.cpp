@@ -60,34 +60,25 @@ public final class PythonLlamaDiskCache extends PythonLlamaCache {
 
   @Override
   public List<Object> findLongestPrefixKey(List<Object> key) {
-    int minimumLength = 0;
-    List<Object> minimumKey = null;
-    for (List<Object> candidate : cache.iterKeys()) {
-      int length = PythonTokens.longestTokenPrefix(candidate, key);
-      if (length > minimumLength) {
-        minimumLength = length;
-        minimumKey = candidate;
-      }
-    }
-    return minimumKey;
+    return longestPrefixKey(cache.iterKeys(), key);
   }
 
   @Override
   public Object get(List<Object> key) {
-    List<Object> found = findLongestPrefixKey(tuple(key));
+    List<Object> found = findLongestPrefixKey(Py.tuple(key));
     if (found == null) throw Py.error(PythonErrorType.KEY_ERROR, "'Key not found'");
     return cache.pop(found);
   }
 
   @Override
   public boolean contains(List<Object> key) {
-    return findLongestPrefixKey(tuple(key)) != null;
+    return findLongestPrefixKey(Py.tuple(key)) != null;
   }
 
   @Override
   public void put(List<Object> key, Object value) {
     print("called");
-    List<Object> converted = tuple(key);
+    List<Object> converted = Py.tuple(key);
     if (cache.contains(converted)) {
       print("delete");
       cache.delete(converted);
@@ -104,9 +95,5 @@ public final class PythonLlamaDiskCache extends PythonLlamaCache {
     // CPython print writes the text and its terminator separately.
     stderr.accept("LlamaDiskCache.__setitem__: " + stage);
     stderr.accept("\n");
-  }
-
-  private static List<Object> tuple(List<Object> key) {
-    return Py.tuple(key);
   }
 }

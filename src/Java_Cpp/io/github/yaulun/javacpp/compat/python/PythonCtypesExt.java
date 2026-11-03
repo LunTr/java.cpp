@@ -36,8 +36,8 @@ public final class PythonCtypesExt {
           }
           throw failure;
         }
-        setAttr(func, "argtypes", argtypes);
-        setAttr(func, "restype", restype);
+        PythonCtypesExtensions.setAttr(func, "argtypes", argtypes);
+        PythonCtypesExtensions.setAttr(func, "restype", restype);
         PythonCtypesExtensions.wraps(func, f);
         return func;
       }
@@ -45,15 +45,5 @@ public final class PythonCtypesExt {
           PythonErrorType.ATTRIBUTE_ERROR,
           "None of the shared library symbols were found: " + String.join(", ", missing));
     };
-  }
-
-  /** setattr on a duck-typed attributed target, mirroring ctypes assignment. */
-  private static void setAttr(Object owner, String name, Object value) {
-    if (owner instanceof PythonCtypesExtensions.MutableAttributed mutable) {
-      mutable.setAttr(name, value);
-      return;
-    }
-    throw Py.error(
-        PythonErrorType.ATTRIBUTE_ERROR, "'" + name + "' object is not attribute-assignable");
   }
 }

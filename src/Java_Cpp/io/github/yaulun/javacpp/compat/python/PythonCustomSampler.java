@@ -31,7 +31,7 @@ public final class PythonCustomSampler {
     this.port = Objects.requireNonNull(port, "port");
     this.applyFunc = Objects.requireNonNull(applyFunc, "applyFunc");
 
-    Consumer<Object> applyWrapper = new NamedApply(curP -> this.applyFunc.accept(curP));
+    Consumer<Object> applyWrapper = new NamedApply(this.applyFunc);
 
     Object samplerI = port.newSamplerInterface();
     port.samplerIAssign(samplerI, "apply", port.samplerIFunction("apply", applyWrapper));

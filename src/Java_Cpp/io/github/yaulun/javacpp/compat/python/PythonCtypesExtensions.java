@@ -405,7 +405,7 @@ public final class PythonCtypesExtensions {
     return Py.getAttr(owner, name);
   }
 
-  private static void setAttr(Object owner, String name, Object value) {
+  static void setAttr(Object owner, String name, Object value) {
     if (owner instanceof MutableAttributed mutable) {
       mutable.setAttr(name, value);
       return;

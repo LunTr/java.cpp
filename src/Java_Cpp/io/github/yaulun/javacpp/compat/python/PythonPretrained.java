@@ -140,7 +140,7 @@ public final class PythonPretrained {
               + " that match "
               + pattern
               + "\n\nAvailable Files:\n"
-              + json(relative));
+              + PythonJson.dumps(relative));
     if (found.size() > 1)
       throw error(
           PythonErrorType.VALUE_ERROR,
@@ -149,7 +149,7 @@ public final class PythonPretrained {
               + " matching "
               + pattern
               + "\n\nAvailable Files:\n"
-              + json(files));
+              + PythonJson.dumps(files));
     return found.getFirst();
   }
 
@@ -221,27 +221,5 @@ public final class PythonPretrained {
       } else result.append(Pattern.quote(String.valueOf(c)));
     }
     return Pattern.compile(result.toString());
-  }
-
-  private static String json(List<String> strings) {
-    List<String> encoded = new ArrayList<>();
-    for (String value : strings) {
-      StringBuilder text = new StringBuilder("\"");
-      for (char c : value.toCharArray())
-        switch (c) {
-          case '"', '\\' -> text.append('\\').append(c);
-          case '\n' -> text.append("\\n");
-          case '\r' -> text.append("\\r");
-          case '\t' -> text.append("\\t");
-          case '\b' -> text.append("\\b");
-          case '\f' -> text.append("\\f");
-          default -> {
-            if (c < 32 || c > 126) text.append(String.format("\\u%04x", (int) c));
-            else text.append(c);
-          }
-        }
-      encoded.add(text.append('"').toString());
-    }
-    return "[" + String.join(", ", encoded) + "]";
   }
 }

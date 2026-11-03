@@ -26,23 +26,7 @@ public final class PythonLlamaState implements PyAttributed {
       int nTokens,
       byte[] llamaState,
       BigInteger llamaStateSize,
-      long seed) {
-    this.inputIds = inputIds;
-    this.scores = scores;
-    this.nTokens = nTokens;
-    this.llamaState = llamaState;
-    this.llamaStateSize = llamaStateSize;
-    this.seed = BigInteger.valueOf(seed);
-  }
-
-  /** Stores an arbitrary-precision seed for PythonLlama save/load. */
-  public PythonLlamaState(
-      int[] inputIds,
-      float[][] scores,
-      int nTokens,
-      byte[] llamaState,
-      BigInteger llamaStateSize,
-      BigInteger seed) {
+      Object seed) {
     this.inputIds = inputIds;
     this.scores = scores;
     this.nTokens = nTokens;
@@ -121,16 +105,6 @@ public final class PythonLlamaState implements PyAttributed {
 
   public Object seedObject() {
     return seed;
-  }
-
-  public PythonLlamaState(
-      int[] inputIds, float[][] scores, int nTokens, byte[] data, BigInteger size, Object seed) {
-    this.inputIds = inputIds;
-    this.scores = scores;
-    this.nTokens = nTokens;
-    llamaState = data;
-    llamaStateSize = size;
-    this.seed = seed;
   }
 
   public void setSeedValue(BigInteger value) {

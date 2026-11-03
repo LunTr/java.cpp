@@ -2,7 +2,6 @@ package io.github.yaulun.javacpp.compat.python;
 
 import io.github.yaulun.javacpp.python.PythonErrorType;
 import io.github.yaulun.javacpp.python.PythonValues;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -199,9 +198,7 @@ public final class PythonInternalsSampler {
           PythonErrorType.NOT_IMPLEMENTED_ERROR,
           "Cannot clone LlamaSampler that contains custom samplers");
     }
-    PythonInternalsSampler cloned =
-        new PythonInternalsSampler(port, warnings, port.samplerClone(sampler));
-    return cloned;
+    return new PythonInternalsSampler(port, warnings, port.samplerClone(sampler));
   }
 
   private PythonInternalsSampler(PythonInternalsPort port, PythonWarnings warnings, Object cloned) {
@@ -221,7 +218,7 @@ public final class PythonInternalsSampler {
   }
 
   private static byte[] utf8(String text) {
-    return text.getBytes(StandardCharsets.UTF_8);
+    return PythonLlamaServices.strictUtf8(text);
   }
 
   public void addPenalties(
