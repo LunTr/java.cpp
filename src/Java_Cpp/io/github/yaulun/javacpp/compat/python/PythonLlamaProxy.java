@@ -1,6 +1,7 @@
 package io.github.yaulun.javacpp.compat.python;
 
 import io.github.yaulun.javacpp.python.Py;
+import io.github.yaulun.javacpp.python.PythonBytes;
 import io.github.yaulun.javacpp.python.PythonErrorType;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -94,7 +95,7 @@ public final class PythonLlamaProxy {
     if (settings instanceof String json) {
       value = validator.validateJson(json);
     } else if (settings instanceof byte[] bytes) {
-      value = validator.validateJson(new String(bytes, java.nio.charset.StandardCharsets.UTF_8));
+      value = validator.validateJson(PythonBytes.decodeUtf8(bytes));
     } else {
       value = (ModelSettings) settings;
     }

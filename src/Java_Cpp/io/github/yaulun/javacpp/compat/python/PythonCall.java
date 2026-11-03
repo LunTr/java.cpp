@@ -1,5 +1,7 @@
 package io.github.yaulun.javacpp.compat.python;
 
+import io.github.yaulun.javacpp.python.Py;
+import io.github.yaulun.javacpp.python.PythonErrorType;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -60,7 +62,8 @@ public final class PythonCall {
   /** Records actual token counts for the completion context-window check. */
   public static PythonCall completion(int promptTokens, int contextLength) {
     if (promptTokens < 0 || contextLength < 1) {
-      throw new IllegalArgumentException("promptTokens must be >= 0 and contextLength >= 1");
+      throw Py.error(
+          PythonErrorType.VALUE_ERROR, "promptTokens must be >= 0 and contextLength >= 1");
     }
     return new PythonCall(Operation.COMPLETION, null, null, promptTokens, contextLength);
   }

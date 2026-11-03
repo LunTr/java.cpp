@@ -468,7 +468,7 @@ class PythonHelpersContractTest {
         new PythonServerErrors.RouteErrorHandler(
             request -> {
               String fail = (String) argument.get("fail");
-              if ("http".equals(fail)) throw new PythonServerErrors.HttpException("unauthorized");
+              if ("http".equals(fail)) throw new PythonServerApp.HttpException(401, "unauthorized");
               if ("exc".equals(fail)) throw new RuntimeException((String) argument.get("error"));
               return resp();
             },
@@ -493,8 +493,8 @@ class PythonHelpersContractTest {
                       "status", response.statusCode(),
                       "body", response.payload());
                 return dict("kind", "resp", "headers", response.headers());
-              } catch (PythonServerErrors.HttpException http) {
-                return dict("kind", "exc", "error", "HttpExc", "message", http.getMessage());
+              } catch (PythonServerApp.HttpException http) {
+                return dict("kind", "exc", "error", "HttpExc", "message", http.detail());
               }
             });
     if (result instanceof Map<?, ?> captured
@@ -514,7 +514,7 @@ class PythonHelpersContractTest {
   private static <T> T unchecked(ThrowingSupplier<T> operation) {
     try {
       return operation.get();
-    } catch (PythonServerErrors.HttpException | PythonException failure) {
+    } catch (PythonServerApp.HttpException | PythonException failure) {
       throw failure;
     } catch (Exception failure) {
       throw new RuntimeException(failure);

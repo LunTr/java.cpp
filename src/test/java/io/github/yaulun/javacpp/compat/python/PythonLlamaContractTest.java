@@ -295,9 +295,13 @@ class PythonLlamaContractTest {
     float[][] result = PythonLlama.logitsToLogprobs(values, 0);
     assertArrayEquals(new float[] {1, 2}, values[0]);
     assertNotSame(values[0], result[0]);
-    assertThrows(IllegalArgumentException.class, () -> PythonLlama.logitsToLogprobs(values, 2));
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> PythonLlama.logitsToLogprobs(new float[][] {{1}, {2, 3}}, 0));
+    PythonException axis =
+        assertThrows(PythonException.class, () -> PythonLlama.logitsToLogprobs(values, 2));
+    assertEquals(PythonErrorType.VALUE_ERROR, axis.type());
+    PythonException ragged =
+        assertThrows(
+            PythonException.class,
+            () -> PythonLlama.logitsToLogprobs(new float[][] {{1}, {2, 3}}, 0));
+    assertEquals(PythonErrorType.VALUE_ERROR, ragged.type());
   }
 }

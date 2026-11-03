@@ -1,5 +1,7 @@
 package io.github.yaulun.javacpp.compat.python;
 
+import io.github.yaulun.javacpp.python.Py;
+import io.github.yaulun.javacpp.python.PythonErrorType;
 import java.util.Objects;
 
 /**
@@ -12,7 +14,7 @@ public record PythonWarningLocation(
     Objects.requireNonNull(fileName, "fileName");
     Objects.requireNonNull(module, "module");
     if (lineNumber < 0) {
-      throw new IllegalArgumentException("lineNumber must be >= 0");
+      throw Py.error(PythonErrorType.VALUE_ERROR, "lineNumber must be >= 0");
     }
   }
 }

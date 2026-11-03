@@ -31,11 +31,27 @@ public final class PythonPretrained {
       throw error(
           PythonErrorType.IMPORT_ERROR,
           "Llama.from_pretrained requires the huggingface-hub package. You can install it with `pip install huggingface-hub`.");
-    String repo = (String) options.get("repo_id");
+    Object repoId = options.get("repo_id");
+    if (!(repoId instanceof String)) {
+      throw error(
+          PythonErrorType.ATTRIBUTE_ERROR,
+          "'" + typeName(repoId) + "' object has no attribute 'count'");
+    }
+    String repo = (String) repoId;
     repository.validate(repo);
     List<String> files = new ArrayList<>(), relative = new ArrayList<>();
-    for (Object item : repository.files(repo))
-      files.add((String) (item instanceof Map<?, ?> map ? get(map, "name") : item));
+    for (Object item : repository.files(repo)) {
+      Object name = item;
+      if (item instanceof Map<?, ?>) {
+        name = get((Map<?, ?>) item, "name");
+      }
+      if (!(name instanceof String)) {
+        throw error(
+            PythonErrorType.TYPE_ERROR,
+            "expected str, bytes or os.PathLike object, not " + typeName(name));
+      }
+      files.add((String) name);
+    }
     for (String file : files) {
       Path base = Path.of(repo), target = Path.of(file);
       if (!target.startsWith(base))

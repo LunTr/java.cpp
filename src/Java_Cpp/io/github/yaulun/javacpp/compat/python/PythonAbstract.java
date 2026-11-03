@@ -1,7 +1,6 @@
 package io.github.yaulun.javacpp.compat.python;
 
 import io.github.yaulun.javacpp.python.Py;
-import io.github.yaulun.javacpp.python.PythonErrorType;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,13 +28,7 @@ final class PythonAbstract {
             .sorted()
             .collect(Collectors.toList());
     if (!missing.isEmpty()) {
-      throw Py.error(
-          PythonErrorType.TYPE_ERROR,
-          "Can't instantiate abstract class "
-              + typeName
-              + " without an implementation for abstract method"
-              + (missing.size() == 1 ? " " : "s ")
-              + missing.stream().map(name -> "'" + name + "'").collect(Collectors.joining(", ")));
+      throw Py.abstractError(typeName, missing);
     }
   }
 

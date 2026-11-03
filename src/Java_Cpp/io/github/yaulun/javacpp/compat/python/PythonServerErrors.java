@@ -136,7 +136,7 @@ public final class PythonServerErrors {
         int elapsed = (int) ((clock.getAsDouble() - start) * 1000);
         response.headers().put("openai-processing-ms", Integer.toString(elapsed));
         return response;
-      } catch (HttpException unauthorized) {
+      } catch (PythonServerApp.HttpException unauthorized) {
         throw unauthorized;
       } catch (Exception exc) {
         // request.json() is outside the parse try; its own failures propagate like Python's.
@@ -150,13 +150,6 @@ public final class PythonServerErrors {
         java.util.List<Object> wrapped = errorMessageWrapper(exc, body);
         return Response.json(Map.of("error", wrapped.get(1)), (int) wrapped.get(0));
       }
-    }
-  }
-
-  /** Raised for HTTPException passthrough (e.g. API key failures). */
-  public static class HttpException extends RuntimeException {
-    public HttpException(String message) {
-      super(message);
     }
   }
 

@@ -51,3 +51,5 @@ build/
 # Generated test inputs and expected outputs, including Base64 contracts.
 /src/test/resources/
 /tools/python_compat/__pycache__/
+# Local verification scripts, generated classpaths and compiled helpers.
+/.verify/

@@ -308,7 +308,7 @@ public final class PythonLlamaInit {
     }
     f.put("metadata", metadata);
     if (Boolean.TRUE.equals(verbose)) {
-      d.printErr("Model metadata: " + pyRepr(metadata));
+      d.printErr("Model metadata: " + Py.repr(metadata));
     }
     Object eosId = d.tokenEos(self.self);
     Object bosId = d.tokenBos(self.self);
@@ -360,18 +360,5 @@ public final class PythonLlamaInit {
     f.put("_is_hybrid", d.modelIsHybrid("MODEL"));
     f.put("_callbacks", callbacks);
     return self;
-  }
-
-  private static String pyRepr(Object value) {
-    if (value instanceof Map<?, ?> map) {
-      StringBuilder out = new StringBuilder("{");
-      for (Map.Entry<?, ?> e : map.entrySet()) {
-        if (out.length() > 1) out.append(", ");
-        out.append(pyRepr(e.getKey())).append(": ").append(pyRepr(e.getValue()));
-      }
-      return out.append("}").toString();
-    }
-    if (value instanceof String s) return "'" + s + "'";
-    return String.valueOf(value);
   }
 }

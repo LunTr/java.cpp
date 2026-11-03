@@ -1,5 +1,6 @@
 package io.github.yaulun.javacpp.compat.python;
 
+import io.github.yaulun.javacpp.python.Py;
 import io.github.yaulun.javacpp.python.PythonErrorType;
 import java.util.Objects;
 
@@ -12,7 +13,9 @@ public record PythonWarning(
     Objects.requireNonNull(message, "message");
     Objects.requireNonNull(location, "location");
     if (!category.isWarning()) {
-      throw new IllegalArgumentException("category must be a Python warning");
+      throw Py.error(
+          PythonErrorType.TYPE_ERROR,
+          "category must be a Warning subclass, not '" + category.pythonName() + "'");
     }
   }
 

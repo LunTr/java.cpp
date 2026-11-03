@@ -2,6 +2,7 @@ package io.github.yaulun.javacpp.compat.python;
 
 import io.github.yaulun.javacpp.python.Py;
 import io.github.yaulun.javacpp.python.PyAttributed;
+import io.github.yaulun.javacpp.python.PythonErrorType;
 import io.github.yaulun.javacpp.python.PythonNumbers;
 import java.math.BigInteger;
 
@@ -102,7 +103,11 @@ public final class PythonLlamaState implements PyAttributed {
 
   /** Returns seed. */
   public long seed() {
-    return seedValue().longValueExact();
+    try {
+      return seedValue().longValueExact();
+    } catch (ArithmeticException overflow) {
+      throw Py.error(PythonErrorType.OVERFLOW_ERROR, "Python int too large to convert to C long");
+    }
   }
 
   /** Replaces seed. */

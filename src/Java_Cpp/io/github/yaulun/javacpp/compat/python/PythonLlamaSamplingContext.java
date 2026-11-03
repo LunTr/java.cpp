@@ -2,8 +2,8 @@ package io.github.yaulun.javacpp.compat.python;
 
 import static io.github.yaulun.javacpp.compat.python.PythonErrorBridge.error;
 
+import io.github.yaulun.javacpp.python.PythonBytes;
 import io.github.yaulun.javacpp.python.PythonErrorType;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,7 +64,7 @@ public final class PythonLlamaSamplingContext {
     int start = Math.max(0, prev.size() - n);
     byte[] text =
         ctxMain.model().detokenize(new ArrayList<>(prev.subList(start, prev.size())), false);
-    return new String(text, StandardCharsets.UTF_8);
+    return PythonBytes.decodeUtf8(text);
   }
 
   /** Deprecated in the original; raises NotImplementedError unconditionally. */

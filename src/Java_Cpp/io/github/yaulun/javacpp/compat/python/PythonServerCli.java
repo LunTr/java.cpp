@@ -1,9 +1,9 @@
 package io.github.yaulun.javacpp.compat.python;
 
 import io.github.yaulun.javacpp.python.Py;
+import io.github.yaulun.javacpp.python.PythonBytes;
 import io.github.yaulun.javacpp.python.PythonErrorType;
 import io.github.yaulun.javacpp.python.PythonException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -98,7 +98,7 @@ public final class PythonServerCli {
   /** Ports _parse_bool_arg; bytes decode first, then lowercase/strip membership. */
   public static boolean parseBoolArg(Object arg) {
     if (arg instanceof byte[] bytes) {
-      arg = new String(bytes, StandardCharsets.UTF_8);
+      arg = PythonBytes.decodeUtf8(bytes);
     }
     String argStr = String.valueOf(arg).toLowerCase().strip();
     if (TRUE_VALUES.contains(argStr)) return true;
@@ -114,125 +114,20 @@ public final class PythonServerCli {
   /** Ports _parse_json_object_arg; bad JSON raises JSONDecodeError, non-dict raises ValueError. */
   public static Map<String, Object> parseJsonObjectArg(Object arg) {
     if (arg instanceof byte[] bytes) {
-      arg = new String(bytes, StandardCharsets.UTF_8);
+      arg = PythonBytes.decodeUtf8(bytes);
     }
-    Object value = parseJson((String) arg);
+    if (!(arg instanceof String)) {
+      throw Py.error(
+          PythonErrorType.TYPE_ERROR,
+          "the JSON object must be str, bytes or bytearray, not " + Py.typeName(arg));
+    }
+    Object value = PythonJson.loads((String) arg);
     if (!(value instanceof Map)) {
       throw Py.error(PythonErrorType.VALUE_ERROR, "Invalid JSON object argument: " + arg);
     }
     @SuppressWarnings("unchecked")
     Map<String, Object> map = (Map<String, Object>) value;
     return map;
-  }
-
-  /** Minimal JSON parser for the dict-detection contract; failures raise JSONDecodeError. */
-  private static Object parseJson(String text) {
-    int[] pos = {0};
-    try {
-      Object value = jsonValue(text, pos);
-      jsonSpace(text, pos);
-      if (pos[0] != text.length()) throw new IllegalArgumentException();
-      return value;
-    } catch (RuntimeException failure) {
-      throw Py.error(
-          PythonErrorType.JSON_DECODE_ERROR,
-          "Expecting value: line 1 column " + (pos[0] + 1) + " (char " + pos[0] + ")");
-    }
-  }
-
-  private static void jsonSpace(String text, int[] pos) {
-    while (pos[0] < text.length() && " \t\n\r".indexOf(text.charAt(pos[0])) >= 0) pos[0]++;
-  }
-
-  private static Object jsonValue(String text, int[] pos) {
-    jsonSpace(text, pos);
-    if (pos[0] >= text.length()) throw new IllegalArgumentException();
-    char c = text.charAt(pos[0]);
-    return switch (c) {
-      case '{' -> {
-        Map<String, Object> map = new java.util.LinkedHashMap<>();
-        pos[0]++;
-        jsonSpace(text, pos);
-        if (pos[0] < text.length() && text.charAt(pos[0]) == '}') pos[0]++;
-        else {
-          while (true) {
-            jsonSpace(text, pos);
-            String key = (String) jsonValue(text, pos);
-            jsonSpace(text, pos);
-            if (text.charAt(pos[0]++) != ':') throw new IllegalArgumentException();
-            map.put(key, jsonValue(text, pos));
-            jsonSpace(text, pos);
-            char sep = text.charAt(pos[0]++);
-            if (sep == '}') break;
-            if (sep != ',') throw new IllegalArgumentException();
-          }
-        }
-        yield map;
-      }
-      case '[' -> {
-        List<Object> list = new java.util.ArrayList<>();
-        pos[0]++;
-        jsonSpace(text, pos);
-        if (pos[0] < text.length() && text.charAt(pos[0]) == ']') pos[0]++;
-        else {
-          while (true) {
-            list.add(jsonValue(text, pos));
-            jsonSpace(text, pos);
-            char sep = text.charAt(pos[0]++);
-            if (sep == ']') break;
-            if (sep != ',') throw new IllegalArgumentException();
-          }
-        }
-        yield list;
-      }
-      case '"' -> jsonString(text, pos);
-      case 't' -> jsonLiteral(text, pos, "true", Boolean.TRUE);
-      case 'f' -> jsonLiteral(text, pos, "false", Boolean.FALSE);
-      case 'n' -> jsonLiteral(text, pos, "null", null);
-      default -> {
-        int start = pos[0];
-        while (pos[0] < text.length() && "-+0123456789.eE".indexOf(text.charAt(pos[0])) >= 0)
-          pos[0]++;
-        if (pos[0] == start) throw new IllegalArgumentException();
-        String number = text.substring(start, pos[0]);
-        // An if/else keeps Long unboxed: a Long/Double ternary promotes to double.
-        if (number.contains(".") || number.contains("e") || number.contains("E")) {
-          yield Double.valueOf(number);
-        }
-        yield Long.valueOf(number);
-      }
-    };
-  }
-
-  private static String jsonString(String text, int[] pos) {
-    StringBuilder out = new StringBuilder();
-    pos[0]++;
-    while (pos[0] < text.length()) {
-      char c = text.charAt(pos[0]++);
-      if (c == '"') return out.toString();
-      if (c == '\\' && pos[0] < text.length()) {
-        c =
-            switch (text.charAt(pos[0]++)) {
-              case 'n' -> '\n';
-              case 't' -> '\t';
-              case 'r' -> '\r';
-              case 'b' -> '\b';
-              case 'f' -> '\f';
-              case 'u' -> {
-                yield (char) Integer.parseInt(text.substring(pos[0], pos[0] += 4), 16);
-              }
-              default -> text.charAt(pos[0] - 1);
-            };
-      }
-      out.append(c);
-    }
-    throw new IllegalArgumentException();
-  }
-
-  private static Object jsonLiteral(String text, int[] pos, String literal, Object value) {
-    if (!text.startsWith(literal, pos[0])) throw new IllegalArgumentException();
-    pos[0] += literal.length();
-    return value;
   }
 
   /** Ports add_args_from_model: fields iterate in definition order. */

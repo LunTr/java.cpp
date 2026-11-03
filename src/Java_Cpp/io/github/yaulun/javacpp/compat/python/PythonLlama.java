@@ -654,7 +654,9 @@ public final class PythonLlama implements AutoCloseable {
   }
 
   private PythonLlamaExecution requireExecution() {
-    if (execution == null) throw new IllegalStateException("Attach an execution backend first");
+    if (execution == null)
+      throw PythonValues.error(
+          PythonErrorType.ATTRIBUTE_ERROR, "'NoneType' object has no attribute 'ctx'");
     return execution;
   }
 
@@ -732,12 +734,16 @@ public final class PythonLlama implements AutoCloseable {
 
   /** Returns a new model-backed wrapper, independently of the active custom tokenizer. */
   public PythonLlamaTokenizer tokenizer() {
-    if (tokenizerModel == null) throw new IllegalStateException("Attach a tokenizer model first");
+    if (tokenizerModel == null)
+      throw PythonValues.error(
+          PythonErrorType.ATTRIBUTE_ERROR, "'NoneType' object has no attribute 'vocab'");
     return new PythonLlamaTokenizer(tokenizerModel);
   }
 
   private PythonTokenizer requireTokenizer() {
-    if (activeTokenizer == null) throw new IllegalStateException("Attach a tokenizer first");
+    if (activeTokenizer == null)
+      throw PythonValues.error(
+          PythonErrorType.ATTRIBUTE_ERROR, "'NoneType' object has no attribute 'vocab'");
     return activeTokenizer;
   }
 
@@ -881,12 +887,13 @@ public final class PythonLlama implements AutoCloseable {
    */
   public static float[][] logitsToLogprobs(float[][] logits, int axis) {
     Objects.requireNonNull(logits, "logits");
-    if (axis < -2 || axis > 1) throw new IllegalArgumentException("axis must be -2, -1, 0 or 1");
+    if (axis < -2 || axis > 1)
+      throw PythonValues.error(PythonErrorType.VALUE_ERROR, "axis must be -2, -1, 0 or 1");
     if (logits.length == 0) throw emptyReduction();
     int columns = Objects.requireNonNull(logits[0], "row").length;
     for (float[] row : logits) {
       if (Objects.requireNonNull(row, "row").length != columns)
-        throw new IllegalArgumentException("logits must be rectangular");
+        throw PythonValues.error(PythonErrorType.VALUE_ERROR, "logits must be rectangular");
     }
     float[][] result = new float[logits.length][columns];
     if (axis == 1 || axis == -1) {

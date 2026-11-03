@@ -1,5 +1,8 @@
 package io.github.yaulun.javacpp.compat.python;
 
+import io.github.yaulun.javacpp.python.Py;
+import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
@@ -84,7 +87,9 @@ public final class PythonJson {
     } else if (value instanceof Number number) {
       out.append(numberRepr(number));
     } else {
-      throw new IllegalArgumentException("not JSON serializable: " + value.getClass());
+      throw Py.error(
+          PythonErrorType.TYPE_ERROR,
+          "Object of type " + Py.typeName(value) + " is not JSON serializable");
     }
   }
 
@@ -152,13 +157,37 @@ public final class PythonJson {
 
   /** Minimal json.loads returning Map/List/String/Number/Boolean/null. */
   public static Object loads(String text) {
+    if (text == null) {
+      throw Py.error(
+          PythonErrorType.TYPE_ERROR,
+          "the JSON object must be str, bytes or bytearray, not NoneType");
+    }
     int[] pos = {0};
     Object v = parse(text, pos);
     skipWs(text, pos);
     if (pos[0] != text.length()) {
-      throw new IllegalArgumentException("Extra data");
+      throw fail(text, pos[0], "Extra data");
     }
     return v;
+  }
+
+  /**
+   * JSONDecodeError with CPython's "line N column M (char P)" suffix computed from the failure
+   * position.
+   */
+  private static PythonException fail(String text, int pos, String message) {
+    int line = 1;
+    int lastNewline = -1;
+    for (int i = 0; i < pos && i < text.length(); i++) {
+      if (text.charAt(i) == '\n') {
+        line++;
+        lastNewline = i;
+      }
+    }
+    int column = pos - lastNewline;
+    return Py.error(
+        PythonErrorType.JSON_DECODE_ERROR,
+        message + ": line " + line + " column " + column + " (char " + pos + ")");
   }
 
   private static void skipWs(String t, int[] pos) {
@@ -167,85 +196,164 @@ public final class PythonJson {
 
   private static Object parse(String t, int[] pos) {
     skipWs(t, pos);
+    if (pos[0] >= t.length()) {
+      throw fail(t, pos[0], "Expecting value");
+    }
     char c = t.charAt(pos[0]);
     if (c == '{') {
       pos[0]++;
       java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
       skipWs(t, pos);
-      if (t.charAt(pos[0]) == '}') {
+      if (pos[0] < t.length() && t.charAt(pos[0]) == '}') {
         pos[0]++;
         return m;
       }
       while (true) {
         skipWs(t, pos);
-        String k = (String) parseString(t, pos);
+        if (pos[0] >= t.length() || t.charAt(pos[0]) != '"') {
+          throw fail(t, pos[0], "Expecting property name enclosed in double quotes");
+        }
+        String k = parseString(t, pos);
         skipWs(t, pos);
-        pos[0]++; // ':'
+        if (pos[0] >= t.length() || t.charAt(pos[0]) != ':') {
+          throw fail(t, pos[0], "Expecting ':' delimiter");
+        }
+        pos[0]++;
         m.put(k, parse(t, pos));
         skipWs(t, pos);
+        if (pos[0] >= t.length()) {
+          throw fail(t, pos[0], "Expecting ',' delimiter");
+        }
         char d = t.charAt(pos[0]++);
         if (d == '}') return m;
+        if (d != ',') {
+          throw fail(t, pos[0] - 1, "Expecting ',' delimiter");
+        }
       }
     } else if (c == '[') {
       pos[0]++;
       java.util.List<Object> l = new java.util.ArrayList<>();
       skipWs(t, pos);
-      if (t.charAt(pos[0]) == ']') {
+      if (pos[0] < t.length() && t.charAt(pos[0]) == ']') {
         pos[0]++;
         return l;
       }
       while (true) {
         l.add(parse(t, pos));
         skipWs(t, pos);
+        if (pos[0] >= t.length()) {
+          throw fail(t, pos[0], "Expecting ',' delimiter");
+        }
         char d = t.charAt(pos[0]++);
         if (d == ']') return l;
+        if (d != ',') {
+          throw fail(t, pos[0] - 1, "Expecting ',' delimiter");
+        }
       }
     } else if (c == '"') {
       return parseString(t, pos);
-    } else if (c == 't' || c == 'f' || c == 'n') {
-      if (t.startsWith("true", pos[0])) {
-        pos[0] += 4;
-        return Boolean.TRUE;
-      }
-      if (t.startsWith("false", pos[0])) {
-        pos[0] += 5;
-        return Boolean.FALSE;
-      }
+    } else if (t.startsWith("true", pos[0])) {
+      pos[0] += 4;
+      return Boolean.TRUE;
+    } else if (t.startsWith("false", pos[0])) {
+      pos[0] += 5;
+      return Boolean.FALSE;
+    } else if (t.startsWith("null", pos[0])) {
       pos[0] += 4;
       return null;
+    } else if (t.startsWith("NaN", pos[0])) {
+      pos[0] += 3;
+      return Double.NaN;
+    } else if (t.startsWith("Infinity", pos[0])) {
+      pos[0] += 8;
+      return Double.POSITIVE_INFINITY;
+    } else if (t.startsWith("-Infinity", pos[0])) {
+      pos[0] += 9;
+      return Double.NEGATIVE_INFINITY;
     } else {
-      int start = pos[0];
-      while (pos[0] < t.length() && "+-0123456789.eE".indexOf(t.charAt(pos[0])) >= 0) pos[0]++;
-      String num = t.substring(start, pos[0]);
-      if (num.contains(".") || num.contains("e") || num.contains("E")) {
-        return Double.parseDouble(num);
-      }
-      return Long.parseLong(num);
+      return parseNumber(t, pos);
     }
   }
 
-  private static Object parseString(String t, int[] pos) {
+  private static final java.util.regex.Pattern NUMBER =
+      java.util.regex.Pattern.compile("-?(?:0|[1-9][0-9]*)(\\.[0-9]+)?([eE][-+]?[0-9]+)?");
+
+  private static Object parseNumber(String t, int[] pos) {
+    java.util.regex.Matcher match = NUMBER.matcher(t).region(pos[0], t.length());
+    if (!match.lookingAt()) {
+      throw fail(t, pos[0], "Expecting value");
+    }
+    String num = match.group();
+    pos[0] = match.end();
+    if (match.group(1) != null || match.group(2) != null) {
+      return Double.parseDouble(num);
+    }
+    try {
+      return Long.parseLong(num);
+    } catch (NumberFormatException overflow) {
+      return new BigInteger(num);
+    }
+  }
+
+  private static String parseString(String t, int[] pos) {
+    int start = pos[0];
     pos[0]++;
     StringBuilder b = new StringBuilder();
     while (true) {
+      if (pos[0] >= t.length()) {
+        throw fail(t, start, "Unterminated string starting at");
+      }
       char c = t.charAt(pos[0]++);
       if (c == '"') return b.toString();
       if (c == '\\') {
+        int slash = pos[0] - 1;
+        if (pos[0] >= t.length()) {
+          throw fail(t, start, "Unterminated string starting at");
+        }
         char e = t.charAt(pos[0]++);
         switch (e) {
-          case 'u' -> {
-            b.append((char) Integer.parseInt(t.substring(pos[0], pos[0] + 4), 16));
+          case '"':
+            b.append('"');
+            break;
+          case '\\':
+            b.append('\\');
+            break;
+          case 'n':
+            b.append('\n');
+            break;
+          case 'r':
+            b.append('\r');
+            break;
+          case 't':
+            b.append('\t');
+            break;
+          case 'b':
+            b.append('\b');
+            break;
+          case 'f':
+            b.append('\f');
+            break;
+          case '/':
+            b.append('/');
+            break;
+          case 'u':
+            if (pos[0] + 4 > t.length()) {
+              throw fail(t, slash, "Invalid \\uXXXX escape");
+            }
+            try {
+              b.append((char) Integer.parseInt(t.substring(pos[0], pos[0] + 4), 16));
+            } catch (NumberFormatException invalid) {
+              throw fail(t, slash, "Invalid \\uXXXX escape");
+            }
             pos[0] += 4;
-          }
-          case 'n' -> b.append('\n');
-          case 'r' -> b.append('\r');
-          case 't' -> b.append('\t');
-          case 'b' -> b.append('\b');
-          case 'f' -> b.append('\f');
-          case '/' -> b.append('/');
-          default -> b.append(e);
+            break;
+          default:
+            throw fail(t, slash, "Invalid \\escape");
         }
       } else {
+        if (c < 0x20) {
+          throw fail(t, pos[0] - 1, "Invalid control character at");
+        }
         b.append(c);
       }
     }
