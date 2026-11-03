@@ -110,6 +110,23 @@ for row in audit["functions"]:
                    reason=reason + "；固定原版完整函数体已有场景对照，全输入一致性继续验收",
                    contractEvidence="docs/python-llama-contracts.json")
 assert foundLlama == set(llamaMappings)
+initContracts = json.loads((root / "docs/python-init-contracts.json").read_text(encoding="utf-8"))
+initMappings = {
+    "Llama.__init__": ("PythonLlamaInit.init", "逐句移植固定原版初始化装配：参数字段写入、ExitStack 进入顺序、kvo 数组、LoRA 回调、元数据/模板/chat handler 与失败分支均经桩化端口回放对照"),
+}
+assert len(initMappings) == len(initContracts["functions"]) == 1
+assert set(initMappings) == set(initContracts["functions"])
+foundInit = set()
+for row in audit["functions"]:
+    if row["file"] == "llama_cpp/llama.py" and row["qualname"] in initMappings:
+        name = row["qualname"]
+        method, reason = initMappings[name]
+        foundInit.add(name)
+        row.update(status="covered", checked=True, pythonExactParity="not-certified",
+                   java="compat.python." + method,
+                   reason=reason + "；全输入一致性继续验收",
+                   contractEvidence="docs/python-init-contracts.json")
+assert foundInit == set(initMappings)
 tokenizerContracts = json.loads((root / "docs/python-tokenizer-contracts.json").read_text(encoding="utf-8"))
 tokenizerMappings = {
     ("llama.py", "Llama.tokenize"): "PythonLlama.tokenize",
@@ -681,8 +698,7 @@ for row in audit["functions"]:
                    pythonExactParity="not-certified", contractEvidence=f"docs/python-{evidence}-contracts.json",
                    reason="已实现并执行固定原版完整函数体对照；covered 仅指已测端口/类型范围的能力，partial 保留缓存时序、动态类型、完整 provider 或初始化失败状态的后续核实；全行为一致性未认证")
     elif name == "Llama.__init__":
-        row.update(java="PythonNativeLlama.load / compat.python.PythonLlama.load",
-                   reason="原生构造、Python 默认参数、LoRA 和配置重建已实现并有模型测试；完整 Jinja2、动态参数转换及初始化失败状态继续核实")
+        pass  # covered by docs/python-init-contracts.json above
     elif name in {"Llama.__init__.free_lora_adapter", "Llama.__del__"}:
         pass  # covered by docs/python-lowlevel-contracts.json above
     elif name in {"Llama.sample", "Llama.generate"}:

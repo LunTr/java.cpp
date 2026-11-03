@@ -111,9 +111,9 @@ Java.cpp 与 bytedeco/JavaCPP 为独立项目。
 |---|---:|
 | Python 去重函数/方法总数 | 751 |
 | 已有完整同名 JNA 绑定 | 315 |
-| 已覆盖独立能力（含聊天、缓存、处理器及 Llama 辅助方法） | 435 |
-| 本清单打勾项合计 | 750 / 751（99.87%） |
-| 部分覆盖，保持未勾选 | 1 |
+| 已覆盖独立能力（含聊天、缓存、处理器及 Llama 辅助方法） | 436 |
+| 本清单打勾项合计 | 751 / 751（100.00%） |
+| 部分覆盖，保持未勾选 | 0 |
 | 当前缺少明确对应迁移项 | 0 |
 | 已通过 Python 全行为、报错、警告一致性验收 | **0** |
 
@@ -159,7 +159,7 @@ completionConfig 对 null、0、负数按剩余上下文处理，并截断过大
 
 固定原版完整函数体及 CPython repr 产生 10,376 条对照样例，比较 UTF-16 内容（包括未配对代理字符）、空值、角色过滤、异常类别/原文、字典顺序、debug 日志、数值和 Unicode 边界及出错前已产出的流式块。来源的 25 个文件均重新验证 Git blob SHA-1 / SHA-256，并用 AST 复核 786 个定义、751 个去重项。生成脚本已纳入版本控制，见 [本批验证记录](docs/PYTHON_CHAT_COMPATIBILITY.md)。
 
-清单尚未打勾 1 项，其中部分覆盖 1 项、尚无对应实现 0 项。所有 751 项继续保留全输入一致性待验收状态。
+清单尚未打勾 0 项，其中部分覆盖 0 项、尚无对应实现 0 项。所有 751 项继续保留全输入一致性待验收状态。
 
 ### RAM 缓存、状态与处理器逐项移植
 
@@ -223,7 +223,7 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 
 ### 测试数据管理
 
-本轮补齐 `from_pretrained` 的 Windows 字符串仓库匹配路径：保留无效范围、字面括号、仓库外路径异常原文及各次下载请求的独立性。配置/仓库原版对照现为 89 组。llama.py 已测窄范围能力 **48/49（97.96%）**，部分实现 1 项；全函数行为一致验收继续进行。
+本轮补齐 `from_pretrained` 的 Windows 字符串仓库匹配路径：保留无效范围、字面括号、仓库外路径异常原文及各次下载请求的独立性。配置/仓库原版对照现为 89 组。llama.py 已测窄范围能力 **49/49（100.00%）**，部分实现 0 项；全函数行为一致验收继续进行。
 
 `src/test/resources/` 全部由 `.gitignore` 忽略，测试数据及 Base64 样例保留本地。生成脚本、固定来源和小型摘要元数据纳入版本控制。清洁检出后先使用 [生成说明](tools/python_compat/README.md) 恢复六组数据，再执行 Maven 验证；`AGENTS.md` 已记录后续维护规则。
 
@@ -381,9 +381,9 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 - [x] [`llama_cpp._utils.MetaSingleton.__call__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_utils.py#L87) — 能力已覆盖 → `compat.python.PythonSingleton.call`；已移植按类注册的共享实例表；构造异常传播且不写入注册表，原版对照核对缓存命中与异常路径。
 - [x] [`llama_cpp._utils.Singleton.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_utils.py#L98) — 能力已覆盖 → `compat.python.PythonSingleton`；已移植仅链接 super().__init__ 的空构造。
 
-#### `llama_cpp/llama.py` — 49 项，勾选 48，部分 1
+#### `llama_cpp/llama.py` — 49 项，勾选 49，部分 0
 
-- [ ] [`llama_cpp.llama.Llama.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L60) — 部分覆盖 → `PythonNativeLlama.load / compat.python.PythonLlama.load`；原生构造、Python 默认参数、LoRA 和配置重建已实现并有模型测试；完整 Jinja2、动态参数转换及初始化失败状态继续核实。
+- [x] [`llama_cpp.llama.Llama.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L60) — 能力已覆盖 → `compat.python.PythonLlamaInit.init`；逐句移植固定原版初始化装配：参数字段写入、ExitStack 进入顺序、kvo 数组、LoRA 回调、元数据/模板/chat handler 与失败分支均经桩化端口回放对照；全输入一致性继续验收。
 - [x] [`llama_cpp.llama.Llama.__init__.free_lora_adapter`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L446) — 能力已覆盖；嵌套函数 → `compat.python.PythonLlamaResource.free`；已移植嵌套释放闭包：空指针早退、成功后清空引用、释放失败保留引用均经原版对照。
 - [x] [`llama_cpp.llama.Llama.ctx`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L576) — 能力已覆盖 → `compat.python.PythonLlama.ctx`；已移植属性直读：返回存储的上下文句柄，关闭后仍返回原值，与原版 _ctx.ctx 一致。
 - [x] [`llama_cpp.llama.Llama.model`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L580) — 能力已覆盖 → `compat.python.PythonLlama.model`；已移植属性直读：返回存储的模型句柄，关闭后仍返回原值，与原版 _model.model 一致。
