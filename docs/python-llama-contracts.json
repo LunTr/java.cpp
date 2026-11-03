@@ -5,6 +5,7 @@
   "numpyVersion": "2.4.3",
   "uniqueFunctions": 8,
   "functions": [
+    "Llama.__setstate__",
     "Llama._input_ids",
     "Llama._scores",
     "Llama.eval_logits",
@@ -14,15 +15,16 @@
     "Llama.set_cache",
     "Llama.set_seed"
   ],
-  "caseCount": 374,
+  "caseCount": 376,
   "casesByOperation": {
     "views": 150,
     "settings": 12,
     "reset": 48,
+    "setstate": 2,
     "vector": 92,
     "matrix": 72
   },
-  "fixtureSha256": "d362d481d57a2bba42fd83aff4e9429614a4439c16829f71d93c94dd434c3798",
+  "fixtureSha256": "797c6a74ef89c611fe920583f5702d81ede124f414e9f0e33a39bc51ce61cb85",
   "numericalTolerance": {
     "absolute": 4e-06,
     "relative": 4e-06

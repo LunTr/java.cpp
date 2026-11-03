@@ -754,10 +754,258 @@ for case in [dict(body=dict(model="em", dump={"input": "hi"})),
     rows.append("\t".join(["appembed", base64.b64encode(wire(case)).decode(),
         base64.b64encode(wire(run_embed(case))).decode()]))
 
+# ---- server/model.py load_llama_from_model_settings -------------------------------
+tree = ast.parse((args.source_root / "llama_cpp/server/model.py").read_text(encoding="utf-8"))
+proxy_cls = next(n for n in ast.walk(tree)
+                 if isinstance(n, ast.ClassDef) and n.name == "LlamaProxy")
+load_fn = next(f for f in proxy_cls.body
+               if isinstance(f, ast.FunctionDef)
+               and f.name == "load_llama_from_model_settings")
+load_fn.decorator_list = []
+
+def make_handler_class(name, calls):
+    def ctor(*args, **kwargs):
+        calls.append(["handler_ctor", name, kwargs])
+        return {"handler": name}
+    ctor.from_pretrained = (
+        lambda **kwargs: (calls.append(["handler_pretrained", name, kwargs]),
+                          {"handler": name + ".pretrained"})[1])
+    return ctor
+
+def run_load(argument):
+    calls = []
+    chat_format_ns = types.SimpleNamespace(
+        **{cls: make_handler_class(cls, calls) for cls in
+           ["Llava15ChatHandler", "ObsidianChatHandler", "Llava16ChatHandler",
+            "MTMDChatHandler", "Gemma4ChatHandler", "MoondreamChatHandler",
+            "NanoLlavaChatHandler", "Llama3VisionAlpha", "MiniCPMv26ChatHandler",
+            "Qwen25VLChatHandler"]})
+    chat_format_ns.hf_autotokenizer_to_chat_completion_handler = (
+        lambda path: calls.append(["hf_autotokenizer", path]) or {"handler": "hf_auto"})
+    chat_format_ns.hf_tokenizer_config_to_chat_completion_handler = (
+        lambda cfg: calls.append(["hf_config", cfg]) or {"handler": "hf_cfg"})
+    chat_format_ns.get_chat_completion_handler = (
+        lambda fmt: calls.append(["registry_handler", fmt]) or {"handler": "registry:" + str(fmt)})
+    def base_handler(*args, **kwargs):
+        calls.append(["base_handler", args, kwargs])
+        return "BASE"
+    class FakeLlama:
+        def __init__(self):
+            self.chat_handler = argument.get("model_chat_handler", base_handler)
+            self._chat_handlers = {k: base_handler for k in
+                                   argument.get("model_chat_handlers", {})}
+            self.chat_format = argument.get("model_chat_format", "chatml")
+            self.cache = None
+        def set_cache(self, cache):
+            calls.append(["set_cache", cache]); self.cache = cache
+        @classmethod
+        def from_pretrained(cls, repo_id=None, filename=None, **kwargs):
+            calls.append(["llama_pretrained", repo_id, filename, kwargs])
+            made.append(("from_pretrained", repo_id, filename, kwargs))
+            return cls()
+        def __call__(self, *args, **kwargs):
+            calls.append(["llama_call", args, kwargs]); return FakeLlama()
+    llama_cpp_ns = types.SimpleNamespace(
+        llama_chat_format=chat_format_ns,
+        Llama=lambda **kwargs: (calls.append(["llama_ctor", kwargs]),
+                                made.append(("ctor", kwargs)), FakeLlama())[2],
+        LlamaDiskCache=lambda capacity_bytes=None: calls.append(["disk_cache", capacity_bytes]) or ("disk", capacity_bytes),
+        LlamaRAMCache=lambda capacity_bytes=None: calls.append(["ram_cache", capacity_bytes]) or ("ram", capacity_bytes),
+    )
+    # functools.partial semantics: create_fn(**kwargs) forwards to from_pretrained
+    llama_cpp_ns.Llama.from_pretrained = FakeLlama.from_pretrained
+    tokenizer_ns = types.SimpleNamespace(
+        LlamaHFTokenizer=types.SimpleNamespace(
+            from_pretrained=lambda name: calls.append(["hf_tokenizer", name]) or ("tok", name)))
+    speculative_ns = types.SimpleNamespace(
+        LlamaPromptLookupDecoding=lambda num_pred_tokens=None:
+            calls.append(["draft", num_pred_tokens]) or ("draft", num_pred_tokens))
+    files = dict(argument.get("files", {}))
+    def fake_open(path, mode="r"):
+        calls.append(["open", path, mode])
+        import io
+        return io.StringIO(files.get(path, "{}"))
+    ns = {"llama_cpp": llama_cpp_ns, "llama_tokenizer": tokenizer_ns,
+          "llama_speculative": speculative_ns, "json": json, "open": fake_open,
+          "Optional": object, "Dict": dict, "List": list, "Union": object}
+    made = []
+    execute([load_fn], ns)
+    settings = types.SimpleNamespace(**argument["settings"])
+    try:
+        model = ns["load_llama_from_model_settings"](settings)
+        result = {"model": "ok", "calls": calls, "made": made}
+        handler = getattr(model, "chat_handler", None)
+        if callable(handler) and handler is not base_handler:
+            inner = handler(*argument.get("handler_args", []),
+                            **argument.get("handler_kwargs", {}))
+            result["handler_result"] = inner
+            result["handler_calls"] = calls
+        return result
+    except Exception as error:
+        return {"error": type(error).__name__, "message": str(error), "calls": calls}
+
+base_settings = dict(chat_format=None, clip_model_path=None, hf_model_repo_id=None,
+                     hf_pretrained_model_name_or_path=None, hf_tokenizer_config_path=None,
+                     draft_model=None, draft_model_num_pred_tokens=2, kv_overrides=None,
+                     model="m.gguf", n_gpu_layers=0, split_mode=1, main_gpu=0, tensor_split=None,
+                     vocab_only=False, use_mmap=True, use_mlock=False, rpc_servers=None, seed=7,
+                     n_ctx=512, n_batch=512, n_ubatch=512, n_threads=None, n_threads_batch=None,
+                     rope_scaling_type=-1, rope_freq_base=0.0, rope_freq_scale=0.0,
+                     yarn_ext_factor=-1.0, yarn_attn_factor=1.0, yarn_beta_fast=32.0,
+                     yarn_beta_slow=1.0, yarn_orig_ctx=0, mul_mat_q=True, logits_all=False,
+                     embedding=False, offload_kqv=True, flash_attn=False, last_n_tokens_size=64,
+                     lora_base=None, lora_path=None, numa=False, chat_template_kwargs=None,
+                     type_k=None, type_v=None, cache=False, cache_type="ram", cache_size=8,
+                     verbose=False)
+load_cases = [
+    dict(settings={**base_settings}),
+    dict(settings={**base_settings, "chat_format": "llava-1-5", "clip_model_path": "c.gguf"}),
+    dict(settings={**base_settings, "chat_format": "mtmd", "clip_model_path": "c.gguf",
+                   "hf_model_repo_id": "org/repo"}),
+    dict(settings={**base_settings, "chat_format": "llava-1-6"}),
+    dict(settings={**base_settings, "chat_format": "hf-autotokenizer"}),
+    dict(settings={**base_settings, "chat_format": "hf-autotokenizer",
+                   "hf_pretrained_model_name_or_path": "org/tok"}),
+    dict(settings={**base_settings, "chat_format": "hf-tokenizer-config",
+                   "hf_tokenizer_config_path": "tc.json"},
+         files={"tc.json": '{"a": 1}'}),
+    dict(settings={**base_settings,
+                   "kv_overrides": ["a=bool:true", "b=int:5", "c=float:0.5", "d=str:x"]}),
+    dict(settings={**base_settings, "kv_overrides": ["e=bad:1"]}),
+    dict(settings={**base_settings, "chat_template_kwargs": {"t": 1}},
+         handler_args=["m"], handler_kwargs={"t": 9, "k": 2}),
+    dict(settings={**base_settings, "chat_template_kwargs": {"t": 1},
+                   "model_chat_handlers": {"chatml": {"handler": "h2"}},
+                   "model_chat_format": "chatml"}),
+    dict(settings={**base_settings, "chat_template_kwargs": {}},
+         ),
+    dict(settings={**base_settings, "cache": True, "cache_type": "disk", "verbose": True}),
+    dict(settings={**base_settings, "cache": True, "cache_type": "ram", "verbose": False}),
+]
+for case in load_cases:
+    rows.append("\t".join(["loadmodel", base64.b64encode(wire(case)).decode(),
+        base64.b64encode(wire(run_load(case))).decode()]))
+
+# ---- server/__main__.py main -------------------------------------------------------
+tree = ast.parse((args.source_root / "llama_cpp/server/__main__.py").read_text(encoding="utf-8"))
+main_fn = next(n for n in tree.body
+               if isinstance(n, ast.FunctionDef) and n.name == "main")
+
+def run_main(argument):
+    trace = []
+    class StubParser:
+        def add_argument(self, flag, **kwargs):
+            tn = kwargs.get("type")
+            trace.append(["add_argument", flag,
+                          "bool_arg" if tn is cli["_parse_bool_arg"] else
+                          "json_arg" if tn is cli["_parse_json_object_arg"] else
+                          getattr(tn, "__name__", tn),
+                          kwargs.get("help")])
+        def parse_args(self):
+            trace.append(["parse_args"])
+            return types.SimpleNamespace(**{"config_file": None, **argument.get("args", {})})
+        def print_help(self):
+            trace.append(["print_help"])
+    argparse_ns = types.SimpleNamespace(
+        ArgumentParser=lambda description=None: trace.append(["ArgumentParser", description]) or StubParser())
+    class Field:
+        def __init__(self, name, annotation, desc=None, default=None, required=True):
+            self.name, self.annotation = name, annotation
+            self.description, self.default = desc, default
+            self._required = required
+        def is_required(self): return self._required
+    class Settings:
+        model_fields = {
+            "a": Field("a", Literal["x"], "an opt", default="d0", required=False),
+            "b": Field("b", List[int], "many", default=None, required=False),
+            "c": Field("c", bool, "flag", default=None, required=False),
+        }
+    class ConfigFileSettings:
+        models = None
+        @classmethod
+        def model_validate_json(cls, payload):
+            trace.append(["config_validate_json",
+                          payload if isinstance(payload, str) else payload.decode()])
+            if argument.get("config_fail"):
+                raise ValueError("bad config")
+            spec = argument.get("config_result", {})
+            inst = types.SimpleNamespace(models=list(spec.get("models", ["m1"])))
+            return inst
+    class ServerSettings:
+        @classmethod
+        def model_validate(cls, cfg):
+            trace.append(["server_validate", cfg.models])
+            inst = types.SimpleNamespace(host=argument.get("host", "0.0.0.0"),
+                                         port=argument.get("port", 8000),
+                                         ssl_keyfile=argument.get("key"),
+                                         ssl_certfile=argument.get("cert"))
+            made.append(("server", inst))
+            return inst
+    class ModelSettings:
+        pass
+    exits = []
+    def fake_exit(code):
+        trace.append(["exit", code])
+        exits.append(code)
+        raise SystemExit(code)
+    files = dict(argument.get("files", {}))
+    def fake_open(path, mode="r"):
+        trace.append(["open", path, mode])
+        import io
+        if mode == "rb":
+            return io.BytesIO(files.get(path, "{}").encode())
+        return io.StringIO(files.get(path, "{}"))
+    os_ns = types.SimpleNamespace(
+        environ=dict(argument.get("env", {})),
+        getenv=lambda k, d=None: dict(argument.get("env", {})).get(k, d),
+        path=types.SimpleNamespace(exists=lambda p: trace.append(["exists", p]) or p in files))
+    def fake_create_app(server_settings=None, model_settings=None):
+        trace.append(["create_app",
+                      "validated" if made and server_settings is made[0][1] else "parsed",
+                      len(model_settings)])
+        return "app"
+    uvicorn_ns = types.SimpleNamespace(
+        run=lambda app=None, **kwargs: trace.append(["uvicorn", app, kwargs]))
+    yaml_ns = types.SimpleNamespace(safe_load=lambda f: json.loads(f.read().decode()))
+    import io as _io
+    stderr_buf = _io.StringIO()
+    sys_ns = types.SimpleNamespace(stderr=stderr_buf, exit=fake_exit)
+    ns = {"os": os_ns, "sys": sys_ns, "argparse": argparse_ns, "uvicorn": uvicorn_ns,
+          "create_app": fake_create_app, "Settings": Settings,
+          "ServerSettings": ServerSettings, "ModelSettings": ModelSettings,
+          "ConfigFileSettings": ConfigFileSettings,
+          "add_args_from_model": cli["add_args_from_model"],
+          "parse_model_from_args": lambda model, args: trace.append(["parse_model", model.__name__]) or types.SimpleNamespace(host="h", port=1, ssl_keyfile=None, ssl_certfile=None),
+          "yaml": yaml_ns, "json": json, "open": fake_open}
+    made = []
+    execute([main_fn], ns)
+    try:
+        ns["main"]()
+        return {"result": "ok", "trace": trace, "stderr": stderr_buf.getvalue()}
+    except SystemExit:
+        return {"result": "exit", "trace": trace, "stderr": stderr_buf.getvalue()}
+    except Exception as error:
+        return {"error": type(error).__name__, "message": str(error),
+                "trace": trace, "stderr": stderr_buf.getvalue()}
+
+for case in [dict(args={}, env={}),
+             dict(args={"config_file": "cfg.json"}, env={},
+                  files={"cfg.json": '{"models": ["a", "b"]}'}, config_result={"models": ["a", "b"]}),
+             dict(args={"config_file": "cfg.yaml"}, env={},
+                  files={"cfg.yaml": '{"models": ["y"]}'}, config_result={"models": ["y"]}),
+             dict(args={"config_file": "missing.json"}, env={}),
+             dict(args={}, env={"CONFIG_FILE": "e.json"},
+                  files={"e.json": '{"models": ["e"]}'}, config_result={"models": ["e"]}),
+             dict(args={"config_file": "bad.json"}, env={},
+                  files={"bad.json": '{}'}, config_fail=True),
+             dict(args={}, env={"HOST": "1.2.3.4", "PORT": "9"}, port=8)]:
+    rows.append("\t".join(["servermain", base64.b64encode(wire(case)).decode(),
+        base64.b64encode(wire(run_main(case))).decode()]))
+
 fixture = root / "src/test/resources/python-0.3.36-server-contracts.tsv"
 fixture.write_text("\n".join(rows) + "\n", encoding="ascii")
 metadata = dict(pythonPackage="0.3.36", sourceCommit=audit["baseline"]["commit"],
-                fixtureRuntime=sys.version, caseCount=len(rows), uniqueFunctions=26,
+                fixtureRuntime=sys.version, caseCount=len(rows), uniqueFunctions=29,
                 functions=["_get_base_type", "_contains_list_type", "_contains_dict_type",
                            "_parse_bool_arg", "_parse_json_object_arg",
                            "add_args_from_model", "parse_model_from_args",
@@ -770,7 +1018,10 @@ metadata = dict(pythonPackage="0.3.36", sourceCommit=audit["baseline"]["commit"]
                            "LlamaProxy.__iter__", "LlamaProxy.free",
                            "create_app", "prepare_request_resources",
                            "get_event_publisher", "create_completion",
-                           "create_embedding", "create_chat_completion"],
+                           "create_embedding", "create_chat_completion",
+                           "LlamaProxy.load_llama_from_model_settings",
+                           "LlamaProxy.load_llama_from_model_settings.chat_handler_with_kwargs",
+                           "main"],
                 fixtureSha256=hashlib.sha256(fixture.read_bytes()).hexdigest(),
                 method="Hash-verified pinned bodies over stub pydantic/argparse/asyncio-lock/Llama ports; lock acquisition order, channel sends, middleware calls and parser add_argument calls recorded verbatim.")
 (root / "docs/python-server-contracts.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

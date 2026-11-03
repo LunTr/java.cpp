@@ -27,11 +27,11 @@ for item in audit["baseline"]["files"]:
     assert hashlib.sha256(data).hexdigest() == item["sha256"], item["path"]
     assert hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest() == item["sha"], item["path"]
 
-names = {"_input_ids", "_scores", "eval_tokens", "eval_logits", "set_cache", "set_seed", "reset", "logits_to_logprobs"}
+names = {"_input_ids", "_scores", "eval_tokens", "eval_logits", "set_cache", "set_seed", "reset", "logits_to_logprobs", "__setstate__"}
 tree = ast.parse((args.source_root / "llama_cpp/llama.py").read_text(encoding="utf-8"))
 llama = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "Llama")
 methods = [node for node in llama.body if isinstance(node, ast.FunctionDef) and node.name in names]
-assert len(methods) == len(names) == 8
+assert len(methods) == len(names) == 9
 llama.body = methods
 future = ast.ImportFrom(module="__future__", names=[ast.alias(name="annotations")], level=0)
 native = types.SimpleNamespace()
@@ -147,6 +147,23 @@ for recurrent in [False, True]:
             for cursor in [-1, 0, 5]:
                 arg = {"recurrent": recurrent, "hybrid": hybrid, "memory": memory, "cursor": cursor}
                 record("reset", arg, lambda: resetCase(arg))
+
+
+def setstateCase(arg):
+    obj = Llama.__new__(Llama)
+    calls = []
+    original = Llama.__init__
+    try:
+        Llama.__init__ = lambda self, **state: calls.append(dict(state))
+        state = {k: arg[k] for k in sorted(arg)}
+        result = capture(lambda: obj.__setstate__(state))
+        return {"result": result, "calls": calls, "stateArg": state}
+    finally:
+        Llama.__init__ = original
+
+
+for arg in [dict(a=1, b="x", c=[1, 2]), dict(model_path="m.gguf", n_ctx=8)]:
+    record("setstate", arg, lambda: setstateCase(arg))
 
 
 def numericalCase(arg):

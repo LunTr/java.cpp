@@ -2,8 +2,8 @@
   "pythonPackage": "0.3.36",
   "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
   "fixtureRuntime": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]",
-  "caseCount": 81,
-  "uniqueFunctions": 26,
+  "caseCount": 102,
+  "uniqueFunctions": 29,
   "functions": [
     "_get_base_type",
     "_contains_list_type",
@@ -30,8 +30,11 @@
     "get_event_publisher",
     "create_completion",
     "create_embedding",
-    "create_chat_completion"
+    "create_chat_completion",
+    "LlamaProxy.load_llama_from_model_settings",
+    "LlamaProxy.load_llama_from_model_settings.chat_handler_with_kwargs",
+    "main"
   ],
-  "fixtureSha256": "c93f92236cea525d3e8cb8f4e26ef2d98fc3072a1ead2890ab468124aa253f30",
+  "fixtureSha256": "da48c87d9bd8771459580db4a9d552114e625e449f9ac6d811028a95df719fa0",
   "method": "Hash-verified pinned bodies over stub pydantic/argparse/asyncio-lock/Llama ports; lock acquisition order, channel sends, middleware calls and parser add_argument calls recorded verbatim."
 }

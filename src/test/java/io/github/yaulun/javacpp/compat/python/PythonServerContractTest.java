@@ -3,6 +3,8 @@ package io.github.yaulun.javacpp.compat.python;
 import static io.github.yaulun.javacpp.python.PythonValues.dict;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import io.github.yaulun.javacpp.python.Py;
+import io.github.yaulun.javacpp.python.PythonErrorType;
 import io.github.yaulun.javacpp.python.PythonException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -55,6 +57,8 @@ class PythonServerContractTest {
                             case "appcompletion" -> runAppCompletion(argument);
                             case "appchat" -> runAppChat(argument);
                             case "appembed" -> runAppEmbed(argument);
+                            case "loadmodel" -> runLoadModel(argument);
+                            case "servermain" -> runServerMain(argument);
                             default -> throw new AssertionError(parts[0]);
                           };
                       var bytes = new ByteArrayOutputStream();
@@ -1032,5 +1036,357 @@ class PythonServerContractTest {
     snapshot.put("llama_proxy", mark(state.llamaProxy));
     snapshot.put("ping", mark(state.pingMessageFactory));
     return dict("result", epResult(result), "state", snapshot, "trace", trace);
+  }
+
+  // ---- model.py load_llama_from_model_settings -------------------------------
+
+  @SuppressWarnings("unchecked")
+  private static Object runLoadModel(Object input) {
+    var argument = (Map<String, Object>) input;
+    Map<String, Object> settings =
+        new LinkedHashMap<>((Map<String, Object>) argument.get("settings"));
+    List<Object> calls = new ArrayList<>();
+    List<Object> made = new ArrayList<>();
+    Map<String, Object> files = (Map<String, Object>) argument.getOrDefault("files", Map.of());
+    class FakeModel implements PythonLlamaProxy.LoadedLlama {
+      Object chatHandler =
+          argument.containsKey("model_chat_handler") ? argument.get("model_chat_handler") : "base";
+      final Map<String, Object> chatHandlers = new LinkedHashMap<>();
+      Object cache;
+
+      FakeModel() {
+        for (Object key :
+            ((Map<String, Object>) argument.getOrDefault("model_chat_handlers", Map.of()))
+                .keySet()) {
+          chatHandlers.put((String) key, "base");
+        }
+      }
+
+      public Object chatHandler() {
+        return chatHandler;
+      }
+
+      public void setChatHandler(Object handler) {
+        chatHandler = handler;
+      }
+
+      public Map<String, Object> chatHandlers() {
+        return chatHandlers;
+      }
+
+      public Object chatFormat() {
+        return argument.getOrDefault("model_chat_format", "chatml");
+      }
+
+      public void setCache(Object cacheValue) {
+        calls.add(List.of("set_cache", cacheValue));
+        cache = cacheValue;
+      }
+    }
+    var deps =
+        new PythonLlamaProxy.LoaderDeps() {
+          public Object chatHandler(String cls, Object clipModelPath, Object verbose) {
+            calls.add(
+                List.of(
+                    "handler_ctor",
+                    cls,
+                    dict("clip_model_path", clipModelPath, "verbose", verbose)));
+            return dict("handler", cls);
+          }
+
+          public Object chatHandlerFromPretrained(
+              String cls, Object repoId, Object filename, Object verbose) {
+            calls.add(
+                List.of(
+                    "handler_pretrained",
+                    cls,
+                    dict("repo_id", repoId, "filename", filename, "verbose", verbose)));
+            return dict("handler", cls + ".pretrained");
+          }
+
+          public Object hfAutotokenizerHandler(Object nameOrPath) {
+            calls.add(List.of("hf_autotokenizer", nameOrPath));
+            return dict("handler", "hf_auto");
+          }
+
+          public Object readJsonFile(Object path) {
+            calls.add(List.of("open", path, "r"));
+            return PythonJson.loads((String) files.get(path));
+          }
+
+          public Object hfTokenizerConfigHandler(Object config) {
+            calls.add(List.of("hf_config", config));
+            return dict("handler", "hf_cfg");
+          }
+
+          public Object hfTokenizer(Object nameOrPath) {
+            calls.add(List.of("hf_tokenizer", nameOrPath));
+            return List.of("tok", nameOrPath);
+          }
+
+          public Object draftModel(Object numPredTokens) {
+            calls.add(List.of("draft", numPredTokens));
+            return List.of("draft", numPredTokens);
+          }
+
+          public Object llamaFromPretrained(
+              Object repoId, Object filename, Map<String, Object> kwargs) {
+            calls.add(List.of("llama_pretrained", repoId, filename, kwargs));
+            made.add(List.of("from_pretrained", repoId, filename, kwargs));
+            return new FakeModel();
+          }
+
+          public Object llamaCreate(Map<String, Object> kwargs) {
+            calls.add(List.of("llama_ctor", kwargs));
+            made.add(List.of("ctor", kwargs));
+            return new FakeModel();
+          }
+
+          public Object diskCache(Object capacityBytes) {
+            calls.add(List.of("disk_cache", capacityBytes));
+            return List.of("disk", capacityBytes);
+          }
+
+          public Object ramCache(Object capacityBytes) {
+            calls.add(List.of("ram_cache", capacityBytes));
+            return List.of("ram", capacityBytes);
+          }
+
+          public void print(Object message) {}
+
+          public Object callChatHandler(
+              Object handler, List<Object> args, Map<String, Object> kwargs) {
+            calls.add(List.of("base_handler", args, kwargs));
+            return "BASE";
+          }
+
+          public Object registryChatHandler(Object chatFormat) {
+            calls.add(List.of("registry_handler", chatFormat));
+            return dict("handler", "registry:" + chatFormat);
+          }
+        };
+    try {
+      var model = PythonLlamaProxy.loadLlamaFromModelSettings(settings, deps);
+      Map<String, Object> result = new LinkedHashMap<>();
+      result.put("model", "ok");
+      result.put("calls", calls);
+      result.put("made", made);
+      if (model.chatHandler() instanceof PythonLlamaProxy.ChatHandlerWithKwargs wrapped) {
+        Object inner =
+            wrapped.call(
+                (List<Object>) argument.getOrDefault("handler_args", List.of()),
+                (Map<String, Object>) argument.getOrDefault("handler_kwargs", Map.of()));
+        result.put("handler_result", inner);
+        result.put("handler_calls", calls);
+      }
+      return result;
+    } catch (PythonException error) {
+      return dict(
+          "error", error.type().pythonName(), "message", error.getMessage(), "calls", calls);
+    }
+  }
+
+  // ---- __main__.py main --------------------------------------------------------
+
+  private static final class MainExit extends RuntimeException {
+    final int code;
+
+    MainExit(int code) {
+      this.code = code;
+    }
+  }
+
+  private record SrvBox(String kind, Object host, Object port, Object key, Object cert) {}
+
+  @SuppressWarnings("unchecked")
+  private static Object runServerMain(Object input) {
+    var argument = (Map<String, Object>) input;
+    Map<String, Object> env = (Map<String, Object>) argument.getOrDefault("env", Map.of());
+    Map<String, Object> files = (Map<String, Object>) argument.getOrDefault("files", Map.of());
+    Map<String, Object> namespace =
+        new LinkedHashMap<>((Map<String, Object>) argument.getOrDefault("args", Map.of()));
+    namespace.putIfAbsent("config_file", null);
+    List<Object> trace = new ArrayList<>();
+    StringBuilder stderr = new StringBuilder();
+    final Object[] validated = {null};
+    var deps =
+        new PythonServerCli.MainDeps() {
+          public PythonServerCli.MainParser parser(String description) {
+            trace.add(List.of("ArgumentParser", description));
+            return new PythonServerCli.MainParser() {
+              public void addArgument(
+                  String flag, String dest, Object nargs, Object type, Object help) {
+                trace.add(List.of("add_argument", flag, type, help));
+              }
+
+              public Map<String, Object> parseArgs() {
+                trace.add(List.of("parse_args"));
+                return namespace;
+              }
+
+              public void printHelp() {
+                trace.add(List.of("print_help"));
+              }
+            };
+          }
+
+          public PythonServerCli.Model settingsModel() {
+            return new PythonServerCli.Model() {
+              public java.util.List<PythonServerCli.ModelField> modelFields() {
+                return List.of(
+                    new Field("a", new Ann(null, "str", List.of()), "an opt", "d0", false),
+                    new Field(
+                        "b",
+                        new Ann("list", null, List.of(new Ann(null, "int", List.of()))),
+                        "many",
+                        null,
+                        false),
+                    new Field("c", new Ann(null, "bool", List.of()), "flag", null, false));
+              }
+
+              public Object construct(Map<String, Object> kwargs) {
+                return kwargs;
+              }
+            };
+          }
+
+          public PythonServerCli.Model serverSettingsModel() {
+            return parseModel("ServerSettings");
+          }
+
+          public PythonServerCli.Model modelSettingsModel() {
+            return parseModel("ModelSettings");
+          }
+
+          private PythonServerCli.Model parseModel(String name) {
+            return new PythonServerCli.Model() {
+              public java.util.List<PythonServerCli.ModelField> modelFields() {
+                return List.of();
+              }
+
+              public Object construct(Map<String, Object> kwargs) {
+                trace.add(List.of("parse_model", name));
+                return new SrvBox("parsed", "h", 1L, null, null);
+              }
+            };
+          }
+
+          public String envGet(String name) {
+            Object value = env.get(name);
+            return value instanceof String text ? text : null;
+          }
+
+          public boolean pathExists(String path) {
+            trace.add(List.of("exists", path));
+            return files.containsKey(path);
+          }
+
+          public Object configValidateJson(String json) {
+            trace.add(List.of("config_validate_json", json));
+            if (Boolean.TRUE.equals(argument.get("config_fail"))) {
+              throw Py.error(PythonErrorType.VALUE_ERROR, "bad config");
+            }
+            Map<String, Object> spec =
+                (Map<String, Object>) argument.getOrDefault("config_result", Map.of());
+            return spec.getOrDefault("models", List.of("m1"));
+          }
+
+          public Object yamlSafeLoad(String path) {
+            trace.add(List.of("open", path, "rb"));
+            Object content = files.get(path);
+            if (content instanceof byte[] bytes) {
+              return PythonJson.loads(new String(bytes, StandardCharsets.UTF_8));
+            }
+            return PythonJson.loads((String) content);
+          }
+
+          public String openRead(String path) {
+            trace.add(List.of("open", path, "rb"));
+            Object content = files.get(path);
+            return content instanceof byte[] bytes
+                ? new String(bytes, StandardCharsets.UTF_8)
+                : (String) content;
+          }
+
+          public Object serverSettingsValidate(Object configFileSettings) {
+            trace.add(List.of("server_validate", configFileSettings));
+            var box =
+                new SrvBox(
+                    "validated",
+                    argument.getOrDefault("host", "0.0.0.0"),
+                    argument.getOrDefault("port", 8000L),
+                    argument.get("key"),
+                    argument.get("cert"));
+            validated[0] = box;
+            return box;
+          }
+
+          public List<Object> configModels(Object configFileSettings) {
+            return (List<Object>) configFileSettings;
+          }
+
+          public void printErr(String message) {
+            stderr.append(message).append('\n');
+          }
+
+          public void exit(int code) {
+            trace.add(List.of("exit", code));
+            throw new MainExit(code);
+          }
+
+          public Object createApp(Object serverSettings, List<Object> modelSettings) {
+            trace.add(
+                List.of(
+                    "create_app",
+                    serverSettings == validated[0] ? "validated" : "parsed",
+                    modelSettings.size()));
+            return "app";
+          }
+
+          public Object serverHost(Object serverSettings) {
+            return ((SrvBox) serverSettings).host();
+          }
+
+          public Object serverPort(Object serverSettings) {
+            return ((SrvBox) serverSettings).port();
+          }
+
+          public Object sslKeyfile(Object serverSettings) {
+            return ((SrvBox) serverSettings).key();
+          }
+
+          public Object sslCertfile(Object serverSettings) {
+            return ((SrvBox) serverSettings).cert();
+          }
+
+          public void uvicornRun(
+              Object app, Object host, int port, Object sslKeyfile, Object sslCertfile) {
+            trace.add(
+                List.of(
+                    "uvicorn",
+                    app,
+                    dict(
+                        "host", host,
+                        "port", (long) port,
+                        "ssl_keyfile", sslKeyfile,
+                        "ssl_certfile", sslCertfile)));
+          }
+        };
+    try {
+      PythonServerCli.main(deps);
+      return dict("result", "ok", "trace", trace, "stderr", stderr.toString());
+    } catch (MainExit exit) {
+      return dict("result", "exit", "trace", trace, "stderr", stderr.toString());
+    } catch (Exception error) {
+      return dict(
+          "error",
+          error instanceof PythonException failure ? failure.type().pythonName() : "Error",
+          "message",
+          error.getMessage(),
+          "trace",
+          trace,
+          "stderr",
+          stderr.toString());
+    }
   }
 }

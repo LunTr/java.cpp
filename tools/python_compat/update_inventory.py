@@ -95,8 +95,9 @@ llamaMappings = {
     "Llama.set_seed": ("setSeed", "BigInteger 保留原版整数赋值语义，采样器由调用方管理"),
     "Llama.reset": ("reset", "先更新游标及待求值标记，再通过调用方内存适配回调处理 recurrent/hybrid 分支；已测回调顺序及异常后状态"),
     "Llama.logits_to_logprobs": ("logitsToLogprobs", "single 向量及二维矩阵 axis 0/1/-1/-2 已对照，数值采用绝对及相对 4e-6 容差；NumPy 警告和更高维数组待迁移"),
+    "Llama.__setstate__": ("PythonLlamaConfiguration.setState", "一行委托 __init__(**state)；桩化初始化记录完整 state kwargs 转发"),
 }
-assert len(llamaMappings) == llamaContracts["uniqueFunctions"] == 8
+assert len(llamaMappings) == len(llamaContracts["functions"]) == 9
 assert set(llamaMappings) == set(llamaContracts["functions"])
 foundLlama = set()
 for row in audit["functions"]:
@@ -576,8 +577,14 @@ serverMappings = {
         "已移植 proxy(model).create_embedding threadpool 调用与 exclude={user} dump；proxy None 抛 TypeError 原文"),
     ("server/app.py", "create_chat_completion"): ("PythonServerApp.createChatCompletion",
         "已移植 exclude 集合、stream 分支 ESR+partial（Llama.create_chat_completion）、非流式双锁+断连 400+threadpool bound-method 调用"),
+    ("server/model.py", "LlamaProxy.load_llama_from_model_settings"): ("PythonLlamaProxy.loadLlamaFromModelSettings",
+        "已移植十种 chat_format handler 分支与 assert 原文、hf-autotokenizer/tokenizer-config、tokenizer/draft/kv_overrides 解析、partial from_pretrained/ctor 两路 kwargs 顺序、chat_template_kwargs 包装与 disk/ram cache 打印/挂载"),
+    ("server/model.py", "LlamaProxy.load_llama_from_model_settings.chat_handler_with_kwargs"): ("PythonLlamaProxy.ChatHandlerWithKwargs.call",
+        "已移植嵌套闭包：{**settings.chat_template_kwargs, **kwargs} 合并后委托 base handler"),
+    ("server/__main__.py", "main"): ("PythonServerCli.main",
+        "已移植 parser/add_args_from_model/--config_file、CONFIG_FILE 环境与 args 回退、yaml/json 两分支、except 双 print+print_help+exit(1)、双断言、create_app 与 uvicorn.run host/port/ssl kwargs"),
 }
-assert len(serverMappings) == 26 == serverContracts["uniqueFunctions"]
+assert len(serverMappings) == 29 == serverContracts["uniqueFunctions"]
 assert set(key[1] for key in serverMappings) == set(serverContracts["functions"])
 foundServer = set()
 for row in audit["functions"]:
@@ -662,7 +669,7 @@ supplements = {
     "Llama.create_chat_completion": ("covered", "PythonLlamaServices.createChatCompletion", "services"),
     "Llama.create_chat_completion_openai_v1": ("covered", "PythonLlamaServices.createChatCompletionOpenAiV1", "services"),
     "Llama.__getstate__": ("covered", "PythonLlamaConfiguration.getState", "configuration"),
-    "Llama.__setstate__": ("partial", "PythonLlamaConfiguration.setState", "configuration"),
+    "Llama.__setstate__": ("covered", "PythonLlamaConfiguration.setState", "llama"),
     "Llama.from_pretrained": ("covered", "PythonPretrained.fromPretrained", "configuration"),
 }
 for row in audit["functions"]:
@@ -736,6 +743,18 @@ for row in audit["functions"]:
     if row["file"] == "llama_cpp/llama_cpp.py" and row["qualname"] in declared and row["status"] == "missing":
         row.update(status="bound", checked=True, java="internal.LlamaLibrary." + row["qualname"],
                    reason="已声明 b11669 Windows x64 JNA 入口，完整 native verify 已验证加载；Python vendor 同版本行为对照继续核实", pythonExactParity="not-certified")
+extDeclared = {line.split("(")[0].split()[-1] for line in (root / "src/Java_Cpp/io/github/yaulun/javacpp/internal/LlamaExtBindings.java").read_text(encoding="utf-8").splitlines() if " llama_" in line and "(" in line}
+for row in audit["functions"]:
+    if row["file"] == "llama_cpp/llama_cpp_ext.py" and row["qualname"] in extDeclared and row["status"] == "missing":
+        row.update(status="bound", checked=True, java="internal.LlamaExtBindings." + row["qualname"],
+                   reason="已按 _ctypes_function_from_names 三候选名（plain/_Z/MSVC 修饰）解析 b11669 llama.dll 导出，native verify 已验证符号命中；Python vendor 同版本行为对照继续核实",
+                   pythonExactParity="not-certified")
+llavaDeclared = {line.split("(")[0].split()[-1] for line in (root / "src/Java_Cpp/io/github/yaulun/javacpp/internal/LlavaLibrary.java").read_text(encoding="utf-8").splitlines() if (" llava_" in line or " clip_" in line) and "(" in line}
+for row in audit["functions"]:
+    if row["file"] == "llama_cpp/llava_cpp.py" and row["qualname"] in llavaDeclared and row["status"] == "missing":
+        row.update(status="bound", checked=True, java="internal.LlavaLibrary." + row["qualname"],
+                   reason="已声明 pinned llava.h/clip.h JNA 入口并支持 llava.dll 可选加载；Python vendor 同版本行为对照继续核实",
+                   pythonExactParity="not-certified")
 mtmdDeclared = {line.split("(")[0].split()[-1] for line in (root / "src/Java_Cpp/io/github/yaulun/javacpp/internal/MtmdLibrary.java").read_text(encoding="utf-8").splitlines() if " mtmd_" in line and "(" in line}
 for row in audit["functions"]:
     if row["file"] == "llama_cpp/mtmd_cpp.py" and row["qualname"] in mtmdDeclared and row["status"] == "missing":

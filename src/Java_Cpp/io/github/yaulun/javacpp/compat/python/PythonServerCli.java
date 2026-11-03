@@ -2,6 +2,7 @@ package io.github.yaulun.javacpp.compat.python;
 
 import io.github.yaulun.javacpp.python.Py;
 import io.github.yaulun.javacpp.python.PythonErrorType;
+import io.github.yaulun.javacpp.python.PythonException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -273,5 +274,127 @@ public final class PythonServerCli {
     if (annotation.args() == null || annotation.args().isEmpty()) {
       throw Py.error(PythonErrorType.ASSERTION_ERROR, "");
     }
+  }
+
+  // ---- server/__main__.py main -------------------------------------------------
+
+  /** argparse.ArgumentParser port for __main__.main. */
+  public interface MainParser extends ArgumentParser {
+    /** parse_args() result namespace. */
+    Map<String, Object> parseArgs();
+
+    void printHelp();
+  }
+
+  /** Dependency ports of __main__.main; every call is recordable. */
+  public interface MainDeps {
+    MainParser parser(String description);
+
+    /** Settings model for add_args_from_model. */
+    Model settingsModel();
+
+    Model serverSettingsModel();
+
+    Model modelSettingsModel();
+
+    /** os.environ.get / os.getenv. */
+    String envGet(String name);
+
+    boolean pathExists(String path);
+
+    /** ConfigFileSettings.model_validate_json. */
+    Object configValidateJson(String json);
+
+    /** yaml.safe_load on the opened config file. */
+    Object yamlSafeLoad(String path);
+
+    /** f.read() of the opened non-yaml config file. */
+    String openRead(String path);
+
+    /** ServerSettings.model_validate. */
+    Object serverSettingsValidate(Object configFileSettings);
+
+    /** config_file_settings.models. */
+    List<Object> configModels(Object configFileSettings);
+
+    /** print(e, file=sys.stderr). */
+    void printErr(String message);
+
+    /** sys.exit(code). */
+    void exit(int code);
+
+    Object createApp(Object serverSettings, List<Object> modelSettings);
+
+    Object serverHost(Object serverSettings);
+
+    Object serverPort(Object serverSettings);
+
+    Object sslKeyfile(Object serverSettings);
+
+    Object sslCertfile(Object serverSettings);
+
+    void uvicornRun(Object app, Object host, int port, Object sslKeyfile, Object sslCertfile);
+  }
+
+  /** Ports server/__main__.py main. */
+  public static void main(MainDeps deps) {
+    String description = "🦙 Llama.cpp python server. Host your own LLMs!🚀";
+    MainParser parser = deps.parser(description);
+    addArgsFromModel(parser, deps.settingsModel());
+    parser.addArgument(
+        "--config_file", "config_file", null, "str", "Path to a config file to load.");
+    Object serverSettings = null;
+    List<Object> modelSettings = new java.util.ArrayList<>();
+    Map<String, Object> arguments = parser.parseArgs();
+    try {
+      String configFile = deps.envGet("CONFIG_FILE");
+      if (configFile == null) {
+        Object value = arguments.get("config_file");
+        configFile = value instanceof String text ? text : null;
+      }
+      if (configFile != null) {
+        if (!deps.pathExists(configFile)) {
+          throw Py.error(PythonErrorType.VALUE_ERROR, "Config file " + configFile + " not found!");
+        }
+        Object configFileSettings;
+        if (configFile.endsWith(".yaml") || configFile.endsWith(".yml")) {
+          configFileSettings =
+              deps.configValidateJson(PythonJson.dumps(deps.yamlSafeLoad(configFile)));
+        } else {
+          configFileSettings = deps.configValidateJson(deps.openRead(configFile));
+        }
+        serverSettings = deps.serverSettingsValidate(configFileSettings);
+        modelSettings = new java.util.ArrayList<>(deps.configModels(configFileSettings));
+      } else {
+        serverSettings = parseModelFromArgs(deps.serverSettingsModel(), arguments);
+        modelSettings = new java.util.ArrayList<>();
+        modelSettings.add(parseModelFromArgs(deps.modelSettingsModel(), arguments));
+      }
+    } catch (Exception error) {
+      String message =
+          error instanceof PythonException failure ? failure.getMessage() : String.valueOf(error);
+      deps.printErr(message);
+      parser.printHelp();
+      deps.exit(1);
+      return;
+    }
+    if (serverSettings == null) {
+      throw Py.error(PythonErrorType.ASSERTION_ERROR, "");
+    }
+    if (modelSettings == null) {
+      throw Py.error(PythonErrorType.ASSERTION_ERROR, "");
+    }
+    Object app = deps.createApp(serverSettings, modelSettings);
+    String host = deps.envGet("HOST");
+    if (host == null) {
+      host = (String) deps.serverHost(serverSettings);
+    }
+    String portEnv = deps.envGet("PORT");
+    int port =
+        portEnv != null
+            ? Integer.parseInt(portEnv)
+            : ((Number) deps.serverPort(serverSettings)).intValue();
+    deps.uvicornRun(
+        app, host, port, deps.sslKeyfile(serverSettings), deps.sslCertfile(serverSettings));
   }
 }

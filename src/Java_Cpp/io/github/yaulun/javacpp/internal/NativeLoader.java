@@ -45,13 +45,22 @@ public final class NativeLoader {
     GgmlBaseLibrary base = bind(directory.resolve("ggml-base.dll"), GgmlBaseLibrary.class);
     GgmlLibrary ggml = bind(directory.resolve("ggml.dll"), GgmlLibrary.class);
     LlamaLibrary llama = bind(directory.resolve("llama.dll"), LlamaLibrary.class);
-    return new NativeLibraries(directory, llama, ggml, base);
+    LlamaExtBindings ext =
+        LlamaExtBindings.load(
+            NativeLibrary.getInstance(directory.resolve("llama.dll").toString(), OPTIONS));
+    return new NativeLibraries(directory, llama, ggml, base, ext);
   }
 
   /** Loads the optional mtmd.dll; returns null when the directory has no multimodal library. */
   public static MtmdLibrary loadMtmd(Path directory) {
     Path file = directory.resolve("mtmd.dll");
     return Files.isRegularFile(file) ? bind(file, MtmdLibrary.class) : null;
+  }
+
+  /** Loads the optional llava.dll; returns null when the directory has no legacy vision library. */
+  public static LlavaLibrary loadLlava(Path directory) {
+    Path file = directory.resolve("llava.dll");
+    return Files.isRegularFile(file) ? bind(file, LlavaLibrary.class) : null;
   }
 
   private static <T extends Library> T bind(Path file, Class<T> type) {

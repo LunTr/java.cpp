@@ -14,6 +14,7 @@ import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -106,6 +107,7 @@ class PythonLlamaContractTest {
           floats(
               PythonLlama.logitsToLogprobs(
                   matrix(argument.get("values")), number(argument.get("axis"))));
+      case "setstate" -> setstate(argument);
       default -> throw new AssertionError(kind);
     };
   }
@@ -260,6 +262,21 @@ class PythonLlamaContractTest {
       for (Object key : left.keySet())
         compare(left.get(key), right.get(key), path + "." + key, approximate);
     } else assertEquals(expected, actual, path);
+  }
+
+  private static Object setstate(Map<String, Object> arg) {
+    List<Object> calls = new ArrayList<>();
+    var configuration =
+        new PythonLlamaConfiguration(null, Map.of(), Map.of(), Map.of(), calls::add);
+    Map<String, Object> state = new LinkedHashMap<>();
+    new java.util.TreeMap<>(arg).forEach((k, v) -> state.put(k, v));
+    Object result =
+        capture(
+            () -> {
+              configuration.setState(state);
+              return null;
+            });
+    return dict("result", result, "calls", calls, "stateArg", state);
   }
 
   @Test
