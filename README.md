@@ -111,15 +111,15 @@ Java.cpp 与 bytedeco/JavaCPP 为独立项目。
 |---|---:|
 | Python 去重函数/方法总数 | 751 |
 | 已有完整同名 JNA 绑定 | 315 |
-| 已覆盖独立能力（含聊天、缓存、处理器及 Llama 辅助方法） | 431 |
-| 本清单打勾项合计 | 746 / 751（99.33%） |
-| 部分覆盖，保持未勾选 | 5 |
+| 已覆盖独立能力（含聊天、缓存、处理器及 Llama 辅助方法） | 435 |
+| 本清单打勾项合计 | 750 / 751（99.87%） |
+| 部分覆盖，保持未勾选 | 1 |
 | 当前缺少明确对应迁移项 | 0 |
 | 已通过 Python 全行为、报错、警告一致性验收 | **0** |
 
 原版 `llama_cpp.py` 共 256 项，其中 255 个公开 C API 函数和 1 个警告辅助函数。Java 已声明其中 317 个同名入口；上下文结构相关 2 项列为部分覆盖，其余 315 项标记绑定完成。Java 另有 9 个 ggml 补充入口，单独提供设备枚举等能力，不增加 Python 迁移计数。
 
-高层 `Llama` 有 31 个普通公开命名成员（含 4 个属性 getter），其中 29 项已有查询或窄范围辅助能力；构造、生成、聊天、分词等继续逐项对照。构造器、`__call__`、析构、私有辅助成员在下表另行完整列出。
+高层 `Llama` 有 31 个普通公开命名成员（含 4 个属性 getter），其中 31 项已有查询或窄范围辅助能力；构造、生成、聊天、分词等继续逐项对照。构造器、`__call__`、析构、私有辅助成员在下表另行完整列出。
 
 勾选含义：`[x]` 表示该 C 入口绑定或窄范围能力已实现；**勾选不代表 Python 完全一致**。`[ ]` 表示部分覆盖或尚无明确迁移项，具体差异写在函数后。未单独对应的内部辅助动作可能由 Java/JNA 间接承担，未计入完成项。清单覆盖多个分层，同一能力可能出现在 C 入口、内部包装和高层 API；各项分别计数，不将它们解释为独立产品能力。差异证据和桥接用法见 [Python 兼容核对](docs/PYTHON_COMPATIBILITY.md)，机器可读清单见 [python-api-audit.json](docs/python-api-audit.json)。
 
@@ -159,7 +159,7 @@ completionConfig 对 null、0、负数按剩余上下文处理，并截断过大
 
 固定原版完整函数体及 CPython repr 产生 10,376 条对照样例，比较 UTF-16 内容（包括未配对代理字符）、空值、角色过滤、异常类别/原文、字典顺序、debug 日志、数值和 Unicode 边界及出错前已产出的流式块。来源的 25 个文件均重新验证 Git blob SHA-1 / SHA-256，并用 AST 复核 786 个定义、751 个去重项。生成脚本已纳入版本控制，见 [本批验证记录](docs/PYTHON_CHAT_COMPATIBILITY.md)。
 
-清单尚未打勾 5 项，其中部分覆盖 5 项、尚无对应实现 0 项。所有 751 项继续保留全输入一致性待验收状态。
+清单尚未打勾 1 项，其中部分覆盖 1 项、尚无对应实现 0 项。所有 751 项继续保留全输入一致性待验收状态。
 
 ### RAM 缓存、状态与处理器逐项移植
 
@@ -181,7 +181,7 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 
 已为 llama.py 全部 49 个定义项建立 [函数与异常映射](docs/PYTHON_LLAMA_MAPPING.md)，覆盖 4 个嵌套函数和 23 处显式 raise/assert/警告站点。机器清单保存完整签名、Java 去向、触发分支、异常类别、调用依赖和实现状态；计划中的实现继续单独标注。
 
-本轮补齐 eval、save_state、load_state、token_nl、pooling_type 和 close 的窄范围实现，并接入 sample/generate 的执行状态机。207 组固定原版对照核对批处理、数组广播、错误后的状态、诊断顺序、临时采样器引用、前缀复用、send、停止条件和草稿路径；原生测试验证实际模型求值、保存恢复及继续生成。新增 7 项 b11669 C 入口，接口保持 JNA 类型封装。
+本轮补齐 eval、save_state、load_state、token_nl、pooling_type 和 close 的窄范围实现，并接入 sample/generate 的执行状态机。209 组固定原版对照核对批处理、数组广播、错误后的状态、诊断顺序、临时采样器引用、前缀复用、send、停止条件和草稿路径；原生测试验证实际模型求值、保存恢复及继续生成。新增 7 项 b11669 C 入口，接口保持 JNA 类型封装。
 
 采样、embedding、completion/chat 转发、配置重建及仓库匹配已有实现；2026-10-29 已同步机器映射。services 235、completion 140、configuration/repository 89 组原版对照，共 464 组。保留完整 Jinja2、初始化失败状态、动态类型、缓存时序及同版本原生推理对照。验证结果见 [缓存记录](docs/PYTHON_CACHE_COMPATIBILITY.md)，用法和既有记录见 [执行链路记录](docs/PYTHON_EXECUTION_COMPATIBILITY.md)。
 
@@ -223,7 +223,7 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 
 ### 测试数据管理
 
-本轮补齐 `from_pretrained` 的 Windows 字符串仓库匹配路径：保留无效范围、字面括号、仓库外路径异常原文及各次下载请求的独立性。配置/仓库原版对照现为 89 组。llama.py 已测窄范围能力 **44/49（89.80%）**，部分实现 5 项；全函数行为一致验收继续进行。
+本轮补齐 `from_pretrained` 的 Windows 字符串仓库匹配路径：保留无效范围、字面括号、仓库外路径异常原文及各次下载请求的独立性。配置/仓库原版对照现为 89 组。llama.py 已测窄范围能力 **48/49（97.96%）**，部分实现 1 项；全函数行为一致验收继续进行。
 
 `src/test/resources/` 全部由 `.gitignore` 忽略，测试数据及 Base64 样例保留本地。生成脚本、固定来源和小型摘要元数据纳入版本控制。清洁检出后先使用 [生成说明](tools/python_compat/README.md) 恢复六组数据，再执行 Maven 验证；`AGENTS.md` 已记录后续维护规则。
 
@@ -381,7 +381,7 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 - [x] [`llama_cpp._utils.MetaSingleton.__call__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_utils.py#L87) — 能力已覆盖 → `compat.python.PythonSingleton.call`；已移植按类注册的共享实例表；构造异常传播且不写入注册表，原版对照核对缓存命中与异常路径。
 - [x] [`llama_cpp._utils.Singleton.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/_utils.py#L98) — 能力已覆盖 → `compat.python.PythonSingleton`；已移植仅链接 super().__init__ 的空构造。
 
-#### `llama_cpp/llama.py` — 49 项，勾选 44，部分 5
+#### `llama_cpp/llama.py` — 49 项，勾选 48，部分 1
 
 - [ ] [`llama_cpp.llama.Llama.__init__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L60) — 部分覆盖 → `PythonNativeLlama.load / compat.python.PythonLlama.load`；原生构造、Python 默认参数、LoRA 和配置重建已实现并有模型测试；完整 Jinja2、动态参数转换及初始化失败状态继续核实。
 - [x] [`llama_cpp.llama.Llama.__init__.free_lora_adapter`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L446) — 能力已覆盖；嵌套函数 → `compat.python.PythonLlamaResource.free`；已移植嵌套释放闭包：空指针早退、成功后清空引用、释放失败保留引用均经原版对照。
@@ -399,13 +399,13 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 - [x] [`llama_cpp.llama.Llama.eval`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L666) — 能力已覆盖 → `compat.python.PythonLlama.eval`；原版求值/状态/清理完整函数体已有调用顺序及错误后状态对照；查询使用原生整数返回；Java 使用 intc/single 矩形数组及显式执行端口，全输入一致性继续验收。
 - [x] [`llama_cpp.llama.Llama._init_sampler`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L704) — 能力已覆盖 → `compat.python.PythonLlama.initSampler`；已实现并执行固定原版完整函数体对照；covered 仅指已测端口/类型范围的能力，partial 保留缓存时序、动态类型、完整 provider 或初始化失败状态的后续核实；全行为一致性未认证。
 - [x] [`llama_cpp.llama.Llama._init_sampler.apply_func`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L726) — 能力已覆盖；嵌套函数 → `compat.python.PythonLlama.applyProcessors`；已实现并执行固定原版完整函数体对照；covered 仅指已测端口/类型范围的能力，partial 保留缓存时序、动态类型、完整 provider 或初始化失败状态的后续核实；全行为一致性未认证。
-- [ ] [`llama_cpp.llama.Llama.sample`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L792) — 部分覆盖 → `compat.python.PythonLlama.sample`；完整采样参数入口和状态机已接入；原版执行对照及原生测试已通过；动态类型和回调共享视图语义继续核实。
-- [ ] [`llama_cpp.llama.Llama.generate`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L854) — 部分覆盖 → `compat.python.PythonLlama.generate`；完整采样参数入口和状态机已接入；原版执行对照及原生测试已通过；动态类型和回调共享视图语义继续核实。
+- [x] [`llama_cpp.llama.Llama.sample`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L792) — 能力已覆盖 → `compat.python.PythonLlama.sample`；固定原版完整函数体对照覆盖临时/预置采样器、idx-ridx、前缀命中、exact cache 跳过、replay-one-token、评估循环与 stopping/grammar 分支；动态类型边界继续验收。
+- [x] [`llama_cpp.llama.Llama.generate`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L854) — 能力已覆盖 → `compat.python.PythonLlama.generate`；固定原版完整函数体对照覆盖临时/预置采样器、idx-ridx、前缀命中、exact cache 跳过、replay-one-token、评估循环与 stopping/grammar 分支；动态类型边界继续验收。
 - [x] [`llama_cpp.llama.Llama.create_embedding`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1027) — 能力已覆盖 → `compat.python.PythonLlamaServices.createEmbedding`；已实现并执行固定原版完整函数体对照；covered 仅指已测端口/类型范围的能力，partial 保留缓存时序、动态类型、完整 provider 或初始化失败状态的后续核实；全行为一致性未认证。
 - [x] [`llama_cpp.llama.Llama.embed`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1067) — 能力已覆盖 → `compat.python.PythonLlamaServices.embed`；已实现并执行固定原版完整函数体对照；covered 仅指已测端口/类型范围的能力，partial 保留缓存时序、动态类型、完整 provider 或初始化失败状态的后续核实；全行为一致性未认证。
 - [x] [`llama_cpp.llama.Llama.embed.decode_batch`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1115) — 能力已覆盖；嵌套函数 → `compat.python.PythonLlamaServices.decodeEmbedding`；已实现并执行固定原版完整函数体对照；covered 仅指已测端口/类型范围的能力，partial 保留缓存时序、动态类型、完整 provider 或初始化失败状态的后续核实；全行为一致性未认证。
-- [ ] [`llama_cpp.llama.Llama._create_completion`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1195) — 部分覆盖 → `compat.python.PythonCompletion`；已实现并执行固定原版完整函数体对照；covered 仅指已测端口/类型范围的能力，partial 保留缓存时序、动态类型、完整 provider 或初始化失败状态的后续核实；全行为一致性未认证。
-- [ ] [`llama_cpp.llama.Llama._create_completion.logit_bias_processor`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1324) — 部分覆盖；嵌套函数 → `compat.python.PythonCompletion.logitBias`；已实现并执行固定原版完整函数体对照；covered 仅指已测端口/类型范围的能力，partial 保留缓存时序、动态类型、完整 provider 或初始化失败状态的后续核实；全行为一致性未认证。
+- [x] [`llama_cpp.llama.Llama._create_completion`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1195) — 能力已覆盖 → `compat.python.PythonCompletion`；已实现并执行固定原版完整函数体对照；covered 仅指已测端口/类型范围的能力，partial 保留缓存时序、动态类型、完整 provider 或初始化失败状态的后续核实；全行为一致性未认证。
+- [x] [`llama_cpp.llama.Llama._create_completion.logit_bias_processor`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1324) — 能力已覆盖；嵌套函数 → `compat.python.PythonCompletion.logitBias`；已实现并执行固定原版完整函数体对照；covered 仅指已测端口/类型范围的能力，partial 保留缓存时序、动态类型、完整 provider 或初始化失败状态的后续核实；全行为一致性未认证。
 - [x] [`llama_cpp.llama.Llama.create_completion`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1815) — 能力已覆盖 → `compat.python.PythonLlamaServices.createCompletion`；已实现并执行固定原版完整函数体对照；covered 仅指已测端口/类型范围的能力，partial 保留缓存时序、动态类型、完整 provider 或初始化失败状态的后续核实；全行为一致性未认证。
 - [x] [`llama_cpp.llama.Llama.__call__`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L1912) — 能力已覆盖 → `compat.python.PythonLlamaServices.call`；已实现并执行固定原版完整函数体对照；covered 仅指已测端口/类型范围的能力，partial 保留缓存时序、动态类型、完整 provider 或初始化失败状态的后续核实；全行为一致性未认证。
 - [x] [`llama_cpp.llama.Llama.create_chat_completion`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/llama.py#L2004) — 能力已覆盖 → `compat.python.PythonLlamaServices.createChatCompletion`；已实现并执行固定原版完整函数体对照；covered 仅指已测端口/类型范围的能力，partial 保留缓存时序、动态类型、完整 provider 或初始化失败状态的后续核实；全行为一致性未认证。

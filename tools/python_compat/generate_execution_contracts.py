@@ -82,7 +82,7 @@ def run(arg):
     obj.ctx = obj._ctx.ctx
     obj._batch = types.SimpleNamespace(set_batch=setBatch)
     obj._init_sampler = factory
-    obj._sampler = None
+    obj._sampler = types.SimpleNamespace(sample=sample) if arg.get("preset") else None
     obj._stack = contextlib.ExitStack()
     def cleanup():
         trace.append(["close"])
@@ -158,6 +158,8 @@ for cursor in [0, 1, 4]:
     for index in [None, -1, 0, 5]:
         for failure in ["", "sample"]:
             record(dict(base, kind="sample", cursor=cursor, index=index, failure=failure))
+for index in [None, 5]:
+    record(dict(base, kind="sample", cursor=4, index=index, preset=True))
 for count in [0, 2, 4, 5]:
     for cursor in [0, 2, 8]: record(dict(base, kind="save", cursor=cursor, count=count))
 for size in [-1, 0, 3, 5, 6]:

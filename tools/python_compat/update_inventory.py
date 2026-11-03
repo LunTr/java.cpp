@@ -662,8 +662,8 @@ supplements = {
     "Llama.create_embedding": ("covered", "PythonLlamaServices.createEmbedding", "services"),
     "Llama.embed": ("covered", "PythonLlamaServices.embed", "services"),
     "Llama.embed.decode_batch": ("covered", "PythonLlamaServices.decodeEmbedding", "services"),
-    "Llama._create_completion": ("partial", "PythonCompletion", "completion"),
-    "Llama._create_completion.logit_bias_processor": ("partial", "PythonCompletion.logitBias", "completion"),
+    "Llama._create_completion": ("covered", "PythonCompletion", "completion"),
+    "Llama._create_completion.logit_bias_processor": ("covered", "PythonCompletion.logitBias", "completion"),
     "Llama.create_completion": ("covered", "PythonLlamaServices.createCompletion", "services"),
     "Llama.__call__": ("covered", "PythonLlamaServices.call", "services"),
     "Llama.create_chat_completion": ("covered", "PythonLlamaServices.createChatCompletion", "services"),
@@ -686,7 +686,10 @@ for row in audit["functions"]:
     elif name in {"Llama.__init__.free_lora_adapter", "Llama.__del__"}:
         pass  # covered by docs/python-lowlevel-contracts.json above
     elif name in {"Llama.sample", "Llama.generate"}:
-        row["reason"] = "完整采样参数入口和状态机已接入；原版执行对照及原生测试已通过；动态类型和回调共享视图语义继续核实"
+        row.update(status="covered", checked=True,
+                   java="compat.python.PythonLlama." + ("sample" if name.endswith("sample") else "generate"),
+                   pythonExactParity="not-certified", contractEvidence="docs/python-execution-contracts.json",
+                   reason="固定原版完整函数体对照覆盖临时/预置采样器、idx-ridx、前缀命中、exact cache 跳过、replay-one-token、评估循环与 stopping/grammar 分支；动态类型边界继续验收")
 llamacppDeprecated = {
     "llama_load_model_from_file": "loadModelFromFile",
     "llama_free_model": "freeModel",

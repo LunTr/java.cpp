@@ -57,3 +57,15 @@
 `generate_server_contracts.py` 新增 34 组用例（create_app 8、prepare 7、publisher 6、completion 7、chat 4、embedding 2），总计 **81 组**；`PythonServerContractTest` 回放逐字节比对全部通过（JUnit 实测 81 successful / 0 failed）。fixture 仍为 `src/test/resources/python-0.3.36-server-contracts.tsv`（gitignore），元数据 `docs/python-server-contracts.json`（26 函数、81 例、SHA-256）。
 
 全输入一致性认证保持 0 项。
+
+## model.py 与 __main__.py（再 3 项，2026-11-03）
+
+| Python 项 | Java 对应 | 说明 |
+|---|---|---|
+| model.LlamaProxy.load_llama_from_model_settings | PythonLlamaProxy.loadLlamaFromModelSettings | 十种 chat_format handler 分支（ctor/from_pretrained 端口）与 "clip model not found" 断言原文；hf-autotokenizer/hf-tokenizer-config 断言+工厂；LlamaHFTokenizer.from_pretrained、LlamaPromptLookupDecoding、kv_overrides "k=v[:type]" 解包（int/float/bool/str/未知类型 ValueError 与多值解包错误）；functools.partial(from_pretrained)/ctor 两路 39 键 kwargs 顺序；chat_template_kwargs truthy 门控后三源 base handler 选择；disk/ram cache verbose print+set_cache |
+| model.LlamaProxy.load_llama_from_model_settings.chat_handler_with_kwargs | PythonLlamaProxy.ChatHandlerWithKwargs.call | 嵌套闭包 {**chat_template_kwargs, **kwargs} 合并（后者覆盖）后委托 base handler |
+| server.__main__.main | PythonServerCli.main | ArgumentParser+add_args_from_model(Settings)+--config_file；CONFIG_FILE 环境变量回退 args.config_file；exists→ValueError；yaml/yml→yaml.safe_load+json.dumps 与 f.read() 两分支 ConfigFileSettings.model_validate_json；ServerSettings.model_validate+models；except print(e,stderr)+print_help+exit(1)；双断言；create_app(server,models)；uvicorn.run host=env(HOST)/port=int(env(PORT))/ssl kwargs |
+
+## 验证（第三批）
+
+`generate_server_contracts.py` 新增 21 组（loadmodel 14、servermain 7），累计 **102 组**；`PythonServerContractTest` 102/102 回放逐字节比对通过。生成器修复：handler 类 `from_pretrained` 以可调用 lambda 注入（原 classmethod 对象不可调用）。全输入一致性认证保持 0 项。

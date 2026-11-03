@@ -187,6 +187,15 @@ class PythonExecutionContractTest {
             return sampledTokens[sampled[0]++ % sampledTokens.length];
           };
         });
+    if (Boolean.TRUE.equals(arg.get("preset"))) {
+      llama.setSampler(
+          index -> {
+            trace.add(List.of("sample", index));
+            if (failure.equals("sample"))
+              throw PythonValues.error(PythonErrorType.RUNTIME_ERROR, "sample failed");
+            return sampledTokens[sampled[0]++ % sampledTokens.length];
+          });
+    }
     Object result;
     switch ((String) arg.get("kind")) {
       case "close" -> {
