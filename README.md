@@ -169,7 +169,7 @@ completionConfig 对 null、0、负数按剩余上下文处理，并截断过大
 
 本轮迁移 8 项：`Llama._input_ids`、`_scores`、`eval_tokens`、`eval_logits`、`set_cache`、`set_seed`、`reset` 和 `logits_to_logprobs`，Java 入口为 `compat.python.PythonLlama`。它接收调用方已求值的 intc/single 缓冲，提供可写共享视图、按原版容量截取的独立 List 快照、缓存引用及任意精度种子赋值，并保留 reset 的状态更新和 recurrent/hybrid 内存回调顺序。
 
-log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定原版的 376 组对照覆盖切片、共享修改、快照、种子、重置分支与异常时序、数值边界。浮点对照采用绝对与相对 `4e-6` 容差。完整 `Llama` 构造、eval/generate 连接、Python deque 的后续变更操作、多维 NumPy 接口及数值警告列入后续范围。接口示例、8 项映射和验证结果见 [本轮记录](docs/PYTHON_LLAMA_COMPATIBILITY.md)。
+log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定原版的 376 组对照覆盖切片、共享修改、快照、种子、重置分支与异常时序、数值边界。浮点对照采用绝对与相对 `4e-6` 容差。`Llama` 构造已由 `PythonLlamaInit` 对照覆盖（见下轮记录），eval/generate 连接、Python deque 的后续变更操作、多维 NumPy 接口及数值警告列入后续范围。接口示例、8 项映射和验证结果见 [本轮记录](docs/PYTHON_LLAMA_COMPATIBILITY.md)。
 
 ### llama.py 与 LlamaTokenizer 分词链路（2026-10-28，第二轮）
 
@@ -183,7 +183,7 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 
 本轮补齐 eval、save_state、load_state、token_nl、pooling_type 和 close 的窄范围实现，并接入 sample/generate 的执行状态机。209 组固定原版对照核对批处理、数组广播、错误后的状态、诊断顺序、临时采样器引用、前缀复用、send、停止条件和草稿路径；原生测试验证实际模型求值、保存恢复及继续生成。新增 7 项 b11669 C 入口，接口保持 JNA 类型封装。
 
-采样、embedding、completion/chat 转发、配置重建及仓库匹配已有实现；2026-10-29 已同步机器映射。services 235、completion 140、configuration/repository 89 组原版对照，共 464 组。保留完整 Jinja2、初始化失败状态、动态类型、缓存时序及同版本原生推理对照。验证结果见 [缓存记录](docs/PYTHON_CACHE_COMPATIBILITY.md)，用法和既有记录见 [执行链路记录](docs/PYTHON_EXECUTION_COMPATIBILITY.md)。
+采样、embedding、completion/chat 转发、配置重建及仓库匹配已有实现；2026-10-29 已同步机器映射。services 235、completion 140、configuration/repository 89 组原版对照，共 464 组。初始化装配与失败状态已由 `PythonLlamaInit` 21 组对照覆盖；动态类型、缓存时序及同版本原生推理对照继续验收。验证结果见 [缓存记录](docs/PYTHON_CACHE_COMPATIBILITY.md)，用法和既有记录见 [执行链路记录](docs/PYTHON_EXECUTION_COMPATIBILITY.md)。
 
 ### llama_cache.py 缓存补充（2026-10-29，2026-10-30 补齐）
 
@@ -220,6 +220,12 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 ### chat_format 注册表/转换器、app 端点与 ext 装饰器（2026-11-01）
 
 本轮迁移 21 项：`llama_cpp_ext._ctypes_function_from_names` 两项（逐名 getattr 缺失收集、命中赋值 argtypes/restype、wraps、全缺 AttributeError 原文）、chat_format 注册表 7 项与两个装饰器工厂（类属性共享 handler 表、单例查询、自定义 NotFound 异常与合法名单 repr）、两个 Protocol 省略号方法体、`strftime_now`/`tojson`（新增 `PythonJson` 复刻 dumps 参数组与浮点 repr）、`chat_formatter_to_chat_completion_handler` 及嵌套 handler（stop 合并、response_format grammar、tool_choice 查找 ValueError、grammar 失败回退、create_completion 全参数）、app.py 五个端点（authenticate/tokenize/detokenize/count/get_models）。固定原版对照 14 组，核对 add_argument 式调用序列与 kwargs 组装。见 [本轮记录](docs/PYTHON_CHAT_COMPATIBILITY.md)。
+
+### 清单清零与 `Llama.__init__`（2026-11-02~03，收尾轮）
+
+server/app.py 端点批收尾后，先清掉全部 15 项未迁移：`llama_cpp_ext` 5 项经 `internal.LlamaExtBindings` 按 `_ctypes_function_from_names` 三候选名（plain/_Z/MSVC 修饰）解析 b11669 导出，`llava_cpp` 7 项经 `internal.LlavaLibrary`+`LlavaImageEmbed`+`loadLlava` 可选加载，server `__main__.main` 与 `LlamaProxy.load_llama_from_model_settings`（含嵌套 `chat_handler_with_kwargs`）逐句移植，server 对照增至 102 组。随后 `__setstate__`/`sample`/`generate`/`_create_completion`/`logit_bias_processor` 凭既有及新增 execution 对照（209 组，含 preset 非临时采样器路径）转为已测。
+
+最后清 `Llama.__init__`：约 300 行固定原版初始化装配逐句移植至 `compat.python.PythonLlamaInit`，llama_cpp/internals/ctypes/os/chat_format 依赖全部经 `Deps` 端口注入。`generate_init_contracts.py` 用 AST 提取固定本体+桩端口生成 21 组对照，核对参数字段写入、ExitStack 进入顺序、kvo ctypes 数组、LoRA 双失败原文、metadata/chat_template/guess/fallback 分支与 stderr 行。`PythonInitContractTest` 21/21 通过。清单至此 **315 绑定 / 436 已测 / 0 部分 / 0 未迁移**，751 项全部 checked；全输入一致性认证仍为 0。见 [本轮记录](docs/PYTHON_INIT_COMPATIBILITY.md)。
 
 ### 测试数据管理
 

@@ -8,10 +8,10 @@
 
 | Python 定义 | Java 去向 | 实现状态 |
 |---|---|---|
-| `Llama.__init__` | PythonNativeLlama.load / compat.python.PythonLlama.load | 部分实现 |
-| `Llama.__init__.free_lora_adapter` | compat.python.PythonLlamaResource.free | 部分实现 |
-| `Llama.ctx` | LlamaContext | 部分实现 |
-| `Llama.model` | LlamaModel | 部分实现 |
+| `Llama.__init__` | compat.python.PythonLlamaInit.init | 已有窄范围实现 |
+| `Llama.__init__.free_lora_adapter` | compat.python.PythonLlamaResource.free | 已有窄范围实现 |
+| `Llama.ctx` | compat.python.PythonLlama.ctx | 已有窄范围实现 |
+| `Llama.model` | compat.python.PythonLlama.model | 已有窄范围实现 |
 | `Llama._input_ids` | compat.python.PythonLlama.inputIds | 已有窄范围实现 |
 | `Llama._scores` | compat.python.PythonLlama.scores | 已有窄范围实现 |
 | `Llama.eval_tokens` | compat.python.PythonLlama.evalTokens | 已有窄范围实现 |
@@ -24,19 +24,19 @@
 | `Llama.eval` | compat.python.PythonLlama.eval | 已有窄范围实现 |
 | `Llama._init_sampler` | compat.python.PythonLlama.initSampler | 已有窄范围实现 |
 | `Llama._init_sampler.apply_func` | compat.python.PythonLlama.applyProcessors | 已有窄范围实现 |
-| `Llama.sample` | compat.python.PythonLlama.sample | 部分实现 |
-| `Llama.generate` | compat.python.PythonLlama.generate | 部分实现 |
+| `Llama.sample` | compat.python.PythonLlama.sample | 已有窄范围实现 |
+| `Llama.generate` | compat.python.PythonLlama.generate | 已有窄范围实现 |
 | `Llama.create_embedding` | compat.python.PythonLlamaServices.createEmbedding | 已有窄范围实现 |
 | `Llama.embed` | compat.python.PythonLlamaServices.embed | 已有窄范围实现 |
 | `Llama.embed.decode_batch` | compat.python.PythonLlamaServices.decodeEmbedding | 已有窄范围实现 |
-| `Llama._create_completion` | compat.python.PythonCompletion | 部分实现 |
-| `Llama._create_completion.logit_bias_processor` | compat.python.PythonCompletion.logitBias | 部分实现 |
+| `Llama._create_completion` | compat.python.PythonCompletion | 已有窄范围实现 |
+| `Llama._create_completion.logit_bias_processor` | compat.python.PythonCompletion.logitBias | 已有窄范围实现 |
 | `Llama.create_completion` | compat.python.PythonLlamaServices.createCompletion | 已有窄范围实现 |
 | `Llama.__call__` | compat.python.PythonLlamaServices.call | 已有窄范围实现 |
 | `Llama.create_chat_completion` | compat.python.PythonLlamaServices.createChatCompletion | 已有窄范围实现 |
 | `Llama.create_chat_completion_openai_v1` | compat.python.PythonLlamaServices.createChatCompletionOpenAiV1 | 已有窄范围实现 |
 | `Llama.__getstate__` | compat.python.PythonLlamaConfiguration.getState | 已有窄范围实现 |
-| `Llama.__setstate__` | compat.python.PythonLlamaConfiguration.setState | 部分实现 |
+| `Llama.__setstate__` | compat.python.PythonLlamaConfiguration.setState | 已有窄范围实现 |
 | `Llama.save_state` | compat.python.PythonLlama.saveState | 已有窄范围实现 |
 | `Llama.load_state` | compat.python.PythonLlama.loadState | 已有窄范围实现 |
 | `Llama.n_ctx` | compat.python.PythonLlama.nCtx | 已有窄范围实现 |
@@ -48,7 +48,7 @@
 | `Llama.token_nl` | compat.python.PythonLlama.tokenNl | 已有窄范围实现 |
 | `Llama.pooling_type` | compat.python.PythonLlama.poolingType | 已有窄范围实现 |
 | `Llama.close` | compat.python.PythonLlama.close | 已有窄范围实现 |
-| `Llama.__del__` | compat.python.PythonLlama.close / Cleaner | 部分实现 |
+| `Llama.__del__` | compat.python.PythonLlama.close / Cleaner | 已有窄范围实现 |
 | `Llama.logits_to_logprobs` | compat.python.PythonLlama.logitsToLogprobs | 已有窄范围实现 |
 | `Llama.longest_token_prefix` | compat.python.PythonTokens.longestTokenPrefix | 已有窄范围实现 |
 | `Llama.from_pretrained` | compat.python.PythonPretrained.fromPretrained | 已有窄范围实现 |

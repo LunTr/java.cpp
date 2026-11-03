@@ -15,7 +15,7 @@
 | `Llama.reset` | `reset()` |
 | `Llama.logits_to_logprobs` | `logitsToLogprobs(float[])` / `logitsToLogprobs(float[][], int)` |
 
-此类是供后续 eval/generate 连接的状态组件。构造器附加调用方已求值的 intc/single 数组并保留引用；调用方负责资源生命周期和同步。初始 `requiresEval=false`，种子为零，缓存为空。完整 Python `Llama.__init__` 和原生模型加载继续使用各自迁移项跟踪。
+此类是供后续 eval/generate 连接的状态组件。构造器附加调用方已求值的 intc/single 数组并保留引用；调用方负责资源生命周期和同步。初始 `requiresEval=false`，种子为零，缓存为空。完整 Python `Llama.__init__` 已由 `PythonLlamaInit` 覆盖（见 docs/PYTHON_INIT_COMPATIBILITY.md）；原生模型加载继续使用各自迁移项跟踪。
 
 ```java
 PythonLlama state = new PythonLlama(
