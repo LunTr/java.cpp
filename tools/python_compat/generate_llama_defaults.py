@@ -28,7 +28,7 @@ def java(value):
     if isinstance(value, int): return str(value) + ("L" if value > 2147483647 else "")
     return repr(value)
 
-parts = ["package io.github.yaulun.javacpp.compat.python;\n\nimport io.github.yaulun.javacpp.python.PythonErrorType;\nimport io.github.yaulun.javacpp.python.PythonValues;\n\n",
+parts = ["package dev.javacpp.compat.python;\n\nimport dev.javacpp.python.PythonErrorType;\nimport dev.javacpp.python.PythonValues;\n\n",
          "/** Generated from hash-verified Python 0.3.36 signatures. */\nfinal class PythonLlamaDefaults {\n",
          "private PythonLlamaDefaults() {}\nprivate static final java.util.Map<String, java.util.Map<String,Object>> defaults = new java.util.LinkedHashMap<>();\n",
          "private static final java.util.Map<String,java.util.List<String>> required = new java.util.LinkedHashMap<>();\nprivate static final java.util.Map<String,java.util.List<String>> forwarding = new java.util.LinkedHashMap<>();\nstatic {\n"]
@@ -87,5 +87,5 @@ def stateExpression(node):
 parts.append('static java.util.Map<String,Object> snapshot(java.util.Map<String,Object> values, java.util.Map<String,Object> model, java.util.Map<String,Object> context) { return PythonValues.dict(')
 parts.append(','.join(java(k.arg)+','+stateExpression(k.value) for k in stateCall.keywords))
 parts.append('); }\n}\n')
-(root / "src/Java_Cpp/io/github/yaulun/javacpp/compat/python/PythonLlamaDefaults.java").write_text("".join(parts), encoding="utf-8")
+(root / "src/Java_Cpp/dev/javacpp/compat/python/PythonLlamaDefaults.java").write_text("".join(parts), encoding="utf-8")
 print("Generated verified Llama keyword/default tables")

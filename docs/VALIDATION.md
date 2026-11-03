@@ -23,8 +23,8 @@ Llama 与 LlamaTokenizer 的分词、反分词、UTF-8 encode/decode 和模型�
 ## 成品位置
 
 - 根目录为单个 Maven 工程，唯一 POM 为 `pom.xml`。
-- 封装源码：`src/Java_Cpp/io/github/yaulun/javacpp`，包含 API、exception、internal。
-- demo：`src/main/java/io/github/yaulun/demo`；原 `org.example.Main` 入口保留并连接到演示入口。
+- 封装源码：`src/Java_Cpp/dev/javacpp`，包含 API、exception、internal。
+- demo：`src/main/java/dev/javacpp/demo`；原 `org.example.Main` 入口保留并连接到演示入口。
 - 测试：`src/test/java`。
 - `Java_Cpp` 内仅保留 `io` 源码树。包权限与目录边界由测试检查。
 - `target/java-cpp-1.0.0-SNAPSHOT.jar`：96164 字节，仅包含封装类。

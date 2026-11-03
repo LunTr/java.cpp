@@ -26,7 +26,7 @@
 DEMO：InferenceDemoMain / DependencyCheckMain
    │  只调用公开 API
    ▼
-Java.cpp 公开 API（io.github.yaulun.javacpp、…exception）
+Java.cpp 公开 API（dev.javacpp、…exception）
    │
    ▼
 Java.cpp internal（JNA 接口、Structure、NativeLoader、NativeLogBridge）
@@ -73,9 +73,9 @@ llama.dll → ggml.dll → ggml-base.dll
 | 项 | 取值 |
 |---|---|
 | 工作区根目录 `<ROOT>` | 建议 `D:\dev\JavaCppWorkspace`（纯英文路径，不含空格） |
-| 类库模块 | 目录 `Java.cpp`，artifactId `java-cpp`，包名 `io.github.yaulun.javacpp` |
-| 演示模块 | 目录 `DEMO`，artifactId `demo`，包名 `io.github.yaulun.javacpp.demo` |
-| 父 POM | groupId `io.github.yaulun`，artifactId `javacpp-parent`，version `1.0.0-SNAPSHOT` |
+| 类库模块 | 目录 `Java.cpp`，artifactId `java-cpp`，包名 `dev.javacpp` |
+| 演示模块 | 目录 `DEMO`，artifactId `demo`，包名 `dev.javacpp.demo` |
+| 父 POM | groupId `dev.javacpp`，artifactId `javacpp-parent`，version `1.0.0-SNAPSHOT` |
 | 系统属性 / 环境变量 | `javacpp.natives` / `JAVACPP_NATIVES`，`javacpp.models` / `JAVACPP_MODELS` |
 
 - 包名**不能以 `java.` 开头**：JVM 禁止应用类加载器定义 `java.*` 包，否则会抛 `SecurityException`。
@@ -304,7 +304,7 @@ cd natives\llama-b11669-win-cuda-12.4-x64
 ├─ Java.cpp/
 │  ├─ pom.xml                      artifactId java-cpp
 │  └─ src/
-│     ├─ main/java/io/github/yaulun/javacpp/
+│     ├─ main/java/dev/javacpp/
 │     │  ├─ JavaCpp.java               读取 build.properties：版本号与 banner
 │     │  ├─ LlamaRuntime.java          单例：加载 DLL、版本校验、后端初始化、设备查询、诊断
 │     │  ├─ NativeConfig.java          运行时配置（natives 目录、日志级别、监听器）+ Builder
@@ -360,12 +360,12 @@ cd natives\llama-b11669-win-cuda-12.4-x64
 │     │     ├─ NativeLoader.java           按顺序加载 DLL、核对导出函数、诊断加载错误
 │     │     ├─ ProbeResult.java            record：单个 DLL 的试加载结果
 │     │     └─ NativeLogBridge.java        单例日志回调：按行拼接、转发、缓存最近问题
-│     ├─ main/resources/io/github/yaulun/javacpp/build.properties   资源过滤生成
-│     └─ test/java/io/github/yaulun/javacpp/   单元测试（*Test）与集成测试（*IT，tag native）
+│     ├─ main/resources/dev/javacpp/build.properties   资源过滤生成
+│     └─ test/java/dev/javacpp/   单元测试（*Test）与集成测试（*IT，tag native）
 └─ DEMO/
    ├─ pom.xml                      artifactId demo；shade 生成 target/demo-all.jar
    └─ src/
-      ├─ main/java/io/github/yaulun/javacpp/demo/
+      ├─ main/java/dev/javacpp/demo/
       │  ├─ InferenceDemoMain.java     推理演示入口
       │  ├─ DependencyCheckMain.java   依赖校验入口
       │  ├─ CliArgs.java               通用命令行解析（未知参数 → 退出码 2）
@@ -390,14 +390,14 @@ cd natives\llama-b11669-win-cuda-12.4-x64
       │     ├─ NativeChecks.java           C06–C09
       │     ├─ ModelChecks.java            C10
       │     └─ RuntimeChecks.java          C13、C14
-      └─ test/java/io/github/yaulun/javacpp/demo/   CliArgs、下载器（本地 HttpServer 模拟）、PeVersionReader 等测试
+      └─ test/java/dev/javacpp/demo/   CliArgs、下载器（本地 HttpServer 模拟）、PeVersionReader 等测试
 ```
 
 ### 4.1 依赖规则
 
 | 规则 | 检查方式 |
 |---|---|
-| DEMO 只能使用 Java.cpp 的公开 API，**禁止** import `io.github.yaulun.javacpp.internal` | DEMO 里写一个测试，扫描自己的源码，发现该 import 就失败 |
+| DEMO 只能使用 Java.cpp 的公开 API，**禁止** import `dev.javacpp.internal` | DEMO 里写一个测试，扫描自己的源码，发现该 import 就失败 |
 | 公开 API 的签名中不出现 `Pointer`、`Structure`、`Memory` 等 JNA 类型 | 代码评审 + 一个反射测试：遍历公开类的 public 方法签名 |
 | exception 包不依赖 internal（原生日志由抛出点传入） | 代码评审 |
 | internal 不依赖公开 API 中的高层类（如 ChatSession） | 代码评审 |
@@ -1607,7 +1607,7 @@ llama 0.7.0-dev / ggml 0.27.0 / commit 620d2225c
 2. `cd /d "%~dp0"`（切换到脚本所在的 `<ROOT>`）；
 3. 如果 `DEMO\target\demo-all.jar` 不存在，提示先执行 `mvn -q package -DskipTests`，然后 `exit /b 2`；
 4. 定义了 `JAVA_HOME` 就用 `"%JAVA_HOME%\bin\java.exe"`，否则用 PATH 中的 `java`；
-5. 运行 `java -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -cp DEMO\target\demo-all.jar <主类> %*`（主类分别为 `io.github.yaulun.javacpp.demo.DependencyCheckMain` 和 `io.github.yaulun.javacpp.demo.InferenceDemoMain`）；
+5. 运行 `java -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -cp DEMO\target\demo-all.jar <主类> %*`（主类分别为 `dev.javacpp.demo.DependencyCheckMain` 和 `dev.javacpp.demo.InferenceDemoMain`）；
 6. `exit /b %ERRORLEVEL%`。
 
 ---

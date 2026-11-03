@@ -37,7 +37,7 @@
 ## 契约
 
 - 生成器：tools/python_compat/generate_llamacpp_contracts.py，AST 抽取固定原版 `_warn_deprecated` 与 8 个弃用包装函数体执行（同名后者覆盖 ctypes 桩，与模块语义一致），12 组用例覆盖正常委托、委托抛错传播、error 过滤器（告警变异常、委托未调用）与 ignore 过滤器（告警吞没、委托照常）。
-- 回放：src/test/java/io/github/yaulun/javacpp/compat/python/PythonLlamaCppContractTest.java，12/12 通过。
+- 回放：src/test/java/dev/javacpp/compat/python/PythonLlamaCppContractTest.java，12/12 通过。
 - fixture：src/test/resources/python-0.3.36-llamacpp-contracts.tsv（gitignore，不提交）；元数据 docs/python-llamacpp-contracts.json。
 - 22 项纯绑定函数体为 `...`，与既有规则一致：JNA 同名声明即 bound。
 

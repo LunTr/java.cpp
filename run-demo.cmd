@@ -8,5 +8,5 @@ if not exist "target\demo-all.jar" (
 )
 set "JAVA_CMD=java"
 if defined JAVA_HOME set "JAVA_CMD=%JAVA_HOME%\bin\java.exe"
-"%JAVA_CMD%" -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -cp "target\demo-all.jar" io.github.yaulun.demo.InferenceDemoMain %*
+"%JAVA_CMD%" -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -cp "target\demo-all.jar" dev.javacpp.demo.InferenceDemoMain %*
 exit /b %ERRORLEVEL%

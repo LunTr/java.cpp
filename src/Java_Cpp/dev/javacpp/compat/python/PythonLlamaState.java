@@ -1,0 +1,132 @@
+package dev.javacpp.compat.python;
+
+import dev.javacpp.python.Py;
+import dev.javacpp.python.PyAttributed;
+import dev.javacpp.python.PythonErrorType;
+import dev.javacpp.python.PythonNumbers;
+import java.math.BigInteger;
+
+/**
+ * Mutable LlamaState fields from Python 0.3.36. Arrays and byte storage retain their supplied
+ * references. Callers own synchronization, as with the original state object. Implements the
+ * attribute protocol so duck-typed consumers such as caches can read llama_state_size.
+ */
+public final class PythonLlamaState implements PyAttributed {
+  private int[] inputIds;
+  private float[][] scores;
+  private int nTokens;
+  private byte[] llamaState;
+  private BigInteger llamaStateSize;
+  private Object seed;
+
+  /** Stores the six supplied fields without validation or copying, as LlamaState.__init__ does. */
+  public PythonLlamaState(
+      int[] inputIds,
+      float[][] scores,
+      int nTokens,
+      byte[] llamaState,
+      BigInteger llamaStateSize,
+      Object seed) {
+    this.inputIds = inputIds;
+    this.scores = scores;
+    this.nTokens = nTokens;
+    this.llamaState = llamaState;
+    this.llamaStateSize = llamaStateSize;
+    this.seed = seed;
+  }
+
+  /** Returns the input_ids reference. */
+  public int[] inputIds() {
+    return inputIds;
+  }
+
+  /** Replaces input_ids without copying. */
+  public void setInputIds(int[] value) {
+    inputIds = value;
+  }
+
+  /** Returns the scores reference. */
+  public float[][] scores() {
+    return scores;
+  }
+
+  /** Replaces scores without copying. */
+  public void setScores(float[][] value) {
+    scores = value;
+  }
+
+  /** Returns n_tokens. */
+  public int nTokens() {
+    return nTokens;
+  }
+
+  /** Replaces n_tokens. */
+  public void setNTokens(int value) {
+    nTokens = value;
+  }
+
+  /** Returns the llama_state bytes reference. */
+  public byte[] llamaState() {
+    return llamaState;
+  }
+
+  /** Replaces llama_state without copying. */
+  public void setLlamaState(byte[] value) {
+    llamaState = value;
+  }
+
+  /** Returns the arbitrary-precision llama_state_size field. */
+  public BigInteger llamaStateSize() {
+    return llamaStateSize;
+  }
+
+  /** Replaces llama_state_size; caches observe the change on their next size query. */
+  public void setLlamaStateSize(BigInteger value) {
+    llamaStateSize = value;
+  }
+
+  /** Returns seed. */
+  public long seed() {
+    try {
+      return seedValue().longValueExact();
+    } catch (ArithmeticException overflow) {
+      throw Py.error(PythonErrorType.OVERFLOW_ERROR, "Python int too large to convert to C long");
+    }
+  }
+
+  /** Replaces seed. */
+  public void setSeed(long value) {
+    seed = BigInteger.valueOf(value);
+  }
+
+  public BigInteger seedValue() {
+    return PythonNumbers.integer(seed);
+  }
+
+  public Object seedObject() {
+    return seed;
+  }
+
+  public void setSeedValue(BigInteger value) {
+    seed = value;
+  }
+
+  /** Duck-typed attribute lookup matching the six original LlamaState attributes. */
+  @Override
+  public Object attr(String name) {
+    return switch (name) {
+      case "input_ids" -> inputIds;
+      case "scores" -> scores;
+      case "n_tokens" -> nTokens;
+      case "llama_state" -> llamaState;
+      case "llama_state_size" -> llamaStateSize;
+      case "seed" -> seed;
+      default -> Py.ABSENT;
+    };
+  }
+
+  @Override
+  public String pyType() {
+    return "LlamaState";
+  }
+}

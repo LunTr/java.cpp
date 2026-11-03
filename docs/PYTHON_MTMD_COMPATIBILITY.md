@@ -26,7 +26,7 @@
 ## 契约
 
 - 生成器：tools/python_compat/generate_mtmd_contracts.py，AST 抽取固定原版函数体执行，2 组用例（正常/空 ctx、警告类别+消息原文、委托调用 trace）
-- 回放：src/test/java/io/github/yaulun/javacpp/compat/python/PythonMtmdContractTest.java，2/2 通过
+- 回放：src/test/java/dev/javacpp/compat/python/PythonMtmdContractTest.java，2/2 通过
 - fixture：src/test/resources/python-0.3.36-mtmd-contracts.tsv（gitignore，不提交）；元数据 docs/python-mtmd-contracts.json
 - 29 项纯绑定函数体为 ...，与 llama_cpp.py 同规则：JNA 同名声明即 bound
 

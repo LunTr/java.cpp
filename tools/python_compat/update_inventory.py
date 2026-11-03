@@ -757,24 +757,24 @@ for row in audit["functions"]:
                    java="compat.python.PythonLlamaCpp." + llamacppPyOnly[row["qualname"]],
                    reason="已逐句移植固定原版 Python 端弃用包装（无同名 C 符号）：inline warnings.warn 原文后委托改名入口，set_adapter_lora 按原版构造单元素 ctypes 数组传 adapters/scales；告警/委托时序经原版对照",
                    pythonExactParity="not-certified", contractEvidence="docs/python-llamacpp-contracts.json")
-declared = {line.split("(")[0].split()[-1] for line in (root / "src/Java_Cpp/io/github/yaulun/javacpp/internal/LlamaLibrary.java").read_text(encoding="utf-8").splitlines() if " llama_" in line and "(" in line}
+declared = {line.split("(")[0].split()[-1] for line in (root / "src/Java_Cpp/dev/javacpp/internal/LlamaLibrary.java").read_text(encoding="utf-8").splitlines() if " llama_" in line and "(" in line}
 for row in audit["functions"]:
     if row["file"] == "llama_cpp/llama_cpp.py" and row["qualname"] in declared and row["status"] == "missing":
         row.update(status="bound", checked=True, java="internal.LlamaLibrary." + row["qualname"],
                    reason="已声明 b11669 Windows x64 JNA 入口，完整 native verify 已验证加载；Python vendor 同版本行为对照继续核实", pythonExactParity="not-certified")
-extDeclared = {line.split("(")[0].split()[-1] for line in (root / "src/Java_Cpp/io/github/yaulun/javacpp/internal/LlamaExtBindings.java").read_text(encoding="utf-8").splitlines() if " llama_" in line and "(" in line}
+extDeclared = {line.split("(")[0].split()[-1] for line in (root / "src/Java_Cpp/dev/javacpp/internal/LlamaExtBindings.java").read_text(encoding="utf-8").splitlines() if " llama_" in line and "(" in line}
 for row in audit["functions"]:
     if row["file"] == "llama_cpp/llama_cpp_ext.py" and row["qualname"] in extDeclared and row["status"] == "missing":
         row.update(status="bound", checked=True, java="internal.LlamaExtBindings." + row["qualname"],
                    reason="已按 _ctypes_function_from_names 三候选名（plain/_Z/MSVC 修饰）解析 b11669 llama.dll 导出，native verify 已验证符号命中；Python vendor 同版本行为对照继续核实",
                    pythonExactParity="not-certified")
-llavaDeclared = {line.split("(")[0].split()[-1] for line in (root / "src/Java_Cpp/io/github/yaulun/javacpp/internal/LlavaLibrary.java").read_text(encoding="utf-8").splitlines() if (" llava_" in line or " clip_" in line) and "(" in line}
+llavaDeclared = {line.split("(")[0].split()[-1] for line in (root / "src/Java_Cpp/dev/javacpp/internal/LlavaLibrary.java").read_text(encoding="utf-8").splitlines() if (" llava_" in line or " clip_" in line) and "(" in line}
 for row in audit["functions"]:
     if row["file"] == "llama_cpp/llava_cpp.py" and row["qualname"] in llavaDeclared and row["status"] == "missing":
         row.update(status="bound", checked=True, java="internal.LlavaLibrary." + row["qualname"],
                    reason="已声明 pinned llava.h/clip.h JNA 入口并支持 llava.dll 可选加载；Python vendor 同版本行为对照继续核实",
                    pythonExactParity="not-certified")
-mtmdDeclared = {line.split("(")[0].split()[-1] for line in (root / "src/Java_Cpp/io/github/yaulun/javacpp/internal/MtmdLibrary.java").read_text(encoding="utf-8").splitlines() if " mtmd_" in line and "(" in line}
+mtmdDeclared = {line.split("(")[0].split()[-1] for line in (root / "src/Java_Cpp/dev/javacpp/internal/MtmdLibrary.java").read_text(encoding="utf-8").splitlines() if " mtmd_" in line and "(" in line}
 for row in audit["functions"]:
     if row["file"] == "llama_cpp/mtmd_cpp.py" and row["qualname"] in mtmdDeclared and row["status"] == "missing":
         row.update(status="bound", checked=True, java="internal.MtmdLibrary." + row["qualname"],

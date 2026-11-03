@@ -48,7 +48,7 @@
 ## 设计
 
 - **`PythonInternalsPort`** 是与 C 入口一一对应的可注入端口；句柄为不透明 `Object`，
-  参数结构和批次字段不暴露 JNA 类型。`PythonNativeInternals`（`io.github.yaulun.javacpp`
+  参数结构和批次字段不暴露 JNA 类型。`PythonNativeInternals`（`dev.javacpp`
   包内）经 `LlamaRuntime.get().library()` 落到 b11669 真实实现。
 - **`PythonInternalsBatch`** 抽象批次字段写入：`nTokens`/`token`/`pos`/`seqId`/`nSeqId`/`logits`，
   负下标按 ctypes 数组语义落到已分配容量末尾。

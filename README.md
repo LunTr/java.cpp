@@ -8,15 +8,15 @@ Java 21 + JNA 5.19.1，直接调用 llama.cpp b11669 C API 的面向对象封装
 
 ```text
 pom.xml                         唯一的工程 POM
-src/Java_Cpp/io/github/yaulun/javacpp/
+src/Java_Cpp/dev/javacpp/
   *.java                        公开 API、参数、消息、资源对象
   exception/                    分层异常与错误码
   internal/                     JNA 接口、原生结构体、加载器、日志桥
   python/                       CPython 动态类型层（Py 门面与内建协议，独立可复用）
   compat/python/                llama_cpp 适配层（Llama/completion/chat/Jinja/warnings）
 src/main/java/org/example/Main.java              原 IDE 入口
-src/main/java/io/github/yaulun/demo/              检查与对话演示
-src/test/java/io/github/yaulun/                   单元测试、原生集成测试
+src/main/java/dev/javacpp/demo/              检查与对话演示
+src/test/java/dev/javacpp/                   单元测试、原生集成测试
 src/assembly/demo.xml                            demo 打包清单
 natives/                        本地运行依赖
 gguf/                          本地模型（现有目录）
@@ -39,7 +39,7 @@ gguf/                          本地模型（现有目录）
 .\run-demo.cmd --ngl 0 --interactive
 ```
 
-入口类为 `io.github.yaulun.demo.Main`：传入 `--check` 执行检查、传入 `--interactive` 启动对话。也可不经脚本直接用 JAR 启动：
+入口类为 `dev.javacpp.demo.Main`：传入 `--check` 执行检查、传入 `--interactive` 启动对话。也可不经脚本直接用 JAR 启动：
 
 ```powershell
 java -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -jar target\demo-all.jar --check
@@ -133,7 +133,7 @@ Java.cpp 与 bytedeco/JavaCPP 为独立项目。
 
 ### Java 错误到 Python 错误的桥接
 
-桥接适配层位于 `src/Java_Cpp/io/github/yaulun/javacpp/compat/python`；其底层 CPython 动态类型在 `javacpp/python` 包（`Py` 门面、Py* 协议接口、内建 str/数值/切片操作与 PythonException），仅依赖 java.*，可独立复用。桥接按调用操作及结构化 NativeFailure 映射异常类别和原版消息，并保留原 Java 异常作为 cause。模型加载、上下文创建已接入推理 demo。Java 调用方捕获 PythonException，通过 type() 区分类别，getMessage() 获取消息，toString() 获取 `ValueError: ...` 格式。
+桥接适配层位于 `src/Java_Cpp/dev/javacpp/compat/python`；其底层 CPython 动态类型在 `javacpp/python` 包（`Py` 门面、Py* 协议接口、内建 str/数值/切片操作与 PythonException），仅依赖 java.*，可独立复用。桥接按调用操作及结构化 NativeFailure 映射异常类别和原版消息，并保留原 Java 异常作为 cause。模型加载、上下文创建已接入推理 demo。Java 调用方捕获 PythonException，通过 type() 区分类别，getMessage() 获取消息，toString() 获取 `ValueError: ...` 格式。
 
 ```java
 try (LlamaModel model = PythonErrorBridge.loadModel(modelPath, ModelParams.defaults())) {
