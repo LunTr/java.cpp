@@ -1,7 +1,7 @@
 {
   "pythonPackage": "0.3.36",
   "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
-  "fixtureRuntime": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "fixtureRuntime": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]",
   "caseCount": 14,
   "uniqueFunctions": 21,
   "functions": [
@@ -27,6 +27,6 @@
     "count_query_tokens",
     "get_models"
   ],
-  "fixtureSha256": "08a26639b07f75f9e0029a6526794690c4238e86499ec143a086f86f08a1f369",
+  "fixtureSha256": "f9ff5cef799e2419a4646eb6715ef462d1e1c4327bc7ff0bda7598b25de157de",
   "method": "Hash-verified pinned bodies over stub ctypes-lib/Singleton/jinja/format/llama-grammar/FastAPI ports; handler kwargs, tokenize flags and grammar fallback recorded verbatim."
 }

@@ -234,11 +234,11 @@ java += "}\n"
 (root / "src/Java_Cpp/io/github/yaulun/javacpp/compat/python/PythonChatTemplateConstants.java").write_text(java, encoding="utf-8")
 java = "package io.github.yaulun.javacpp.python;\n\n"
 java += "/** CPython 3.13 Unicode " + unicodedata.unidata_version + " printable ranges for repr. */\n"
-java += "final class PythonUnicode {\n  private PythonUnicode() {}\n"
+java += "public final class PythonUnicode {\n  private PythonUnicode() {}\n"
 java += "  private static final int[] printableRanges = {\n"
 for offset in range(0, len(printableRanges), 12):
     java += "    " + ", ".join(hex(cp) for cp in printableRanges[offset:offset + 12]) + ",\n"
-java += "  };\n  static boolean printable(int cp) {\n"
+java += "  };\n  public static boolean printable(int cp) {\n"
 java += "    int low = 0, high = printableRanges.length / 2;\n"
 java += "    while (low < high) {\n      int mid = (low + high) >>> 1;\n"
 java += "      if (cp < printableRanges[2 * mid]) high = mid;\n"

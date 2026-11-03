@@ -22,6 +22,5 @@ public class LlamaPerfContextData extends Structure {
   public int n_reused;
 
   /** C struct returned by value. */
-  public static final class ByValue extends LlamaPerfContextData
-      implements Structure.ByValue {}
+  public static final class ByValue extends LlamaPerfContextData implements Structure.ByValue {}
 }

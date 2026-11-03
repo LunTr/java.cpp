@@ -564,8 +564,20 @@ serverMappings = {
     ("server/model.py", "LlamaProxy.__setitem__"): ("PythonLlamaProxy.set", "已移植 str/bytes 走 model_validate_json 端口"),
     ("server/model.py", "LlamaProxy.__iter__"): ("PythonLlamaProxy.keys", "已移植字典序迭代"),
     ("server/model.py", "LlamaProxy.free"): ("PythonLlamaProxy.free", "已移植关闭并删除当前模型引用"),
+    ("server/app.py", "create_app"): ("PythonServerApp.createApp",
+        "已移植 CONFIG_FILE 环境变量→JSON/yaml 配置分支、Settings/ServerSettings/ModelSettings.validate 序列、双断言、FastAPI+middleware+CORS+router 调用顺序及 disable_ping_events 空工厂"),
+    ("server/app.py", "prepare_request_resources"): ("PythonServerApp.prepareRequestResources",
+        "已移植 proxy None→503、logit_bias tokens 转换、grammar 编译、min_tokens logits_processor 合并/extend"),
+    ("server/app.py", "get_event_publisher"): ("PythonServerApp.getEventPublisher",
+        "已移植双锁代理获取、send channel enter/close、逐块 json.dumps send、disconnect 与 interrupt_requests+outer.locked() 取消、cancelled 后双 print+raise、[DONE] 哨兵"),
+    ("server/app.py", "create_completion"): ("PythonServerApp.createCompletion",
+        "已移植 prompt 列表归一化断言、copilot-codex 路径别名、exclude 集合、stream 分支 ESR+partial kwargs 绑定、非流式双锁+断连 400+threadpool 调用"),
+    ("server/app.py", "create_embedding"): ("PythonServerApp.createEmbedding",
+        "已移植 proxy(model).create_embedding threadpool 调用与 exclude={user} dump；proxy None 抛 TypeError 原文"),
+    ("server/app.py", "create_chat_completion"): ("PythonServerApp.createChatCompletion",
+        "已移植 exclude 集合、stream 分支 ESR+partial（Llama.create_chat_completion）、非流式双锁+断连 400+threadpool bound-method 调用"),
 }
-assert len(serverMappings) == 20 == serverContracts["uniqueFunctions"]
+assert len(serverMappings) == 26 == serverContracts["uniqueFunctions"]
 assert set(key[1] for key in serverMappings) == set(serverContracts["functions"])
 foundServer = set()
 for row in audit["functions"]:

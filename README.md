@@ -111,10 +111,10 @@ Java.cpp 与 bytedeco/JavaCPP 为独立项目。
 |---|---:|
 | Python 去重函数/方法总数 | 751 |
 | 已有完整同名 JNA 绑定 | 303 |
-| 已覆盖独立能力（含聊天、缓存、处理器及 Llama 辅助方法） | 421 |
-| 本清单打勾项合计 | 724 / 751（96.40%） |
+| 已覆盖独立能力（含聊天、缓存、处理器及 Llama 辅助方法） | 427 |
+| 本清单打勾项合计 | 730 / 751（97.20%） |
 | 部分覆盖，保持未勾选 | 6 |
-| 当前缺少明确对应迁移项 | 21 |
+| 当前缺少明确对应迁移项 | 15 |
 | 已通过 Python 全行为、报错、警告一致性验收 | **0** |
 
 原版 `llama_cpp.py` 共 256 项，其中 255 个公开 C API 函数和 1 个警告辅助函数。Java 已声明其中 305 个同名入口；上下文结构相关 2 项列为部分覆盖，其余 303 项标记绑定完成。Java 另有 9 个 ggml 补充入口，单独提供设备枚举等能力，不增加 Python 迁移计数。
@@ -159,7 +159,7 @@ completionConfig 对 null、0、负数按剩余上下文处理，并截断过大
 
 固定原版完整函数体及 CPython repr 产生 10,376 条对照样例，比较 UTF-16 内容（包括未配对代理字符）、空值、角色过滤、异常类别/原文、字典顺序、debug 日志、数值和 Unicode 边界及出错前已产出的流式块。来源的 25 个文件均重新验证 Git blob SHA-1 / SHA-256，并用 AST 复核 786 个定义、751 个去重项。生成脚本已纳入版本控制，见 [本批验证记录](docs/PYTHON_CHAT_COMPATIBILITY.md)。
 
-清单尚未打勾 27 项，其中部分覆盖 6 项、尚无对应实现 21 项。所有 751 项继续保留全输入一致性待验收状态。
+清单尚未打勾 21 项，其中部分覆盖 6 项、尚无对应实现 15 项。所有 751 项继续保留全输入一致性待验收状态。
 
 ### RAM 缓存、状态与处理器逐项移植
 
@@ -215,7 +215,7 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 
 ### server 模块级函数与 LlamaProxy（2026-11-01）
 
-本轮迁移 20 项：`server/cli.py` 的 7 个 argparse/pydantic 帮助函数（注入 typing 注解端口与 parser/model 端口，含最小 JSON 解析器与 JSONDecodeError）、`settings.set_dynamic_defaults`（cpu_count 端口）、`app.py` 模块级 6 项（全局赋值、单次 yield、双锁 get_llama_proxy 顺序、logit_bias tokenize 遍历）、`model.py` LlamaProxy 容器 6 项（默认模型加载、切换关闭旧模型、dump/validate/iter/free）。固定原版对照 47 组，核对 add_argument 调用序列、锁顺序与关闭时机。见 [本轮记录](docs/PYTHON_SERVER_COMPATIBILITY.md)。
+本轮迁移 20 项：`server/cli.py` 的 7 个 argparse/pydantic 帮助函数（注入 typing 注解端口与 parser/model 端口，含最小 JSON 解析器与 JSONDecodeError）、`settings.set_dynamic_defaults`（cpu_count 端口）、`app.py` 模块级 6 项（全局赋值、单次 yield、双锁 get_llama_proxy 顺序、logit_bias tokenize 遍历）、`model.py` LlamaProxy 容器 6 项（默认模型加载、切换关闭旧模型、dump/validate/iter/free）。固定原版对照 81 组，核对 add_argument 调用序列、锁顺序与关闭时机。见 [本轮记录](docs/PYTHON_SERVER_COMPATIBILITY.md)。
 
 ### chat_format 注册表/转换器、app 端点与 ext 装饰器（2026-11-01）
 
@@ -1003,21 +1003,21 @@ log-softmax 支持 single 向量及矩形二维数组的 axis 0/1/-1/-2；固定
 
 - [ ] [`llama_cpp.server.__main__.main`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/__main__.py#L43) — 未迁移。
 
-#### `llama_cpp/server/app.py` — 17 项，勾选 11，部分 0
+#### `llama_cpp/server/app.py` — 17 项，勾选 17，部分 0
 
 - [x] [`llama_cpp.server.app.set_server_settings`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L53) — 能力已覆盖 → `compat.python.PythonServerApp.setServerSettings`；已移植全局赋值。
 - [x] [`llama_cpp.server.app.get_server_settings`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L58) — 能力已覆盖 → `compat.python.PythonServerApp.getServerSettings`；已移植单次 yield 的生成器语义。
 - [x] [`llama_cpp.server.app.set_llama_proxy`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L68) — 能力已覆盖 → `compat.python.PythonServerApp.setLlamaProxy`；已移植 LlamaProxy(models=...) 构造，代理工厂注入。
 - [x] [`llama_cpp.server.app.get_llama_proxy`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L73) — 能力已覆盖 → `compat.python.PythonServerApp.getLlamaProxy`；已移植 outer acquire→inner acquire→outer release→inner release 双锁顺序与 releaseOuterLock 兜底。
 - [x] [`llama_cpp.server.app.set_ping_message_factory`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L95) — 能力已覆盖 → `compat.python.PythonServerApp.setPingMessageFactory`；已移植全局赋值。
-- [ ] [`llama_cpp.server.app.create_app`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L100) — 未迁移。
-- [ ] [`llama_cpp.server.app.prepare_request_resources`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L158) — 未迁移。
-- [ ] [`llama_cpp.server.app.get_event_publisher`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L191) — 未迁移。
+- [x] [`llama_cpp.server.app.create_app`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L100) — 能力已覆盖 → `compat.python.PythonServerApp.createApp`；已移植 CONFIG_FILE 环境变量→JSON/yaml 配置分支、Settings/ServerSettings/ModelSettings.validate 序列、双断言、FastAPI+middleware+CORS+router 调用顺序及 disable_ping_events 空工厂。
+- [x] [`llama_cpp.server.app.prepare_request_resources`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L158) — 能力已覆盖 → `compat.python.PythonServerApp.prepareRequestResources`；已移植 proxy None→503、logit_bias tokens 转换、grammar 编译、min_tokens logits_processor 合并/extend。
+- [x] [`llama_cpp.server.app.get_event_publisher`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L191) — 能力已覆盖 → `compat.python.PythonServerApp.getEventPublisher`；已移植双锁代理获取、send channel enter/close、逐块 json.dumps send、disconnect 与 interrupt_requests+outer.locked() 取消、cancelled 后双 print+raise、[DONE] 哨兵。
 - [x] [`llama_cpp.server.app._logit_bias_tokens_to_input_ids`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L225) — 能力已覆盖 → `compat.python.PythonServerApp.logitBiasTokensToInputIds`；已移植 utf-8 编码后 tokenize(add_bos=False,special=True) 遍历写 str(input_id)->score。
 - [x] [`llama_cpp.server.app.authenticate`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L241) — 能力已覆盖 → `compat.python.PythonServerApp.authenticate`；已移植 api_key 未配置放行、credentials 命中返回、否则 HTTP 401。
-- [ ] [`llama_cpp.server.app.create_completion`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L303) — 未迁移。
-- [ ] [`llama_cpp.server.app.create_embedding`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L366) — 未迁移。
-- [ ] [`llama_cpp.server.app.create_chat_completion`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L408) — 未迁移。
+- [x] [`llama_cpp.server.app.create_completion`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L303) — 能力已覆盖 → `compat.python.PythonServerApp.createCompletion`；已移植 prompt 列表归一化断言、copilot-codex 路径别名、exclude 集合、stream 分支 ESR+partial kwargs 绑定、非流式双锁+断连 400+threadpool 调用。
+- [x] [`llama_cpp.server.app.create_embedding`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L366) — 能力已覆盖 → `compat.python.PythonServerApp.createEmbedding`；已移植 proxy(model).create_embedding threadpool 调用与 exclude={user} dump；proxy None 抛 TypeError 原文。
+- [x] [`llama_cpp.server.app.create_chat_completion`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L408) — 能力已覆盖 → `compat.python.PythonServerApp.createChatCompletion`；已移植 exclude 集合、stream 分支 ESR+partial（Llama.create_chat_completion）、非流式双锁+断连 400+threadpool bound-method 调用。
 - [x] [`llama_cpp.server.app.get_models`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L535) — 能力已覆盖 → `compat.python.PythonServerApp.getModels`；已移植代理迭代生成固定字段模型列表。
 - [x] [`llama_cpp.server.app.tokenize`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L561) — 能力已覆盖 → `compat.python.PythonServerApp.tokenizeEndpoint`；已移植 utf-8 编码 + special=True tokenize。
 - [x] [`llama_cpp.server.app.count_query_tokens`](https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L576) — 能力已覆盖 → `compat.python.PythonServerApp.countQueryTokensEndpoint`；已移植 len(tokens) 返回。

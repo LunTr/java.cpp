@@ -298,12 +298,9 @@ class PythonLlamaCppContractTest {
                       step.get(0), step.get(1), step.get(2), step.get(3), step.get(4), location);
               case "llama_save_session_file" ->
                   cpp.saveSessionFile(step.get(0), step.get(1), step.get(2), step.get(3), location);
-              case "llama_token_get_text" ->
-                  cpp.tokenGetText(step.get(0), step.get(1), location);
-              case "llama_token_get_score" ->
-                  cpp.tokenGetScore(step.get(0), step.get(1), location);
-              case "llama_token_get_attr" ->
-                  cpp.tokenGetAttr(step.get(0), step.get(1), location);
+              case "llama_token_get_text" -> cpp.tokenGetText(step.get(0), step.get(1), location);
+              case "llama_token_get_score" -> cpp.tokenGetScore(step.get(0), step.get(1), location);
+              case "llama_token_get_attr" -> cpp.tokenGetAttr(step.get(0), step.get(1), location);
               case "llama_token_is_eog" -> cpp.tokenIsEog(step.get(0), step.get(1), location);
               case "llama_token_is_control" ->
                   cpp.tokenIsControl(step.get(0), step.get(1), location);

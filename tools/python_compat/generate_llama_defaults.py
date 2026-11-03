@@ -28,7 +28,7 @@ def java(value):
     if isinstance(value, int): return str(value) + ("L" if value > 2147483647 else "")
     return repr(value)
 
-parts = ["package io.github.yaulun.javacpp.compat.python;\n\n",
+parts = ["package io.github.yaulun.javacpp.compat.python;\n\nimport io.github.yaulun.javacpp.python.PythonErrorType;\nimport io.github.yaulun.javacpp.python.PythonValues;\n\n",
          "/** Generated from hash-verified Python 0.3.36 signatures. */\nfinal class PythonLlamaDefaults {\n",
          "private PythonLlamaDefaults() {}\nprivate static final java.util.Map<String, java.util.Map<String,Object>> defaults = new java.util.LinkedHashMap<>();\n",
          "private static final java.util.Map<String,java.util.List<String>> required = new java.util.LinkedHashMap<>();\nprivate static final java.util.Map<String,java.util.List<String>> forwarding = new java.util.LinkedHashMap<>();\nstatic {\n"]

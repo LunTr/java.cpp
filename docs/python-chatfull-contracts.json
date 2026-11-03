@@ -1,7 +1,7 @@
 {
   "pythonPackage": "0.3.36",
   "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
-  "fixtureRuntime": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "fixtureRuntime": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]",
   "caseCount": 24,
   "uniqueFunctions": 29,
   "functions": [
@@ -35,6 +35,6 @@
     "MTMDChatHandler.from_pretrained",
     "chatml_function_calling"
   ],
-  "fixtureSha256": "1a00368e60ffb3a200b1b6279d09b2fcc242868f032e5ab6ed2da72984766110",
+  "fixtureSha256": "1383d8ac8e8e75cd8c79474d2592aeae0ec122870dd7d29c75cf82d25ffc99cc",
   "method": "Complete hash-verified llama_chat_format handler bodies executed over deterministic jinja/mtmd/llama/huggingface_hub stubs; call order and dict shapes compared byte for byte."
 }

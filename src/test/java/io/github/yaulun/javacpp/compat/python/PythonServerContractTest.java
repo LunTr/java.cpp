@@ -49,6 +49,12 @@ class PythonServerContractTest {
                             case "dyn" -> runDyn(argument);
                             case "app" -> runApp(argument);
                             case "proxy" -> runProxy(argument);
+                            case "appcreate" -> runAppCreate(argument);
+                            case "appprepare" -> runAppPrepare(argument);
+                            case "apppublish" -> runAppPublish(argument);
+                            case "appcompletion" -> runAppCompletion(argument);
+                            case "appchat" -> runAppChat(argument);
+                            case "appembed" -> runAppEmbed(argument);
                             default -> throw new AssertionError(parts[0]);
                           };
                       var bytes = new ByteArrayOutputStream();
@@ -410,5 +416,621 @@ class PythonServerContractTest {
               return results;
             });
     return dict("result", overall instanceof List ? overall : overall, "loader", loaderCalls);
+  }
+
+  // ---- app.py endpoints --------------------------------------------------------
+
+  private interface Marker {
+    String mark();
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Object mark(Object value) {
+    if (value == null
+        || value instanceof String
+        || value instanceof Number
+        || value instanceof Boolean) {
+      return value;
+    }
+    if (value instanceof byte[] bytes) {
+      return Map.of("bytes", hexOf(bytes));
+    }
+    if (value instanceof List<?> list) {
+      List<Object> out = new ArrayList<>();
+      for (Object item : list) out.add(mark(item));
+      return out;
+    }
+    if (value instanceof Map<?, ?> map) {
+      Map<Object, Object> out = new LinkedHashMap<>();
+      map.forEach((k, v) -> out.put(mark(k), mark(v)));
+      return out;
+    }
+    if (value instanceof java.util.Set<?> set) {
+      List<Object> items = new ArrayList<>();
+      for (Object item : set) items.add(mark(item));
+      items.sort((a, b) -> String.valueOf(a).compareTo(String.valueOf(b)));
+      return Map.of("set", items);
+    }
+    if (value instanceof Marker tagged) {
+      return tagged.mark();
+    }
+    if (value instanceof Supplier || value instanceof java.util.function.Function) {
+      return "_callable";
+    }
+    if (value instanceof PythonServerApp.BoundCall bound) {
+      Map<String, Object> bc = new LinkedHashMap<>();
+      bc.put("function", bound.function());
+      bc.put("keywords", mark(bound.keywords()));
+      return bc;
+    }
+    return String.valueOf(value);
+  }
+
+  private static Object captureEp(Supplier<?> operation) {
+    try {
+      return operation.get();
+    } catch (PythonServerApp.HttpException error) {
+      return dict(
+          "error", "HTTPException", "status_code", error.statusCode(), "detail", error.detail());
+    } catch (PythonServerApp.CancelledError error) {
+      return dict("error", "CancelledError", "message", "");
+    } catch (PythonException error) {
+      return dict("error", error.type().pythonName(), "message", error.getMessage());
+    }
+  }
+
+  private static Object epResult(Object result) {
+    if (result instanceof Map<?, ?> map && map.containsKey("error")) {
+      return result;
+    }
+    return mark(result);
+  }
+
+  private static final class BodyStub
+      implements PythonServerApp.CompletionBody,
+          PythonServerApp.ChatBody,
+          PythonServerApp.EmbeddingBody,
+          Marker {
+    final Map<String, Object> spec;
+    final List<Object> trace;
+    Object promptValue;
+
+    BodyStub(Map<String, Object> spec, List<Object> trace) {
+      this.spec = spec;
+      this.trace = trace;
+      this.promptValue = spec.get("prompt");
+    }
+
+    public Object logitBias() {
+      return spec.get("logit_bias");
+    }
+
+    public String logitBiasType() {
+      return (String) spec.get("logit_bias_type");
+    }
+
+    public String grammar() {
+      return (String) spec.get("grammar");
+    }
+
+    public long minTokens() {
+      return spec.get("min_tokens") instanceof Number n ? n.longValue() : 0;
+    }
+
+    public Object prompt() {
+      return promptValue;
+    }
+
+    public void setPrompt(Object prompt) {
+      promptValue = prompt;
+    }
+
+    public Object model() {
+      return spec.get("model");
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> modelDump(java.util.Set<String> exclude) {
+      trace.add(
+          java.util.Arrays.asList(
+              "model_dump",
+              exclude == null ? null : new ArrayList<>(new java.util.TreeSet<>(exclude))));
+      return new LinkedHashMap<>((Map<String, Object>) spec.getOrDefault("dump", Map.of()));
+    }
+
+    public String mark() {
+      return "body";
+    }
+  }
+
+  private static final class LlamaStub implements PythonServerApp.ResourceLlama, Marker {
+    final List<Object> trace;
+    final int eos;
+
+    LlamaStub(List<Object> trace, int eos) {
+      this.trace = trace;
+      this.eos = eos;
+    }
+
+    public int[] tokenize(byte[] token, boolean addBos, boolean special) {
+      trace.add(List.of("tokenize", hexOf(token), addBos, special));
+      return new String(token, StandardCharsets.UTF_8).codePoints().toArray();
+    }
+
+    public int tokenEos() {
+      trace.add(List.of("token_eos"));
+      return eos;
+    }
+
+    public String mark() {
+      return "llama";
+    }
+  }
+
+  private static final class RequestStub implements PythonServerApp.Request, Marker {
+    final String path;
+    final String client;
+    final java.util.Deque<Boolean> disconnect;
+    final List<Object> trace;
+
+    @SuppressWarnings("unchecked")
+    RequestStub(Map<String, Object> spec, List<Object> trace) {
+      this.trace = trace;
+      path = (String) spec.getOrDefault("path", "/v1/completions");
+      client = (String) spec.getOrDefault("client", "client-1");
+      disconnect =
+          new java.util.ArrayDeque<>((List<Boolean>) spec.getOrDefault("disconnect", List.of()));
+    }
+
+    public String urlPath() {
+      return path;
+    }
+
+    public boolean isDisconnected() {
+      boolean value = disconnect.isEmpty() ? false : disconnect.poll();
+      trace.add(List.of("is_disconnected", value));
+      return value;
+    }
+
+    public String client() {
+      return client;
+    }
+
+    public String mark() {
+      return "request";
+    }
+  }
+
+  private static final class ChanStub implements PythonServerApp.SendChannel {
+    final List<Object> trace;
+
+    ChanStub(List<Object> trace) {
+      this.trace = trace;
+    }
+
+    public void enter() {
+      trace.add(List.of("chan", "enter"));
+    }
+
+    public void send(Map<String, Object> event) {
+      trace.add(List.of("send", mark(event)));
+    }
+
+    public void close() {
+      trace.add(List.of("chan", "close"));
+    }
+  }
+
+  private static PythonServerApp.Lock recLock(String name, List<Object> trace) {
+    return new PythonServerApp.Lock() {
+      public void acquire() {
+        trace.add(List.of(name, "acquire"));
+      }
+
+      public void release() {
+        trace.add(List.of(name, "release"));
+      }
+    };
+  }
+
+  private static PythonServerApp.OuterLock recOuter(
+      String name, boolean locked, List<Object> trace) {
+    return new PythonServerApp.OuterLock() {
+      public void acquire() {
+        trace.add(List.of(name, "acquire"));
+      }
+
+      public void release() {
+        trace.add(List.of(name, "release"));
+      }
+
+      public boolean locked() {
+        trace.add(List.of(name, "locked"));
+        return locked;
+      }
+    };
+  }
+
+  private record Irq(boolean on) {}
+
+  private static PythonServerApp.EndpointDeps endpointDeps(
+      List<Object> trace, Object tpResult, RuntimeException tpError) {
+    return new PythonServerApp.EndpointDeps() {
+      public Object grammarFromString(String grammar) {
+        trace.add(List.of("grammar_from_string", grammar));
+        return List.of("grammar", grammar);
+      }
+
+      public Object minTokensLogitsProcessor(long minTokens, int tokenEos) {
+        trace.add(List.of("mtp", minTokens, tokenEos));
+        return List.of("mtp", minTokens, tokenEos);
+      }
+
+      public java.util.List<Object> logitsProcessorList(java.util.List<Object> processors) {
+        trace.add(List.of("lpl", mark(processors)));
+        return new ArrayList<>(processors);
+      }
+
+      public Object runInThreadpool(Object callable, Object[] args, Map<String, Object> kwargs) {
+        trace.add(
+            List.of(
+                "threadpool", mark(callable), mark(java.util.Arrays.asList(args)), mark(kwargs)));
+        if (tpError != null) {
+          throw tpError;
+        }
+        return tpResult;
+      }
+
+      @SuppressWarnings("unchecked")
+      public java.util.Iterator<Object> iterateInThreadpool(Object iterator) {
+        return ((List<Object>) iterator).iterator();
+      }
+
+      public Object[] memoryObjectStream(int capacity) {
+        trace.add(List.of("memory_stream", capacity));
+        return new Object[] {"send_chan", "recv_chan"};
+      }
+
+      public Object eventSourceResponse(
+          Object receiveChannel,
+          PythonServerApp.BoundCall dataSenderCallable,
+          String sep,
+          Object pingMessageFactory) {
+        List<Object> payload =
+            java.util.Arrays.asList(
+                mark(receiveChannel),
+                dataSenderCallable.function(),
+                mark(dataSenderCallable.keywords()),
+                sep,
+                mark(pingMessageFactory));
+        List<Object> entry = new ArrayList<>();
+        entry.add("esr");
+        entry.addAll(payload);
+        trace.add(entry);
+        return Map.of("esr", payload);
+      }
+
+      public Object llamaCall() {
+        return "Llama.__call__";
+      }
+
+      public Object llamaCreateChatCompletion() {
+        return "Llama.create_chat_completion";
+      }
+
+      public Object boundMethod(Object target, String name) {
+        return name;
+      }
+
+      public boolean interruptRequests(Object serverSettings) {
+        return serverSettings instanceof Irq irq && irq.on();
+      }
+
+      public void print(String line) {
+        trace.add(List.of("print", line));
+      }
+
+      public void moveOnAfter(long seconds, boolean shield) {
+        trace.add(List.of("move_on_after", seconds, shield));
+      }
+    };
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Object runAppPrepare(Object input) {
+    var argument = (Map<String, Object>) input;
+    List<Object> trace = new ArrayList<>();
+    Map<String, Object> kwargs =
+        new LinkedHashMap<>((Map<String, Object>) argument.getOrDefault("kwargs", Map.of()));
+    var llama = new LlamaStub(trace, ((Number) argument.getOrDefault("token_eos", 0)).intValue());
+    PythonServerApp.ResourceProxy proxy =
+        (Boolean) argument.getOrDefault("proxy", true)
+            ? model -> {
+              trace.add(java.util.Arrays.asList("proxy_call", mark(model)));
+              return llama;
+            }
+            : null;
+    var body = new BodyStub((Map<String, Object>) argument.get("body"), trace);
+    var deps = endpointDeps(trace, null, null);
+    Object result =
+        captureEp(
+            () ->
+                mark(
+                    PythonServerApp.prepareRequestResources(
+                        body, proxy, argument.get("body_model"), kwargs, deps)));
+    return dict("result", result, "kwargs", mark(kwargs), "trace", trace);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Object runAppPublish(Object input) {
+    var argument = (Map<String, Object>) input;
+    List<Object> trace = new ArrayList<>();
+    var state = new PythonServerApp.ModuleState();
+    if ((Boolean) argument.getOrDefault("settings", true)) {
+      state.serverSettings = new Irq((Boolean) argument.getOrDefault("interrupt", false));
+    }
+    var outer = recOuter("outer", (Boolean) argument.getOrDefault("outer_locked", false), trace);
+    var inner = recLock("inner", trace);
+    var llama = new LlamaStub(trace, ((Number) argument.getOrDefault("token_eos", 0)).intValue());
+    state.llamaProxy =
+        (Boolean) argument.getOrDefault("proxy", true)
+            ? (PythonServerApp.ResourceProxy)
+                model -> {
+                  trace.add(java.util.Arrays.asList("proxy_call", mark(model)));
+                  return llama;
+                }
+            : null;
+    var chan = new ChanStub(trace);
+    var request =
+        new RequestStub((Map<String, Object>) argument.getOrDefault("request", Map.of()), trace);
+    var body = new BodyStub((Map<String, Object>) argument.getOrDefault("body", Map.of()), trace);
+    var callSpec = (Map<String, Object>) argument.get("call");
+    Object tpResult = argument.getOrDefault("chunks", List.of());
+    RuntimeException tpError =
+        callSpec != null && callSpec.containsKey("raise")
+            ? io.github.yaulun.javacpp.python.Py.error(
+                io.github.yaulun.javacpp.python.PythonErrorType.VALUE_ERROR,
+                (String) callSpec.get("raise"))
+            : null;
+    var deps = endpointDeps(trace, tpResult, tpError);
+    Object result =
+        captureEp(
+            () -> {
+              PythonServerApp.getEventPublisher(
+                  state,
+                  outer,
+                  inner,
+                  request,
+                  chan,
+                  body,
+                  argument.get("body_model"),
+                  "llama_call",
+                  new LinkedHashMap<>(
+                      (Map<String, Object>) argument.getOrDefault("kwargs", Map.of())),
+                  deps);
+              return null;
+            });
+    return dict("result", result, "trace", trace);
+  }
+
+  private static PythonServerApp.ModuleState endpointState(
+      Map<String, Object> argument, List<Object> trace) {
+    var state = new PythonServerApp.ModuleState();
+    var llama = new LlamaStub(trace, ((Number) argument.getOrDefault("token_eos", 0)).intValue());
+    state.llamaProxy =
+        (Boolean) argument.getOrDefault("proxy", true)
+            ? (PythonServerApp.ResourceProxy)
+                model -> {
+                  trace.add(java.util.Arrays.asList("proxy_call", mark(model)));
+                  return llama;
+                }
+            : null;
+    if ((Boolean) argument.getOrDefault("ping", false)) {
+      state.pingMessageFactory = () -> new byte[0];
+    }
+    return state;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Object runAppCompletion(Object input) {
+    var argument = (Map<String, Object>) input;
+    List<Object> trace = new ArrayList<>();
+    var state = endpointState(argument, trace);
+    var outer = recOuter("outer", false, trace);
+    var inner = recLock("inner", trace);
+    var request =
+        new RequestStub((Map<String, Object>) argument.getOrDefault("request", Map.of()), trace);
+    var body = new BodyStub((Map<String, Object>) argument.get("body"), trace);
+    var deps = endpointDeps(trace, argument.getOrDefault("tp_result", "RES"), null);
+    Object result =
+        captureEp(() -> PythonServerApp.createCompletion(state, outer, inner, request, body, deps));
+    return dict("result", epResult(result), "prompt", mark(body.prompt()), "trace", trace);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Object runAppChat(Object input) {
+    var argument = (Map<String, Object>) input;
+    List<Object> trace = new ArrayList<>();
+    var state = endpointState(argument, trace);
+    var outer = recOuter("outer", false, trace);
+    var inner = recLock("inner", trace);
+    var request =
+        new RequestStub((Map<String, Object>) argument.getOrDefault("request", Map.of()), trace);
+    var body = new BodyStub((Map<String, Object>) argument.get("body"), trace);
+    var deps = endpointDeps(trace, argument.getOrDefault("tp_result", "CHAT"), null);
+    Object result =
+        captureEp(
+            () -> PythonServerApp.createChatCompletion(state, outer, inner, request, body, deps));
+    return dict("result", epResult(result), "trace", trace);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Object runAppEmbed(Object input) {
+    var argument = (Map<String, Object>) input;
+    List<Object> trace = new ArrayList<>();
+    var body = new BodyStub((Map<String, Object>) argument.get("body"), trace);
+    var llama = new LlamaStub(trace, 0);
+    PythonServerApp.ResourceProxy proxy =
+        (Boolean) argument.getOrDefault("proxy", true)
+            ? model -> {
+              trace.add(java.util.Arrays.asList("proxy_call", mark(model)));
+              return llama;
+            }
+            : null;
+    var deps = endpointDeps(trace, argument.getOrDefault("tp_result", "EMB"), null);
+    Object result = captureEp(() -> PythonServerApp.createEmbedding(body, proxy, deps));
+    return dict("result", epResult(result), "trace", trace);
+  }
+
+  // ---- create_app ----------------------------------------------------------------
+
+  private record Cfg(List<Object> models) implements Marker {
+    public String mark() {
+      return "config";
+    }
+  }
+
+  private record Srv(String name, Object rootPath, boolean disable) implements Marker {
+    public String mark() {
+      return name;
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Object runAppCreate(Object input) {
+    var argument = (Map<String, Object>) input;
+    List<Object> trace = new ArrayList<>();
+    var state = new PythonServerApp.ModuleState();
+    Map<String, byte[]> files = new LinkedHashMap<>();
+    for (var entry : ((Map<String, String>) argument.getOrDefault("files", Map.of())).entrySet()) {
+      byte[] bytes = new byte[entry.getValue().length() / 2];
+      for (int i = 0; i < bytes.length; i++) {
+        bytes[i] = (byte) Integer.parseInt(entry.getValue().substring(2 * i, 2 * i + 2), 16);
+      }
+      files.put(entry.getKey(), bytes);
+    }
+    Map<String, String> env = (Map<String, String>) argument.getOrDefault("env", Map.of());
+    var serverSpec = (Map<String, Object>) argument.getOrDefault("server", Map.of());
+    var deps =
+        new PythonServerApp.CreateAppDeps() {
+          public String getenv(String name) {
+            return env.get(name);
+          }
+
+          public boolean pathExists(String path) {
+            trace.add(List.of("exists", path));
+            return files.containsKey(path);
+          }
+
+          public byte[] readFileBytes(String path) {
+            trace.add(List.of("open", path, "rb"));
+            return files.get(path);
+          }
+
+          public Object yamlSafeLoad(byte[] data) {
+            trace.add(List.of("yaml_safe_load", hexOf(data)));
+            return argument.get("yaml_result");
+          }
+
+          public Object configFileValidateJson(Object payload) {
+            trace.add(java.util.Arrays.asList("config_validate", mark(payload)));
+            return new Cfg(
+                new ArrayList<>((List<Object>) argument.getOrDefault("config_models", List.of())));
+          }
+
+          public Object configModels(Object config) {
+            return ((Cfg) config).models();
+          }
+
+          public Object serverSettingsValidate(Object value) {
+            trace.add(java.util.Arrays.asList("server_validate", mark(value)));
+            return new Srv(
+                (String) serverSpec.get("mark"),
+                serverSpec.get("root_path"),
+                (Boolean) serverSpec.getOrDefault("disable_ping", false));
+          }
+
+          public Object modelSettingsValidate(Object value) {
+            trace.add(java.util.Arrays.asList("model_validate", mark(value)));
+            return argument.get("model_mark");
+          }
+
+          public Object newSettings() {
+            trace.add(List.of("settings"));
+            return "settings";
+          }
+
+          public Object rootPath(Object serverSettings) {
+            return ((Srv) serverSettings).rootPath();
+          }
+
+          public boolean disablePingEvents(Object serverSettings) {
+            return ((Srv) serverSettings).disable();
+          }
+
+          public Object rawContextMiddlewareClass() {
+            return "RawContextMiddleware";
+          }
+
+          public Object requestIdPlugin() {
+            return "RequestIdPlugin";
+          }
+
+          public Object corsMiddlewareClass() {
+            return "CORSMiddleware";
+          }
+
+          public Object middleware(Object cls, java.util.List<Object> plugins) {
+            Map<String, Object> mw = new LinkedHashMap<>();
+            mw.put("mw", mark(cls));
+            mw.put("plugins", mark(plugins));
+            return mw;
+          }
+
+          public Object router() {
+            return "router";
+          }
+
+          public Object fastApi(Map<String, Object> kwargs) {
+            trace.add(List.of("fastapi", mark(kwargs)));
+            return "app";
+          }
+
+          public void addMiddleware(Object app, Object cls, Map<String, Object> kwargs) {
+            trace.add(List.of("add_middleware", mark(cls), mark(kwargs)));
+          }
+
+          public void includeRouter(Object app, Object router) {
+            trace.add(List.of("include_router", mark(router)));
+          }
+
+          public Object createProxy(java.util.List<?> modelSettings) {
+            List<Object> marks = new ArrayList<>();
+            for (Object model : modelSettings) marks.add(mark(model));
+            return List.of("proxy", marks);
+          }
+        };
+    List<?> args = (List<?>) argument.getOrDefault("args", List.of());
+    Object settings = args.size() > 0 ? args.get(0) : null;
+    Object serverArg = args.size() > 1 ? args.get(1) : null;
+    if (serverArg instanceof Map<?, ?> spec) {
+      serverArg =
+          new Srv(
+              (String) spec.get("mark"),
+              spec.get("root_path"),
+              Boolean.TRUE.equals(spec.get("disable_ping")));
+    }
+    Object models = args.size() > 2 ? args.get(2) : null;
+    final Object serverArgFinal = serverArg;
+    Object result =
+        captureEp(
+            () ->
+                PythonServerApp.createApp(
+                    state, settings, serverArgFinal, (java.util.List<?>) models, deps));
+    Map<String, Object> snapshot = new LinkedHashMap<>();
+    snapshot.put("server_settings", mark(state.serverSettings));
+    snapshot.put("llama_proxy", mark(state.llamaProxy));
+    snapshot.put("ping", mark(state.pingMessageFactory));
+    return dict("result", epResult(result), "state", snapshot, "trace", trace);
   }
 }

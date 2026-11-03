@@ -243,16 +243,16 @@
     "libraryCount": 712,
     "serverCount": 39,
     "boundCount": 303,
-    "coveredCount": 421,
-    "checkedCount": 724,
+    "coveredCount": 427,
+    "checkedCount": 730,
     "partialCount": 6,
-    "missingCount": 21,
+    "missingCount": 15,
     "exactParityCertifiedCount": 0,
     "sameNamedNativeBindings": 305,
     "javaNativeBindingCount": 314,
     "publicLlamaMembers": 31,
     "publicLlamaCovered": 29,
-    "uncheckedCount": 27
+    "uncheckedCount": 21
   },
   "functions": [
     {
@@ -14343,12 +14343,13 @@
       "method": false,
       "async": false,
       "signature": "settings: Settings | None=None, server_settings: ServerSettings | None=None, model_settings: List[ModelSettings] | None=None",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L100"
+      "java": "compat.python.PythonServerApp.createApp",
+      "reason": "已移植 CONFIG_FILE 环境变量→JSON/yaml 配置分支、Settings/ServerSettings/ModelSettings.validate 序列、双断言、FastAPI+middleware+CORS+router 调用顺序及 disable_ping_events 空工厂",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L100",
+      "contractEvidence": "docs/python-server-contracts.json"
     },
     {
       "id": "llama_cpp.server.app.prepare_request_resources",
@@ -14362,12 +14363,13 @@
       "method": false,
       "async": false,
       "signature": "body: CreateCompletionRequest | CreateChatCompletionRequest, llama_proxy: LlamaProxy, body_model: str | None, kwargs",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L158"
+      "java": "compat.python.PythonServerApp.prepareRequestResources",
+      "reason": "已移植 proxy None→503、logit_bias tokens 转换、grammar 编译、min_tokens logits_processor 合并/extend",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L158",
+      "contractEvidence": "docs/python-server-contracts.json"
     },
     {
       "id": "llama_cpp.server.app.get_event_publisher",
@@ -14381,12 +14383,13 @@
       "method": false,
       "async": true,
       "signature": "request: Request, inner_send_chan: MemoryObjectSendStream[typing.Any], body: CreateCompletionRequest | CreateChatCompletionRequest, body_model: str | None, llama_call, kwargs",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L191"
+      "java": "compat.python.PythonServerApp.getEventPublisher",
+      "reason": "已移植双锁代理获取、send channel enter/close、逐块 json.dumps send、disconnect 与 interrupt_requests+outer.locked() 取消、cancelled 后双 print+raise、[DONE] 哨兵",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L191",
+      "contractEvidence": "docs/python-server-contracts.json"
     },
     {
       "id": "llama_cpp.server.app._logit_bias_tokens_to_input_ids",
@@ -14440,12 +14443,13 @@
       "method": false,
       "async": true,
       "signature": "request: Request, body: CreateCompletionRequest",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L303"
+      "java": "compat.python.PythonServerApp.createCompletion",
+      "reason": "已移植 prompt 列表归一化断言、copilot-codex 路径别名、exclude 集合、stream 分支 ESR+partial kwargs 绑定、非流式双锁+断连 400+threadpool 调用",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L303",
+      "contractEvidence": "docs/python-server-contracts.json"
     },
     {
       "id": "llama_cpp.server.app.create_embedding",
@@ -14459,12 +14463,13 @@
       "method": false,
       "async": true,
       "signature": "request: CreateEmbeddingRequest, llama_proxy: LlamaProxy=Depends(get_llama_proxy)",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L366"
+      "java": "compat.python.PythonServerApp.createEmbedding",
+      "reason": "已移植 proxy(model).create_embedding threadpool 调用与 exclude={user} dump；proxy None 抛 TypeError 原文",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L366",
+      "contractEvidence": "docs/python-server-contracts.json"
     },
     {
       "id": "llama_cpp.server.app.create_chat_completion",
@@ -14478,12 +14483,13 @@
       "method": false,
       "async": true,
       "signature": "request: Request, body: CreateChatCompletionRequest=Body(openapi_examples={'normal': {'summary': 'Chat Completion', 'value': {'model': 'gpt-3.5-turbo', 'messages': [{'role': 'system', 'content': 'You are a helpful assistant.'}, {'role': 'user', 'content': 'What is the capital of France?'}]}}, 'json_mode': {'summary': 'JSON Mode', 'value': {'model': 'gpt-3.5-turbo', 'messages': [{'role': 'system', 'content': 'You are a helpful assistant.'}, {'role': 'user', 'content': 'Who won the world series in 2020'}], 'response_format': {'type': 'json_object'}}}, 'tool_calling': {'summary': 'Tool Calling', 'value': {'model': 'gpt-3.5-turbo', 'messages': [{'role': 'system', 'content': 'You are a helpful assistant.'}, {'role': 'user', 'content': 'Extract Jason is 30 years old.'}], 'tools': [{'type': 'function', 'function': {'name': 'User', 'description': 'User record', 'parameters': {'type': 'object', 'properties': {'name': {'type': 'string'}, 'age': {'type': 'number'}}, 'required': ['name', 'age']}}}], 'tool_choice': {'type': 'function', 'function': {'name': 'User'}}}}, 'logprobs': {'summary': 'Logprobs', 'value': {'model': 'gpt-3.5-turbo', 'messages': [{'role': 'system', 'content': 'You are a helpful assistant.'}, {'role': 'user', 'content': 'What is the capital of France?'}], 'logprobs': True, 'top_logprobs': 10}}})",
-      "status": "missing",
-      "checked": false,
+      "status": "covered",
+      "checked": true,
       "pythonExactParity": "not-certified",
-      "java": null,
-      "reason": "当前 Java 无对应迁移项",
-      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L408"
+      "java": "compat.python.PythonServerApp.createChatCompletion",
+      "reason": "已移植 exclude 集合、stream 分支 ESR+partial（Llama.create_chat_completion）、非流式双锁+断连 400+threadpool bound-method 调用",
+      "source": "https://github.com/abetlen/llama-cpp-python/blob/1652066e0af45f2313b339670ef9555e8a54e545/llama_cpp/server/app.py#L408",
+      "contractEvidence": "docs/python-server-contracts.json"
     },
     {
       "id": "llama_cpp.server.app.get_models",

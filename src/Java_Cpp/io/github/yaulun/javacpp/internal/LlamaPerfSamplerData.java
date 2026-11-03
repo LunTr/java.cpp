@@ -9,6 +9,5 @@ public class LlamaPerfSamplerData extends Structure {
   public int n_sample;
 
   /** C struct returned by value. */
-  public static final class ByValue extends LlamaPerfSamplerData
-      implements Structure.ByValue {}
+  public static final class ByValue extends LlamaPerfSamplerData implements Structure.ByValue {}
 }

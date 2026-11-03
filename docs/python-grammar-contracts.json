@@ -1,7 +1,7 @@
 {
   "pythonPackage": "0.3.36",
   "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
-  "fixtureRuntime": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "fixtureRuntime": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]",
   "caseCount": 16,
   "uniqueFunctions": 29,
   "functions": [
@@ -35,6 +35,6 @@
     "SchemaConverter.format_grammar",
     "json_schema_to_gbnf"
   ],
-  "fixtureSha256": "972d9bb8f73cfe8bb140c30c410fd3ab597b43de195e20ac0b956e15dfc2f60d",
+  "fixtureSha256": "33730d0672f3be604f66c900198e85c8614d5a9305f6d4070e5708995a8aaa8e",
   "method": "Pure input/output equivalence: pinned llama_grammar.py bodies executed verbatim; generated GBNF strings and exception types/messages compared byte for byte."
 }

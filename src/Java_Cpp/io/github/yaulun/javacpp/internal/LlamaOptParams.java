@@ -4,8 +4,8 @@ import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 
 /**
- * Python-mirrored layout: upstream llama-cpp-python 0.3.36 omits the trailing
- * optimizer_type field present in the b11669 C header; kept identical on purpose.
+ * Python-mirrored layout: upstream llama-cpp-python 0.3.36 omits the trailing optimizer_type field
+ * present in the b11669 C header; kept identical on purpose.
  */
 @Structure.FieldOrder({
   "n_ctx_train",

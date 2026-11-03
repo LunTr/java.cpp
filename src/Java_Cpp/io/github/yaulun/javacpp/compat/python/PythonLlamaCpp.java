@@ -238,8 +238,7 @@ public final class PythonLlamaCpp {
 
   /** Deprecated wrapper renamed upstream to llama_vocab_is_control. */
   public Object tokenIsControl(Object vocab, Object token, PythonWarningLocation location) {
-    warnings.deprecated(
-        "llama_token_is_control", "use llama_vocab_is_control instead", location);
+    warnings.deprecated("llama_token_is_control", "use llama_vocab_is_control instead", location);
     return access.tokenIsControl(vocab, token);
   }
 
@@ -287,15 +286,13 @@ public final class PythonLlamaCpp {
 
   /** Deprecated wrapper renamed upstream to llama_vocab_get_add_bos. */
   public Object addBosToken(Object vocab, PythonWarningLocation location) {
-    warnings.deprecated(
-        "llama_add_bos_token", "use llama_vocab_get_add_bos instead", location);
+    warnings.deprecated("llama_add_bos_token", "use llama_vocab_get_add_bos instead", location);
     return access.addBosToken(vocab);
   }
 
   /** Deprecated wrapper renamed upstream to llama_vocab_get_add_eos. */
   public Object addEosToken(Object vocab, PythonWarningLocation location) {
-    warnings.deprecated(
-        "llama_add_eos_token", "use llama_vocab_get_add_eos instead", location);
+    warnings.deprecated("llama_add_eos_token", "use llama_vocab_get_add_eos instead", location);
     return access.addEosToken(vocab);
   }
 

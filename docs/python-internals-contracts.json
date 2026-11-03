@@ -1,7 +1,7 @@
 {
   "pythonPackage": "0.3.36",
   "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
-  "fixtureRuntime": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "fixtureRuntime": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]",
   "caseCount": 31,
   "uniqueFunctions": 111,
   "functions": [
@@ -117,6 +117,6 @@
     "LlamaSampler.clone",
     "LlamaSampler.clone.free_sampler"
   ],
-  "fixtureSha256": "4e6481a62d639583e2150c30b3cb7bed80a83344e975aac08f3594a37631db86",
+  "fixtureSha256": "38d0ab6205bae997a83d75eb16253748902d8ccdeb801b8cd54edabc0eeb11b5",
   "method": "Complete hash-verified _internals class bodies over a traced deterministic native port; call order, buffers and error texts come from the original functions. Real llama.cpp behavior continues to be verified natively."
 }
