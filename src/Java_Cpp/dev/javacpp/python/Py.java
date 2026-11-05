@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -89,6 +90,8 @@ public final class Py {
 
   /** Class name reported in Python error text for the value's dynamic type. */
   public static String typeName(Object value) {
+    if (value instanceof PyFrozenSet) return "frozenset";
+    if (value instanceof PyNone) return "NoneType";
     Type type = typeOf(value);
     if (type != Type.OTHER) {
       return switch (type) {
@@ -238,8 +241,10 @@ public final class Py {
   public static Object getItem(Object container, Object key) {
     if (container instanceof PyItemAccess access) return access.pyGet(key);
     if (container instanceof Map<?, ?> map) {
-      if (!map.containsKey(key)) throw error(PythonErrorType.KEY_ERROR, repr(key));
-      return map.get(key);
+      checkHashable(key);
+      for (var entry : map.entrySet())
+        if (entry.getKey() == key || equal(entry.getKey(), key)) return entry.getValue();
+      throw error(PythonErrorType.KEY_ERROR, repr(key));
     }
     if (key instanceof Slice slice) {
       if (container instanceof byte[] || container instanceof List || container instanceof String)
@@ -276,7 +281,14 @@ public final class Py {
       return;
     }
     if (container instanceof Map) {
-      ((Map<Object, Object>) container).put(key, value);
+      Map<Object, Object> map = (Map<Object, Object>) container;
+      checkHashable(key);
+      for (var entry : map.entrySet())
+        if (entry.getKey() == key || equal(entry.getKey(), key)) {
+          map.put(entry.getKey(), value);
+          return;
+        }
+      map.put(key, value);
       return;
     }
     if (container instanceof PyTuple) {
@@ -301,26 +313,37 @@ public final class Py {
   public static void delItem(Object container, Object key) {
     if (container instanceof Map) {
       Map<Object, Object> map = (Map<Object, Object>) container;
-      if (!map.containsKey(key)) throw error(PythonErrorType.KEY_ERROR, repr(key));
-      map.remove(key);
-      return;
+      checkHashable(key);
+      for (var iterator = map.entrySet().iterator(); iterator.hasNext(); ) {
+        var entry = iterator.next();
+        if (entry.getKey() == key || equal(entry.getKey(), key)) {
+          iterator.remove();
+          return;
+        }
+      }
+      throw error(PythonErrorType.KEY_ERROR, repr(key));
     }
     if (container instanceof PyTuple
         || container instanceof String
-        || container instanceof byte[]) {
+        || container instanceof byte[]
+        || container instanceof Set) {
       throw error(
           PythonErrorType.TYPE_ERROR,
-          "'" + typeName(container) + "' object doesn't support item deletion");
+          "'"
+              + typeName(container)
+              + "' object "
+              + (indexable(key) ? "doesn't" : "does not")
+              + " support item deletion");
     }
     if (container instanceof List list) {
+      if (key instanceof Slice slice) {
+        deleteSlice(list, slice);
+        return;
+      }
       int index = sequenceIndexForAssign(key, list.size());
       list.remove(index);
       return;
     }
-    if (container instanceof PyItemAccess)
-      throw error(
-          PythonErrorType.TYPE_ERROR,
-          "'" + typeName(container) + "' object doesn't support item deletion");
     throw error(
         PythonErrorType.TYPE_ERROR,
         "'" + typeName(container) + "' object does not support item deletion");
@@ -329,7 +352,11 @@ public final class Py {
   /** item in container: membership test with iteration fallback. */
   public static boolean contains(Object container, Object item) {
     if (container instanceof PyItemAccess access) return access.pyContains(item);
-    if (container instanceof Map<?, ?> map) return map.containsKey(item);
+    if (container instanceof Map<?, ?> map) {
+      checkHashable(item);
+      for (Object stored : map.keySet()) if (stored == item || equal(stored, item)) return true;
+      return false;
+    }
     if (container instanceof String text) {
       if (!(item instanceof String piece))
         throw error(
@@ -364,7 +391,10 @@ public final class Py {
       return false;
     }
     if (container instanceof Set<?> set) {
-      for (Object element : set) if (equal(element, item)) return true;
+      // CPython converts a set argument to a temporary frozenset for the lookup,
+      // so `set() in {...}` reports False rather than "unhashable type: 'set'".
+      if (!(item instanceof Set)) checkHashable(item);
+      for (Object element : set) if (element == item || equal(element, item)) return true;
       return false;
     }
     if (container instanceof Iterable<?> iterable) {
@@ -425,6 +455,9 @@ public final class Py {
   }
 
   private static int checkedIndex(BigInteger index, int size, String message) {
+    if (index.bitLength() > 63)
+      throw error(
+          PythonErrorType.INDEX_ERROR, "cannot fit 'int' into an index-sized integer");
     BigInteger position = index.signum() < 0 ? index.add(BigInteger.valueOf(size)) : index;
     if (position.signum() < 0 || position.compareTo(BigInteger.valueOf(size)) >= 0)
       throw error(PythonErrorType.INDEX_ERROR, message);
@@ -432,29 +465,37 @@ public final class Py {
   }
 
   private static void assignSlice(List<Object> list, Slice slice, Object value) {
-    List<Object> items = list(value);
-    int size = list.size();
-    BigInteger stride = slice.step() == null ? BigInteger.ONE : index(slice.step());
+    BigInteger stride = sliceIndexValue(slice.step());
     if (stride.signum() == 0) throw error(PythonErrorType.VALUE_ERROR, "slice step cannot be zero");
     boolean reverse = stride.signum() < 0;
+    int size = list.size();
     int first =
         slice.start() == null
             ? (reverse ? size - 1 : 0)
-            : bound(index(slice.start()), size, reverse);
+            : bound(sliceIndexValue(slice.start()), size, reverse);
     int last =
-        slice.stop() == null ? (reverse ? -1 : size) : bound(index(slice.stop()), size, reverse);
+        slice.stop() == null
+            ? (reverse ? -1 : size)
+            : bound(sliceIndexValue(slice.stop()), size, reverse);
+    List<Object> items;
+    try {
+      items = list(value);
+    } catch (PythonException failure) {
+      throw error(PythonErrorType.TYPE_ERROR, "must assign iterable to extended slice");
+    }
+    boolean simple = stride.equals(BigInteger.ONE);
     long distance = stride.abs().min(BigInteger.valueOf((long) size + 1)).longValue();
     if (reverse) distance = -distance;
     int count = 0;
     for (long i = first; reverse ? i > last : i < last; i += distance) count++;
-    if (distance != 1 && items.size() != count)
+    if (!simple && items.size() != count)
       throw error(
           PythonErrorType.VALUE_ERROR,
           "attempt to assign sequence of size "
               + items.size()
               + " to extended slice of size "
               + count);
-    if (distance == 1) {
+    if (simple) {
       list.subList(first, Math.max(first, last)).clear();
       list.addAll(first, items);
       return;
@@ -462,6 +503,61 @@ public final class Py {
     int n = 0;
     for (long i = first; reverse ? i > last : i < last; i += distance)
       list.set((int) i, items.get(n++));
+  }
+
+  private static void deleteSlice(List<Object> list, Slice slice) {
+    BigInteger stride = sliceIndexValue(slice.step());
+    if (stride.signum() == 0) throw error(PythonErrorType.VALUE_ERROR, "slice step cannot be zero");
+    boolean reverse = stride.signum() < 0;
+    int size = list.size();
+    int first =
+        slice.start() == null
+            ? (reverse ? size - 1 : 0)
+            : bound(sliceIndexValue(slice.start()), size, reverse);
+    int last =
+        slice.stop() == null
+            ? (reverse ? -1 : size)
+            : bound(sliceIndexValue(slice.stop()), size, reverse);
+    long distance = stride.abs().min(BigInteger.valueOf((long) size + 1)).longValue();
+    if (reverse) distance = -distance;
+    List<Integer> positions = new ArrayList<>();
+    for (long i = first; reverse ? i > last : i < last; i += distance) positions.add((int) i);
+    positions.sort(java.util.Comparator.reverseOrder());
+    for (int position : positions) list.remove(position);
+  }
+
+  /** Slice-bound conversion: TypeError becomes the "slice indices" wording. */
+  private static BigInteger sliceIndexValue(Object value) {
+    if (value == null) return BigInteger.ONE;
+    try {
+      return index(value);
+    } catch (PythonException failure) {
+      throw error(
+          PythonErrorType.TYPE_ERROR,
+          "slice indices must be integers or None or have an __index__ method");
+    }
+  }
+
+  /** dict/set membership precondition: raises "unhashable type" for list/dict/mutable set. */
+  private static void checkHashable(Object key) {
+    if (key instanceof PyTuple tuple) {
+      for (Object element : tuple) checkHashable(element);
+    } else if (key instanceof List
+        || key instanceof Map
+        || (key instanceof Set && !(key instanceof PyFrozenSet))) {
+      throw error(
+          PythonErrorType.TYPE_ERROR, "unhashable type: '" + typeName(key) + "'");
+    }
+  }
+
+  /** Whether the key converts through __index__ without error. */
+  private static boolean indexable(Object key) {
+    try {
+      index(key);
+      return true;
+    } catch (PythonException failure) {
+      return false;
+    }
   }
 
   /** CPython slice-index clamping shared by the ports. */
@@ -586,7 +682,9 @@ public final class Py {
           return ordering(bytesCompare((byte[]) left, (byte[]) right), operation);
         case LIST:
         case TUPLE:
-          return ordering(sequenceCompare((List<?>) left, (List<?>) right), operation);
+          return sequenceCompare((List<?>) left, (List<?>) right, operation);
+        case SET:
+          return setCompare((Set<?>) left, (Set<?>) right, operation);
         default:
       }
     }
@@ -664,6 +762,7 @@ public final class Py {
   }
 
   private static double floatingOrNull(Object value) {
+    if (value instanceof Boolean flag) return flag ? 1.0 : 0.0;
     if (value instanceof Number number) return number.doubleValue();
     return Double.NaN;
   }
@@ -687,14 +786,37 @@ public final class Py {
     return Integer.compare(left.length, right.length);
   }
 
-  private static int sequenceCompare(List<?> left, List<?> right) {
+  private static boolean sequenceCompare(List<?> left, List<?> right, Op operation) {
     int shared = Math.min(left.size(), right.size());
     for (int i = 0; i < shared; i++) {
       if (!equal(left.get(i), right.get(i))) {
-        return compare(left.get(i), Op.LT, right.get(i)) ? -1 : 1;
+        return compare(left.get(i), operation, right.get(i));
       }
     }
-    return Integer.compare(left.size(), right.size());
+    return ordering(Integer.compare(left.size(), right.size()), operation);
+  }
+
+  private static boolean setCompare(Set<?> left, Set<?> right, Op operation) {
+    boolean leftSub = subset(left, right), rightSub = subset(right, left);
+    return switch (operation) {
+      case LT -> leftSub && !rightSub;
+      case LE -> leftSub;
+      case GT -> rightSub && !leftSub;
+      case GE -> rightSub;
+      default -> throw new AssertionError();
+    };
+  }
+
+  private static boolean subset(Set<?> left, Set<?> right) {
+    for (Object element : left) {
+      boolean found = false;
+      for (Object other : right) if (equal(element, other)) {
+        found = true;
+        break;
+      }
+      if (!found) return false;
+    }
+    return true;
   }
 
   // ---- Arithmetic ---------------------------------------------------------------------------
@@ -742,11 +864,20 @@ public final class Py {
             + "'");
   }
 
-  /** a - b: numeric subtraction with the canonical TypeError. */
+  /** a - b: numeric subtraction or set difference with the canonical TypeError. */
   public static Object subtract(Object left, Object right) {
     if (isNumber(left) && isNumber(right)) {
       if (isFloat(left) || isFloat(right)) return floatingOrNull(left) - floatingOrNull(right);
       return integer(left).subtract(integer(right));
+    }
+    if (left instanceof Set && right instanceof Set) {
+      LinkedHashSet<Object> result = new LinkedHashSet<>();
+      outer:
+      for (Object element : (Set<?>) left) {
+        for (Object other : (Set<?>) right) if (equal(element, other)) continue outer;
+        result.add(element);
+      }
+      return left instanceof PyFrozenSet ? new PyFrozenSet(result) : result;
     }
     throw error(
         PythonErrorType.TYPE_ERROR,
@@ -776,6 +907,8 @@ public final class Py {
             + "'");
   }
 
+  private static final BigInteger LONG_MAX = BigInteger.valueOf(Long.MAX_VALUE);
+
   private static Object repeat(Object sequence, Object count) {
     BigInteger times;
     try {
@@ -785,24 +918,39 @@ public final class Py {
           PythonErrorType.TYPE_ERROR,
           "can't multiply sequence by non-int of type '" + typeName(count) + "'");
     }
-    int n =
-        times.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0
-            ? Integer.MAX_VALUE
-            : Math.max(0, times.intValue());
+    if (times.bitLength() > 63)
+      throw error(
+          PythonErrorType.OVERFLOW_ERROR, "cannot fit 'int' into an index-sized integer");
+    long n = Math.max(0, times.longValue());
+    long size =
+        sequence instanceof String text
+            ? text.codePointCount(0, text.length())
+            : sequence instanceof byte[] bytes ? bytes.length : ((List<?>) sequence).size();
+    BigInteger total = BigInteger.valueOf(size).multiply(BigInteger.valueOf(n));
+    if (total.compareTo(LONG_MAX) > 0) {
+      if (sequence instanceof String)
+        throw error(PythonErrorType.OVERFLOW_ERROR, "repeated string is too long");
+      if (sequence instanceof byte[])
+        throw error(PythonErrorType.OVERFLOW_ERROR, "repeated bytes are too long");
+      throw error(PythonErrorType.MEMORY_ERROR, "");
+    }
+    if (total.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0)
+      throw error(PythonErrorType.MEMORY_ERROR, "");
+    int reps = (int) n;
     if (sequence instanceof String text) {
       StringBuilder result = new StringBuilder();
-      for (int i = 0; i < n; i++) result.append(text);
+      for (int i = 0; i < reps; i++) result.append(text);
       return result.toString();
     }
     if (sequence instanceof byte[] bytes) {
-      byte[] result = new byte[bytes.length * n];
-      for (int i = 0; i < n; i++)
+      byte[] result = new byte[bytes.length * reps];
+      for (int i = 0; i < reps; i++)
         System.arraycopy(bytes, 0, result, i * bytes.length, bytes.length);
       return result;
     }
     List<?> source = (List<?>) sequence;
-    List<Object> result = new ArrayList<>(source.size() * n);
-    for (int i = 0; i < n; i++) result.addAll(source);
+    List<Object> result = new ArrayList<>(source.size() * reps);
+    for (int i = 0; i < reps; i++) result.addAll(source);
     return sequence instanceof PyTuple ? PyTuple.wrap(result) : result;
   }
 
@@ -837,7 +985,7 @@ public final class Py {
       if (text.matches("[+-]?[0-9]+(?:_[0-9]+)*")) return new BigInteger(text.replace("_", ""));
       throw error(
           PythonErrorType.VALUE_ERROR,
-          "invalid literal for int() with base 10: " + representation(value));
+          "invalid literal for int() with base 10: " + trunc200(representation(value)));
     }
     throw error(
         PythonErrorType.TYPE_ERROR,
@@ -849,6 +997,7 @@ public final class Py {
   /** float(value): numeric conversion and string/bytes parsing. */
   public static double floating(Object value) {
     if (value instanceof Boolean flag) return flag ? 1 : 0;
+    if (value instanceof PyIndexed indexed) return floating(indexed.pyIndex());
     if (value instanceof Number number) {
       double result = number.doubleValue();
       if (value instanceof BigInteger && Double.isInfinite(result))
@@ -945,6 +1094,14 @@ public final class Py {
   public static String repr(Object value) {
     if (value == null) return "None";
     if (value instanceof Boolean flag) return flag ? "True" : "False";
+    if (value instanceof Slice slice)
+      return "slice("
+          + repr(slice.start())
+          + ", "
+          + repr(slice.stop())
+          + ", "
+          + repr(slice.step())
+          + ")";
     if (value instanceof Double || value instanceof Float)
       return floatRepr(((Number) value).doubleValue());
     if (value instanceof byte[] bytes) return PythonBytes.repr(bytes);
@@ -987,6 +1144,17 @@ public final class Py {
         result.append(repr(entry.getKey())).append(": ").append(repr(entry.getValue()));
       }
       return result.append("}").toString();
+    }
+    if (value instanceof PyFrozenSet frozen) {
+      if (frozen.isEmpty()) return "frozenset()";
+      StringBuilder result = new StringBuilder("frozenset({");
+      boolean first = true;
+      for (Object element : frozen) {
+        if (!first) result.append(", ");
+        first = false;
+        result.append(repr(element));
+      }
+      return result.append("})").toString();
     }
     if (value instanceof Set<?> values) {
       if (values.isEmpty()) return "set()";
@@ -1031,6 +1199,12 @@ public final class Py {
 
   private static String representation(Object value) {
     return value instanceof byte[] bytes ? PythonBytes.repr(bytes) : repr(value);
+  }
+
+  /** int() errors embed at most 200 code points of the operand's repr (%.200R in CPython). */
+  private static String trunc200(String text) {
+    if (text.codePointCount(0, text.length()) <= 200) return text;
+    return text.substring(0, text.offsetByCodePoints(0, 200));
   }
 
   private static String decimalText(Object value) {

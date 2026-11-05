@@ -23,6 +23,8 @@ public enum PythonErrorType {
   LLAMA_CHAT_HANDLER_NOT_FOUND("LlamaChatCompletionHandlerNotFoundException", false),
   HTTP_EXCEPTION("HTTPException", false),
   UNICODE_ENCODE_ERROR("UnicodeEncodeError", false),
+  MEMORY_ERROR("MemoryError", false),
+  ZERO_DIVISION_ERROR("ZeroDivisionError", false),
   BASE_EXCEPTION("Exception", false),
   RUNTIME_WARNING("RuntimeWarning", true),
   DEPRECATION_WARNING("DeprecationWarning", true);

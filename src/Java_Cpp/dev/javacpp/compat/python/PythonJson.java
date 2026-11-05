@@ -3,11 +3,9 @@ package dev.javacpp.compat.python;
 import dev.javacpp.python.Py;
 import dev.javacpp.python.PythonErrorType;
 import dev.javacpp.python.PythonException;
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Python json.dumps subset used by the chat-format ports: true/false/null literals, int vs float
@@ -50,22 +48,27 @@ public final class PythonJson {
     } else if (value instanceof Boolean b) {
       out.append(b ? "true" : "false");
     } else if (value instanceof Map<?, ?> map) {
-      Map<?, ?> ordered = sortKeys ? new TreeMap<>(map) : map;
-      if (ordered.isEmpty()) {
+      java.util.List<Map.Entry<?, ?>> entries = new java.util.ArrayList<>(map.entrySet());
+      if (sortKeys) entries.sort(PythonJson::compareKeys);
+      if (entries.isEmpty()) {
         out.append("{}");
         return;
       }
       String[] sep = separators(itemSep, keySep, indent);
       out.append('{');
       String comma = "";
-      for (Map.Entry<?, ?> entry : ordered.entrySet()) {
+      for (Map.Entry<?, ?> entry : entries) {
         out.append(comma).append(newline(indent, level + 1));
-        write(String.valueOf(entry.getKey()), ascii, null, null, null, false, out, 0);
+        writeKey(entry.getKey(), ascii, out);
         out.append(sep[1]);
         write(entry.getValue(), ascii, indent, itemSep, keySep, sortKeys, out, level + 1);
         comma = sep[0];
       }
       out.append(newline(indent, level)).append('}');
+    } else if (value instanceof java.util.Set) {
+      throw Py.error(
+          PythonErrorType.TYPE_ERROR,
+          "Object of type " + Py.typeName(value) + " is not JSON serializable");
     } else if (value instanceof Iterable<?> list) {
       String[] sep = separators(itemSep, keySep, indent);
       out.append('[');
@@ -90,6 +93,36 @@ public final class PythonJson {
       throw Py.error(
           PythonErrorType.TYPE_ERROR,
           "Object of type " + Py.typeName(value) + " is not JSON serializable");
+    }
+  }
+
+  /** sort_keys uses Python rich comparison so mixed-type key sets raise the same TypeError. */
+  private static int compareKeys(Map.Entry<?, ?> left, Map.Entry<?, ?> right) {
+    Object a = left.getKey(), b = right.getKey();
+    if (a == b || Py.equal(a, b)) return 0;
+    return Py.compare(a, Py.Op.LT, b) ? -1 : 1;
+  }
+
+  /** dict key coercion: str quoted, int/float repr, true/false/null, otherwise TypeError. */
+  private static void writeKey(Object key, boolean ascii, StringBuilder out) {
+    if (key == null) {
+      writeString("null", ascii, out);
+    } else if (key instanceof Boolean flag) {
+      writeString(flag ? "true" : "false", ascii, out);
+    } else if (key instanceof CharSequence || key instanceof Character) {
+      writeString(String.valueOf(key), ascii, out);
+    } else if (key instanceof Integer
+        || key instanceof Long
+        || key instanceof Short
+        || key instanceof Byte
+        || key instanceof BigInteger) {
+      writeString(key.toString(), ascii, out);
+    } else if (key instanceof Number number) {
+      writeString(floatRepr(number), ascii, out);
+    } else {
+      throw Py.error(
+          PythonErrorType.TYPE_ERROR,
+          "keys must be str, int, float, bool or None, not " + Py.typeName(key));
     }
   }
 
@@ -139,7 +172,7 @@ public final class PythonJson {
     out.append('"');
   }
 
-  /** Python repr for JSON numbers: ints verbatim, floats shortest-roundtrip-ish. */
+  /** JSON number rendering: ints verbatim, floats through repr with NaN/Infinity literals. */
   private static String numberRepr(Number number) {
     if (number instanceof Integer
         || number instanceof Long
@@ -148,11 +181,19 @@ public final class PythonJson {
         || number instanceof BigInteger) {
       return number.toString();
     }
+    return floatRepr(number);
+  }
+
+  private static String floatRepr(Number number) {
     double value = number.doubleValue();
-    if (value == Math.rint(value) && Math.abs(value) < 1e15) {
-      return new BigDecimal(value).stripTrailingZeros().toPlainString() + ".0";
-    }
-    return Double.toString(value);
+    if (Double.isNaN(value)) return "NaN";
+    if (value == Double.POSITIVE_INFINITY) return "Infinity";
+    if (value == Double.NEGATIVE_INFINITY) return "-Infinity";
+    String repr = Py.repr(number);
+    if ("inf".equals(repr)) return "Infinity";
+    if ("-inf".equals(repr)) return "-Infinity";
+    if ("nan".equals(repr)) return "NaN";
+    return repr;
   }
 
   /** Minimal json.loads returning Map/List/String/Number/Boolean/null. */
@@ -229,6 +270,11 @@ public final class PythonJson {
         if (d != ',') {
           throw fail(t, pos[0] - 1, "Expecting ',' delimiter");
         }
+        int commaPos = pos[0] - 1;
+        skipWs(t, pos);
+        if (pos[0] < t.length() && t.charAt(pos[0]) == '}') {
+          throw fail(t, commaPos, "Illegal trailing comma before end of object");
+        }
       }
     } else if (c == '[') {
       pos[0]++;
@@ -248,6 +294,11 @@ public final class PythonJson {
         if (d == ']') return l;
         if (d != ',') {
           throw fail(t, pos[0] - 1, "Expecting ',' delimiter");
+        }
+        int commaPos = pos[0] - 1;
+        skipWs(t, pos);
+        if (pos[0] < t.length() && t.charAt(pos[0]) == ']') {
+          throw fail(t, commaPos, "Illegal trailing comma before end of array");
         }
       }
     } else if (c == '"') {
@@ -338,12 +389,12 @@ public final class PythonJson {
             break;
           case 'u':
             if (pos[0] + 4 > t.length()) {
-              throw fail(t, slash, "Invalid \\uXXXX escape");
+              throw fail(t, slash + 1, "Invalid \\uXXXX escape");
             }
             try {
               b.append((char) Integer.parseInt(t.substring(pos[0], pos[0] + 4), 16));
             } catch (NumberFormatException invalid) {
-              throw fail(t, slash, "Invalid \\uXXXX escape");
+              throw fail(t, slash + 1, "Invalid \\uXXXX escape");
             }
             pos[0] += 4;
             break;

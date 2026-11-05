@@ -3,7 +3,6 @@ package dev.javacpp.python;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 /** CPython str methods exposed to the Jinja adapter through the py_* filters. */
@@ -69,13 +68,13 @@ public final class PythonStrings {
       case "splitlines" -> splitlines(text, args);
       case "join" -> join(text, args);
       case "replace" -> replace(text, args);
-      case "find" -> find(text, args, true, false);
-      case "rfind" -> find(text, args, false, false);
-      case "index" -> find(text, args, true, true);
-      case "rindex" -> find(text, args, false, true);
+      case "find" -> find("find", text, args, true, false);
+      case "rfind" -> find("rfind", text, args, false, false);
+      case "index" -> find("index", text, args, true, true);
+      case "rindex" -> find("rindex", text, args, false, true);
       case "count" -> count(text, args);
-      case "lower" -> text.toLowerCase(Locale.ROOT);
-      case "upper" -> text.toUpperCase(Locale.ROOT);
+      case "lower" -> caseMap(text, PythonStrings::lowerOf);
+      case "upper" -> caseMap(text, PythonStrings::upperOf);
       case "title" -> title(text);
       case "capitalize" -> capitalize(text);
       case "swapcase" -> swapcase(text);
@@ -106,14 +105,23 @@ public final class PythonStrings {
 
   private static void arity(String name, Object[] args) {
     switch (name) {
-      case "startswith", "endswith" -> clinic(name, args, 1, 3);
+      case "startswith", "endswith" -> manual(name, args, 1, 3);
       case "strip", "lstrip", "rstrip" -> manual(name, args, 0, 1);
       case "split", "rsplit" -> clinic(name, args, 0, 2);
       case "splitlines", "expandtabs" -> clinic(name, args, 0, 1);
       case "join", "zfill", "partition", "rpartition", "removeprefix", "removesuffix" ->
           exact1(name, args);
-      case "replace" -> manual(name, args, 2, 3);
-      case "find", "rfind", "index", "rindex", "count" -> clinic(name, args, 1, 3);
+      case "replace" -> {
+        int n = args.length;
+        if (n < 2)
+          throw Py.error(
+              PythonErrorType.TYPE_ERROR,
+              "replace() takes at least 2 positional arguments (" + n + " given)");
+        if (n > 3)
+          throw Py.error(
+              PythonErrorType.TYPE_ERROR, "replace() takes at most 3 arguments (" + n + " given)");
+      }
+      case "find", "rfind", "index", "rindex", "count" -> manual(name, args, 1, 3);
       case "center", "ljust", "rjust" -> manual(name, args, 1, 2);
       default -> noArgs(name, args);
     }
@@ -256,6 +264,38 @@ public final class PythonStrings {
     return text;
   }
 
+  /** "X() argument N must be str, not T" used by find/rfind/index/rindex/count/replace. */
+  private static String strArg(String name, Object value, int position) {
+    if (!(value instanceof String text))
+      throw Py.error(
+          PythonErrorType.TYPE_ERROR,
+          name
+              + "() argument "
+              + position
+              + " must be str, not "
+              + (value == null ? "None" : Py.typeName(value)));
+    return text;
+  }
+
+  /** Py_ssize_t conversion for count/width-style arguments. */
+  private static long ssize(Object value) {
+    BigInteger i = Py.index(value);
+    if (i.bitLength() > 63)
+      throw Py.error(
+          PythonErrorType.OVERFLOW_ERROR, "Python int too large to convert to C ssize_t");
+    return i.longValue();
+  }
+
+  /** C int conversion for expandtabs-style arguments. */
+  private static int cint(Object value) {
+    BigInteger i = Py.index(value);
+    try {
+      return i.intValueExact();
+    } catch (ArithmeticException failure) {
+      throw Py.error(PythonErrorType.OVERFLOW_ERROR, "Python int too large to convert to C int");
+    }
+  }
+
   private static int[] span(String text, Object start, Object stop) {
     int size = text.codePointCount(0, text.length());
     int a = start == null ? 0 : Py.bound(sliceIndex(start), size, false);
@@ -334,7 +374,7 @@ public final class PythonStrings {
 
   private static Object split(String text, Object[] args, boolean reverse) {
     Object marker = args.length > 0 ? args[0] : null;
-    int maxsplit = args.length > 1 ? Py.index(args[1]).intValue() : -1;
+    long maxsplit = args.length > 1 ? ssize(args[1]) : -1;
     if (marker == null) return new ArrayList<Object>(whitespaceSplit(text, maxsplit, reverse));
     if (!(marker instanceof String sep))
       throw Py.error(PythonErrorType.TYPE_ERROR, "must be str or None, not " + Py.typeName(marker));
@@ -363,7 +403,7 @@ public final class PythonStrings {
   }
 
   /** Whitespace split: separators are whitespace runs and edges produce no empty fields. */
-  private static List<String> whitespaceSplit(String text, int maxsplit, boolean reverse) {
+  private static List<String> whitespaceSplit(String text, long maxsplit, boolean reverse) {
     int[] points = text.codePoints().toArray();
     List<String> parts = new ArrayList<>();
     if (!reverse) {
@@ -442,9 +482,9 @@ public final class PythonStrings {
   }
 
   private static Object replace(String text, Object[] args) {
-    String old = replaceArg(args[0], 1);
-    String replacement = replaceArg(args[1], 2);
-    long count = args.length > 2 ? Py.index(args[2]).longValue() : -1;
+    String old = strArg("replace", args[0], 1);
+    String replacement = strArg("replace", args[1], 2);
+    long count = args.length > 2 ? ssize(args[2]) : -1;
     if (count == 0) return text;
     if (old.isEmpty()) {
       StringBuilder result = new StringBuilder();
@@ -472,16 +512,9 @@ public final class PythonStrings {
     return result.append(text.substring(from)).toString();
   }
 
-  private static String replaceArg(Object value, int position) {
-    if (!(value instanceof String text))
-      throw Py.error(
-          PythonErrorType.TYPE_ERROR,
-          "replace() argument " + position + " must be str, not " + Py.typeName(value));
-    return text;
-  }
-
-  private static Object find(String text, Object[] args, boolean forward, boolean raise) {
-    String piece = mustBeStr(args[0]);
+  private static Object find(
+      String name, String text, Object[] args, boolean forward, boolean raise) {
+    String piece = strArg(name, args[0], 1);
     int[] span = span(text, arg(args, 1), arg(args, 2));
     String body = slice(text, span);
     int at = forward ? body.indexOf(piece) : body.lastIndexOf(piece);
@@ -493,7 +526,7 @@ public final class PythonStrings {
   }
 
   private static Object count(String text, Object[] args) {
-    String piece = mustBeStr(args[0]);
+    String piece = strArg("count", args[0], 1);
     int[] span = span(text, arg(args, 1), arg(args, 2));
     String body = slice(text, span);
     if (piece.isEmpty()) return BigInteger.valueOf(body.codePointCount(0, body.length()) + 1);
@@ -505,11 +538,105 @@ public final class PythonStrings {
     return BigInteger.valueOf(total);
   }
 
+  /** Apply a per-code-point case mapping across the string. */
+  private static String caseMap(String text, java.util.function.IntFunction<String> map) {
+    StringBuilder result = new StringBuilder(text.length());
+    for (int cp : text.codePoints().toArray()) result.append(map.apply(cp));
+    return result.toString();
+  }
+
+  /** CPython full lowercase: multi-char expansions then Java's 1:1 mapping. */
+  private static String lowerOf(int cp) {
+    String expansion = expansion(LOWER_EXPANSIONS, cp);
+    if (expansion != null) return expansion;
+    return new String(Character.toChars(Character.toLowerCase(cp)));
+  }
+
+  /** CPython full uppercase: multi-char expansions (ß->SS, ligatures, ...) then 1:1 mapping. */
+  private static String upperOf(int cp) {
+    String expansion = expansion(UPPER_EXPANSIONS, cp);
+    if (expansion != null) return expansion;
+    return new String(Character.toChars(Character.toUpperCase(cp)));
+  }
+
+  /** CPython full titlecase: expansions, Java's single-char titlecase, then uppercase. */
+  private static String titleOf(int cp) {
+    String expansion = expansion(TITLE_EXPANSIONS, cp);
+    if (expansion != null) return expansion;
+    int title = Character.toTitleCase(cp);
+    if (title != cp || Character.isTitleCase(cp)) return new String(Character.toChars(title));
+    return upperOf(cp);
+  }
+
+  /** Look up a code point in a flat expansion table: cp, count, out... entries sorted by cp. */
+  private static String expansion(int[] table, int cp) {
+    for (int i = 0; i < table.length; ) {
+      int key = table[i++];
+      if (key > cp) return null;
+      int n = table[i++];
+      if (key == cp) {
+        StringBuilder out = new StringBuilder(n);
+        for (int j = 0; j < n; j++) out.appendCodePoint(table[i + j]);
+        return out.toString();
+      }
+      i += n;
+    }
+    return null;
+  }
+
+  /**
+   * Full case expansions taken from CPython 3.13 (Unicode 15.1): every code point whose
+   * str.lower/upper/title result is longer than one character, packed as (cp, count, out...).
+   */
+  private static final int[] LOWER_EXPANSIONS = {
+    304, 2, 105, 775,
+  };
+
+  private static final int[] UPPER_EXPANSIONS = {
+    223, 2, 83, 83, 329, 2, 700, 78, 496, 2, 74, 780, 912, 3, 921, 776, 769, 944, 3, 933, 776,
+    769, 1415, 2, 1333, 1362, 7830, 2, 72, 817, 7831, 2, 84, 776, 7832, 2, 87, 778, 7833, 2, 89,
+    778, 7834, 2, 65, 702, 8016, 2, 933, 787, 8018, 3, 933, 787, 768, 8020, 3, 933, 787, 769,
+    8022, 3, 933, 787, 834, 8064, 2, 7944, 921, 8065, 2, 7945, 921, 8066, 2, 7946, 921, 8067, 2,
+    7947, 921, 8068, 2, 7948, 921, 8069, 2, 7949, 921, 8070, 2, 7950, 921, 8071, 2, 7951, 921,
+    8072, 2, 7944, 921, 8073, 2, 7945, 921, 8074, 2, 7946, 921, 8075, 2, 7947, 921, 8076, 2, 7948,
+    921, 8077, 2, 7949, 921, 8078, 2, 7950, 921, 8079, 2, 7951, 921, 8080, 2, 7976, 921, 8081, 2,
+    7977, 921, 8082, 2, 7978, 921, 8083, 2, 7979, 921, 8084, 2, 7980, 921, 8085, 2, 7981, 921,
+    8086, 2, 7982, 921, 8087, 2, 7983, 921, 8088, 2, 7976, 921, 8089, 2, 7977, 921, 8090, 2, 7978,
+    921, 8091, 2, 7979, 921, 8092, 2, 7980, 921, 8093, 2, 7981, 921, 8094, 2, 7982, 921, 8095, 2,
+    7983, 921, 8096, 2, 8040, 921, 8097, 2, 8041, 921, 8098, 2, 8042, 921, 8099, 2, 8043, 921,
+    8100, 2, 8044, 921, 8101, 2, 8045, 921, 8102, 2, 8046, 921, 8103, 2, 8047, 921, 8104, 2, 8040,
+    921, 8105, 2, 8041, 921, 8106, 2, 8042, 921, 8107, 2, 8043, 921, 8108, 2, 8044, 921, 8109, 2,
+    8045, 921, 8110, 2, 8046, 921, 8111, 2, 8047, 921, 8114, 2, 8122, 921, 8115, 2, 913, 921,
+    8116, 2, 902, 921, 8118, 2, 913, 834, 8119, 3, 913, 834, 921, 8124, 2, 913, 921, 8130, 2,
+    8138, 921, 8131, 2, 919, 921, 8132, 2, 905, 921, 8134, 2, 919, 834, 8135, 3, 919, 834, 921,
+    8140, 2, 919, 921, 8146, 3, 921, 776, 768, 8147, 3, 921, 776, 769, 8150, 2, 921, 834, 8151,
+    3, 921, 776, 834, 8162, 3, 933, 776, 768, 8163, 3, 933, 776, 769, 8164, 2, 929, 787, 8166, 2,
+    933, 834, 8167, 3, 933, 776, 834, 8178, 2, 8186, 921, 8179, 2, 937, 921, 8180, 2, 911, 921,
+    8182, 2, 937, 834, 8183, 3, 937, 834, 921, 8188, 2, 937, 921, 64256, 2, 70, 70, 64257, 2, 70,
+    73, 64258, 2, 70, 76, 64259, 3, 70, 70, 73, 64260, 3, 70, 70, 76, 64261, 2, 83, 84, 64262, 2,
+    83, 84, 64275, 2, 1348, 1350, 64276, 2, 1348, 1333, 64277, 2, 1348, 1339, 64278, 2, 1358,
+    1350, 64279, 2, 1348, 1341,
+  };
+
+  private static final int[] TITLE_EXPANSIONS = {
+    223, 2, 83, 115, 329, 2, 700, 78, 496, 2, 74, 780, 912, 3, 921, 776, 769, 944, 3, 933, 776,
+    769, 1415, 2, 1333, 1410, 7830, 2, 72, 817, 7831, 2, 84, 776, 7832, 2, 87, 778, 7833, 2, 89,
+    778, 7834, 2, 65, 702, 8016, 2, 933, 787, 8018, 3, 933, 787, 768, 8020, 3, 933, 787, 769,
+    8022, 3, 933, 787, 834, 8114, 2, 8122, 837, 8116, 2, 902, 837, 8118, 2, 913, 834, 8119, 3,
+    913, 834, 837, 8130, 2, 8138, 837, 8132, 2, 905, 837, 8134, 2, 919, 834, 8135, 3, 919, 834,
+    837, 8146, 3, 921, 776, 768, 8147, 3, 921, 776, 769, 8150, 2, 921, 834, 8151, 3, 921, 776,
+    834, 8162, 3, 933, 776, 768, 8163, 3, 933, 776, 769, 8164, 2, 929, 787, 8166, 2, 933, 834,
+    8167, 3, 933, 776, 834, 8178, 2, 8186, 837, 8180, 2, 911, 837, 8182, 2, 937, 834, 8183, 3,
+    937, 834, 837, 64256, 2, 70, 102, 64257, 2, 70, 105, 64258, 2, 70, 108, 64259, 3, 70, 102,
+    105, 64260, 3, 70, 102, 108, 64261, 2, 83, 116, 64262, 2, 83, 116, 64275, 2, 1348, 1398,
+    64276, 2, 1348, 1381, 64277, 2, 1348, 1387, 64278, 2, 1358, 1398, 64279, 2, 1348, 1389,
+  };
+
   private static String title(String text) {
     StringBuilder result = new StringBuilder(text.length());
     boolean previous = false;
     for (int cp : text.codePoints().toArray()) {
-      result.appendCodePoint(previous ? Character.toLowerCase(cp) : Character.toTitleCase(cp));
+      result.append(previous ? lowerOf(cp) : titleOf(cp));
       previous = hasCase(cp);
     }
     return result.toString();
@@ -518,19 +645,20 @@ public final class PythonStrings {
   private static String capitalize(String text) {
     int[] points = text.codePoints().toArray();
     if (points.length == 0) return text;
-    StringBuilder result = new StringBuilder().appendCodePoint(Character.toTitleCase(points[0]));
-    for (int i = 1; i < points.length; i++)
-      result.appendCodePoint(Character.toLowerCase(points[i]));
+    StringBuilder result = new StringBuilder().append(titleOf(points[0]));
+    for (int i = 1; i < points.length; i++) result.append(lowerOf(points[i]));
     return result.toString();
   }
 
   private static String swapcase(String text) {
     StringBuilder result = new StringBuilder(text.length());
     for (int cp : text.codePoints().toArray())
-      result.appendCodePoint(
+      result.append(
           Character.isUpperCase(cp)
-              ? Character.toLowerCase(cp)
-              : Character.isLowerCase(cp) ? Character.toUpperCase(cp) : cp);
+              ? lowerOf(cp)
+              : Character.isLowerCase(cp)
+                  ? upperOf(cp)
+                  : new String(Character.toChars(cp)));
     return result.toString();
   }
 
@@ -549,17 +677,17 @@ public final class PythonStrings {
   }
 
   private static Object zfill(String text, Object[] args) {
-    int width = Py.index(args[0]).intValue();
+    long width = ssize(args[0]);
     int size = text.codePointCount(0, text.length());
     if (width <= size) return text;
-    String pad = "0".repeat(width - size);
+    String pad = "0".repeat(checkedMargin(width - size));
     if (!text.isEmpty() && "+-".indexOf(text.charAt(0)) >= 0)
       return text.charAt(0) + pad + text.substring(1);
     return pad + text;
   }
 
   private static Object justify(String text, Object[] args, int mode) {
-    int width = Py.index(args[0]).intValue();
+    long width = ssize(args[0]);
     String fill = " ";
     if (args.length > 1) {
       if (!(args[1] instanceof String piece))
@@ -573,10 +701,20 @@ public final class PythonStrings {
     }
     int size = text.codePointCount(0, text.length());
     if (width <= size) return text;
-    int margin = width - size;
-    int left = mode == 0 ? (margin + 1) / 2 : mode == 2 ? margin : 0;
+    int margin = checkedMargin(width - size);
+    // CPython center(): left = marg/2 + (marg & width & 1)
+    int left =
+        mode == 0
+            ? margin / 2 + ((margin & 1) == 1 && (width & 1) == 1 ? 1 : 0)
+            : mode == 2 ? margin : 0;
     int right = margin - left;
     return fill.repeat(left) + text + fill.repeat(right);
+  }
+
+  /** Guard against multi-gigabyte paddings: CPython reports MemoryError for these. */
+  private static int checkedMargin(long margin) {
+    if (margin > (1L << 30)) throw Py.error(PythonErrorType.MEMORY_ERROR, "");
+    return (int) margin;
   }
 
   private static Boolean every(String text, java.util.function.IntPredicate test) {
@@ -636,7 +774,7 @@ public final class PythonStrings {
   }
 
   private static Object expandtabs(String text, Object[] args) {
-    int tab = args.length > 0 ? Py.index(args[0]).intValue() : 8;
+    int tab = args.length > 0 ? cint(args[0]) : 8;
     StringBuilder result = new StringBuilder();
     int column = 0;
     for (int cp : text.codePoints().toArray()) {

@@ -1,0 +1,13 @@
+{
+  "sourceCommit": "1652066e0af45f2313b339670ef9555e8a54e545",
+  "fixtureRuntime": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]",
+  "jinjaVersion": "3.1.6",
+  "caseCount": 3000,
+  "outcomes": {
+    "expected_error": 409,
+    "expected_output": 2591
+  },
+  "fixtureSha256": "744bf6172d56153ee1c2374948d24502b8fc6a4a2fc683494a1712b8cc8253bf",
+  "grammar": "type-aware seeded random templates over literals/ops/index/slice/str-methods/filters/for/if/set/namespace/macro/loop-controls/whitespace/comments/raw + ~12%% supported error constructs; error cases only require a Java failure, not the exception type.",
+  "regenerate": "python tools/python_compat/generate_jinjafuzz_contracts.py --source-root .tools/python-api-audit"
+}

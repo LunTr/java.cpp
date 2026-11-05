@@ -51,18 +51,18 @@ public final class PythonBytes {
         minimumSecond = 0x80;
         maximumSecond = 0xbf;
       } else {
-        throw undecodable(bytes, index, "invalid start byte");
+        throw undecodable(bytes, index, 1, "invalid start byte");
       }
       int codePoint = first;
       for (int offset = 1; offset < length; offset++) {
         if (index + offset >= bytes.length) {
-          throw undecodable(bytes, index, "unexpected end of data");
+          throw undecodable(bytes, index, offset, "unexpected end of data");
         }
         int next = Byte.toUnsignedInt(bytes[index + offset]);
         int low = offset == 1 ? minimumSecond : 0x80;
         int high = offset == 1 ? maximumSecond : 0xbf;
         if (next < low || next > high) {
-          throw undecodable(bytes, index + offset, "invalid continuation byte");
+          throw undecodable(bytes, index, offset, "invalid continuation byte");
         }
         codePoint = (codePoint << 6) | (next & 0x3f);
       }
@@ -79,13 +79,24 @@ public final class PythonBytes {
     return result.toString();
   }
 
-  private static PythonException undecodable(byte[] bytes, int position, String reason) {
+  private static PythonException undecodable(
+      byte[] bytes, int start, int consumed, String reason) {
+    if (consumed == 1) {
+      return Py.error(
+          PythonErrorType.UNICODE_DECODE_ERROR,
+          "'utf-8' codec can't decode byte 0x"
+              + String.format("%02x", Byte.toUnsignedInt(bytes[start]))
+              + " in position "
+              + start
+              + ": "
+              + reason);
+    }
     return Py.error(
         PythonErrorType.UNICODE_DECODE_ERROR,
-        "'utf-8' codec can't decode byte 0x"
-            + String.format("%02x", Byte.toUnsignedInt(bytes[position]))
-            + " in position "
-            + position
+        "'utf-8' codec can't decode bytes in position "
+            + start
+            + "-"
+            + (start + consumed - 1)
             + ": "
             + reason);
   }
